@@ -9,14 +9,26 @@ public class Invoice {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public int invoiceId;
+    @Column(name = "invoice_id")
+    private int invoiceId;
 
-    public Date issueDate;
-    public double totalAmount;
+    // Payment එකත් එක්ක සම්බන්ධ කරන Foreign Key එක
+    @Column(name = "payment_id")
+    private int paymentId;
 
-    public void generate() {
-        this.issueDate = new Date();
-        System.out.println("Invoice ID: " + this.invoiceId + " generated successfully!");
-        System.out.println("Total Amount: Rs." + this.totalAmount);
+    @Temporal(TemporalType.DATE)
+    @Column(name = "issue_date")
+    private Date issueDate;
+
+    @Column(name = "total_amount")
+    private double totalAmount;
+
+    public int getInvoiceId() {
+        return invoiceId;
     }
+
+    public void setInvoiceId(int invoiceId) {
+        this.invoiceId = invoiceId;
+    }
+
 }

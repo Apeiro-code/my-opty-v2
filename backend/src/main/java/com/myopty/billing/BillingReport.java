@@ -8,13 +8,24 @@ public class BillingReport {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public int reportId;
+    @Column(name = "report_id")
+    private int reportId;
 
-    public String month;
-    public double totalRevenue;
+    @Column(name = "month")
+    private String month;
 
-    public void generateReport() {
-        System.out.println("Generating billing report for month: " + this.month);
-        System.out.println("Total Revenue: Rs." + this.totalRevenue);
+    @Column(name = "total_revenue")
+    private double totalRevenue;
+
+    public int getReportId() {
+        return reportId;
     }
+
+
+
+    public void setReportId(int reportId) {
+        this.reportId = reportId;
+    }
+
+    // Getters සහ Setters මෙතනටත් දාගන්න
 }

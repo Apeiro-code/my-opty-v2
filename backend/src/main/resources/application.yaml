@@ -1,3 +1,15 @@
 spring:
+  docker:
+    compose:
+      enabled: false
+  flyway:
+    enabled: false
   application:
     name: api
+  datasource:
+    url: jdbc:mysql://localhost:3306/myopty_db
+    username: myopty_admin
+    password: Myopty@123
+  jpa:
+    hibernate:
+      ddl-auto: update
