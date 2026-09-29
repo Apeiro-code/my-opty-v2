@@ -27,5 +27,19 @@ public class BillingReport {
         this.reportId = reportId;
     }
 
-    // Getters සහ Setters මෙතනටත් දාගන්න
+    public String getMonth() {
+        return month;
+    }
+
+    public void setMonth(String month) {
+        this.month = month;
+    }
+
+    public double getTotalRevenue() {
+        return totalRevenue;
+    }
+
+    public void setTotalRevenue(double totalRevenue) {
+        this.totalRevenue = totalRevenue;
+    }
 }

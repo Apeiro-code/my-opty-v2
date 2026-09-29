@@ -9,18 +9,15 @@ public class Invoice {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "invoice_id")
     private int invoiceId;
 
-    // Payment එකත් එක්ක සම්බන්ධ කරන Foreign Key එක
-    @Column(name = "payment_id")
-    private int paymentId;
+    @OneToOne
+    @JoinColumn(name = "payment_id")
+    private Payment payment;
 
     @Temporal(TemporalType.DATE)
-    @Column(name = "issue_date")
     private Date issueDate;
 
-    @Column(name = "total_amount")
     private double totalAmount;
 
     public int getInvoiceId() {
@@ -31,4 +28,27 @@ public class Invoice {
         this.invoiceId = invoiceId;
     }
 
+    public Payment getPayment() {
+        return payment;
+    }
+
+    public void setPayment(Payment payment) {
+        this.payment = payment;
+    }
+
+    public Date getIssueDate() {
+        return issueDate;
+    }
+
+    public void setIssueDate(Date issueDate) {
+        this.issueDate = issueDate;
+    }
+
+    public double getTotalAmount() {
+        return totalAmount;
+    }
+
+    public void setTotalAmount(double totalAmount) {
+        this.totalAmount = totalAmount;
+    }
 }
