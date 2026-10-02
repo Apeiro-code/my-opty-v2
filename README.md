@@ -341,9 +341,9 @@ Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`
 
 ```
 my-opty/
-├── backend/                     # Spring Boot API (Java 26, Maven Wrapper) — a reactor of 7 modules
+├── backend/                     # Spring Boot API (Java 25, Maven Wrapper) — a reactor of 7 modules
 │   ├── pom.xml                  # Parent: Spring Boot BOM, dependency & plugin management
-│   ├── compose.yaml             # Local MySQL via Docker Compose
+│   ├── compose.yaml             # Local MySQL (:3307) + MinIO + Mailpit via Docker Compose
 │   ├── compose.prod.yaml
 │   ├── myopty-app/              # The only runnable module; @SpringBootApplication + assembly
 │   ├── contracts/               # com.myopty.contracts — cross-module interfaces & events only
@@ -363,9 +363,17 @@ my-opty/
 │   ├── types/                   # Mirrors backend/contracts
 │   └── public/
 ├── database/        # DB-wide artifacts (ERD sources, data dictionary, migration notes)
-├── docs/            # Project documentation (deployment plan, API specs)
+├── docs/            # Project documentation (setup guide, deployment plan, API specs)
+│   └── SETUP.md     # Local dev environment: pinned versions, install, preflight check
+├── scripts/
+│   └── check-env.sh # Preflight: verifies toolchain + .env before you blame the code
 ├── .github/         # CODEOWNERS, CI workflow, PR template
 ├── items.json       # Epic/user-story board export (GitHub Projects)
+├── .node-version    # Node 24 — read by fnm
+├── .sdkmanrc        # Java 25 — read by SDKMAN
+├── .env.example     # The committed configuration contract (.env itself is ignored)
+├── .editorconfig    # Indentation and line endings
+├── .gitattributes   # Forces LF so Windows and Linux do not fight over diffs
 ├── CONTRIBUTING.md  # Contribution, branch & PR conventions
 └── README.md        # Project plan, epics, user stories, diagrams
 ```
@@ -447,20 +455,24 @@ colliding on `V3__`:
 
 ## Getting Started
 
+**See [docs/SETUP.md](docs/SETUP.md) for the full local setup, and run
+[`./scripts/check-env.sh`](scripts/check-env.sh) to confirm your machine is ready.**
+
 ### Prerequisites
-- Java 26
-- Docker & Docker Compose (for MySQL)
-- Maven (or use `./mvnw`)
+- Java 25 (pinned in `.sdkmanrc`)
+- Node.js 24 (pinned in `.node-version`)
+- Docker & Docker Compose v2 (for MySQL, MinIO, Mailpit)
+- Maven comes from the wrapper (`./mvnw`) — do not install Maven
 
 ### Backend
 
 ```bash
 cd backend
 
-# Start MySQL via Docker Compose
+# Start MySQL, MinIO and Mailpit via Docker Compose
 docker compose up -d
 
-# Run Flyway migrations (auto on startup)
+# Flyway applies migrations automatically on startup
 ./mvnw spring-boot:run
 ```
 
@@ -471,8 +483,11 @@ Swagger UI at `http://localhost:8080/swagger-ui.html`
 
 ```bash
 cd frontend
-# Instructions TBD once framework is chosen
+npm install
+npm run dev
 ```
+
+Next.js 16 App Router on `http://localhost:3000`, calling the API on `:8080`.
 
 ---
 

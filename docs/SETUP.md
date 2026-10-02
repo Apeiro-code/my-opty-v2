@@ -1,0 +1,250 @@
+# Local Development Setup
+
+Follow this once per machine. Afterwards, `./scripts/check-env.sh` is the fastest
+answer to "is my machine set up right?" and to "why does this work for you and not
+for me?".
+
+The goal is that four people on four machines run the project with the same
+versions, the same configuration keys, and the same local services. That is what
+"works on my machine" costs to get wrong, so the versions are pinned in the
+repository rather than left to each person's memory.
+
+---
+
+## What is pinned, and where
+
+| Tool | Version | Pinned in | How |
+|------|---------|-----------|-----|
+| Java | 25 (Temurin 25.0.4) | `.sdkmanrc` | SDKMAN switches on `cd` |
+| Node.js | 24 (LTS) | `.node-version` | fnm switches on `cd` |
+| npm | ships with Node 24 | — | Don't upgrade it separately |
+| Maven | 3.9.16 | `backend/mvnw` | Wrapper. Never install Maven |
+| Docker + Compose | v2+ | — | Must be running |
+
+Java 26 also works, but nothing in the project is tested against it and CI uses
+25, so a build that only fails on your machine is worth reporting rather than
+working around.
+
+---
+
+## 1. Java
+
+```bash
+# SDKMAN, if you do not have it
+curl -s "https://get.sdkman.io" | bash
+source "$HOME/.sdkman/bin/sdkman-init.sh"
+
+sdk install java 25.0.4-tem
+sdk default java 25.0.4-tem
+```
+
+Then enable automatic switching so the right version is active the moment you
+`cd` into the repository:
+
+```bash
+sdk config set sdkman_auto_env true   # in ~/.sdkman/etc/config
+```
+
+With that on, `.sdkmanrc` is picked up automatically. Without it you will
+silently build with whatever `sdk default` happens to be.
+
+Verify: `java -version` should print `25.x`. A JRE is not enough — you need
+`javac`, which is what compiles the project.
+
+---
+
+## 2. Node.js
+
+Do not use `apt install nodejs` on Ubuntu/Mint. It currently ships Node 18,
+which Next.js will not run on.
+
+```bash
+curl -fsSL https://fnm.vercel.app/install | bash
+source ~/.bashrc
+
+fnm install 24
+fnm default 24
+```
+
+fnm writes a small block into `~/.bashrc`. **Check where it landed.** By default
+the installer appends it to the very end of the file, which is *after* this line
+near the top:
+
+```bash
+# If not running interactively, don't do anything
+case $- in
+    *i*) ;;
+      *) return;;
+esac
+```
+
+Anything that runs without a TTY — a shell script, a Makefile recipe, some IDE
+task runners — stops reading `.bashrc` at that `return` and never sees Node on
+`PATH`. `bash -c 'node -v'` is enough to check:
+
+```bash
+bash -c 'node -v'    # must print v24.x, not "command not found"
+```
+
+If it prints nothing, move the `# fnm` block in `~/.bashrc` to **above** that
+guard. It is safe there: the block only adds a directory to `PATH` and asks fnm
+to set up a shell hook.
+
+### One more PATH gap
+
+Even with the block above the guard, a shell that never reads `.bashrc` at all
+still has no Node. `~/.local/bin` is on the default `PATH` and is writable
+without `sudo`, so point it at the version fnm installed:
+
+```bash
+FNM_BIN="$HOME/.local/share/fnm/node-versions/v24.21.0/installation/bin"
+for b in node npm npx; do ln -sfn "$FNM_BIN/$b" "$HOME/.local/bin/$b"; done
+```
+
+These are symlinks *into* the fnm installation, not a second Node.
+`check-env.sh` resolves them before reporting where Node came from, so it will
+tell you if they are stale after a version bump. Re-run the three lines above
+with the new version in the path if it does.
+
+Verify: `node -v` and `npm -v` in a fresh terminal.
+
+---
+
+## 3. Docker
+
+The database, the prescription object store, and the mail catcher all run in
+containers. Install Docker Desktop, or Docker Engine plus the Compose v2 plugin
+on Linux. Check the plugin specifically — the old standalone `docker-compose`
+script is not enough:
+
+```bash
+docker compose version     # must print a version
+docker info                # must succeed, not time out
+```
+
+---
+
+## 4. Get the code and configure it
+
+```bash
+git clone https://github.com/Apeiro-code/my-opty-v2.git
+cd my-opty-v2
+
+cp .env.example .env
+chmod 600 .env
+```
+
+`.env` is git-ignored and must stay that way. `.env.example` is committed and is
+the contract: every variable the application reads, with the default that works
+on a fresh clone. **If you need a variable that is not in it, add it** — a value
+that only exists in your `.env` is a value the other three people do not have.
+
+Now fill in the four secrets. Generate your own; never copy a teammate's, and
+never commit one:
+
+```bash
+./scripts/check-env.sh --secrets
+```
+
+| Variable | Command |
+|----------|---------|
+| `DB_PASSWORD` | `openssl rand -hex 16` |
+| `DB_ROOT_PASSWORD` | `openssl rand -hex 16` |
+| `MINIO_SECRET_KEY` | `openssl rand -hex 24` |
+| `JWT_SECRET` | `openssl rand -base64 48` |
+
+`JWT_SECRET` signs the tokens that stand in for a session. An empty or guessable
+one lets anyone mint a token for any account, which is why a blank value fails
+the preflight rather than quietly starting.
+
+These stay **blank on purpose**, because the local services need no credentials:
+
+| Variable | Why blank |
+|----------|-----------|
+| `MAIL_USERNAME`, `MAIL_PASSWORD` | Mailpit accepts anything |
+| `PAYMENT_GATEWAY_MERCHANT_ID`, `PAYMENT_GATEWAY_SECRET_KEY` | `PAYMENT_GATEWAY_PROVIDER=fake` needs none |
+
+---
+
+## 5. Check your machine
+
+```bash
+./scripts/check-env.sh
+```
+
+It exits non-zero if anything blocks a build, and prints the command that fixes
+each problem. Expected result:
+
+```
+Java
+  ok    java 25.0.4 (major 25 as required)
+Node
+  ok    node v24.21.0 (major 24 as required)
+Docker
+  ok    docker 29.8.1
+  ok    docker daemon is reachable
+  ok    docker compose 5.5.1
+Environment file
+  ok    .env defines every key in .env.example
+  ok    every required secret has a value
+  ok    .env is mode 600
+Secret hygiene
+  ok    .env is not tracked by git
+```
+
+A `warn` is worth reading but does not stop you. A `FAIL` means the next error
+you hit will be confusing and unrelated to the real cause.
+
+---
+
+## 6. Run it
+
+The backend and frontend skeletons land in a later Epic 0 commit. When they are
+here:
+
+```bash
+# MySQL on :3307, MinIO on :9000, Mailpit UI on :8025, then the API on :8080
+cd backend
+docker compose up -d
+./mvnw spring-boot:run
+
+# Next.js on :3000
+cd ../frontend
+npm install
+npm run dev
+```
+
+Flyway applies migrations on startup, so a fresh database builds itself. Swagger
+UI is at <http://localhost:8080/swagger-ui.html> and Mailpit at
+<http://localhost:8025>.
+
+Note **:3307**, not 3306. A native MySQL often already holds 3306 on developer
+machines, and a port clash there stops the stack for a reason that looks
+unrelated to ports.
+
+---
+
+## Troubleshooting
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| `node: command not found` in a script but fine in your terminal | fnm block sits below the non-interactive guard | Move the `# fnm` block above it in `~/.bashrc` |
+| `bash -c 'node -v'` fails | Shell never reads `.bashrc` | Symlink node/npm/npx into `~/.local/bin` (section 2) |
+| `cannot find symbol` on every class | JRE, not JDK | `sdk install java 25.0.4-tem` |
+| Flyway cannot connect | Container not up, or port 3306 assumed | `docker compose ps`; confirm `DB_URL` says 3307 |
+| Mail arrives nowhere | Looking at your inbox | Mailpit is local: <http://localhost:8025> |
+| `401` on everything | `JWT_SECRET` blank or changed mid-session | Fill it in, then log in again |
+| A teammate's value is not in your `.env` | They added a key and did not say so | `cp .env.example .env`, re-apply your secrets |
+| Line endings churn the whole file | Windows editor writing CRLF | `.gitattributes` normalises to LF; check the editor is not fighting it |
+
+---
+
+## Windows and WSL
+
+Only the Linux path above has been verified. On Windows, `fnm` installs with
+`winget install Schniz.fnm` or `choco install fnm`, SDKMAN does not exist, so
+install Temurin 25 directly and set `JAVA_HOME`. WSL is the smoother option: it
+runs these instructions unchanged.
+
+On any platform, `.gitattributes` forces LF in the repository so Windows and
+Linux contributors do not produce whole-file diffs over a one-line change.

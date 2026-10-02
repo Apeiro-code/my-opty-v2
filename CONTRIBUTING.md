@@ -37,29 +37,50 @@ modules that nobody agreed to is the most expensive kind of code in the project.
 
 ## Getting set up
 
-You need Java 26, Docker & Docker Compose, and Node.js. Maven comes from the wrapper — do not install
-Maven, and do not commit a `mvn` binary.
+**[docs/SETUP.md](docs/SETUP.md) is the full guide.** Read it once per machine; it is the thing that
+stops "works on my machine" from costing a day.
+
+The short version:
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/Apeiro-code/my-opty-v2.git
 cd my-opty-v2
 
-# Backend: MySQL on :3306, then the API on :8080
-cd backend
-docker compose up -d
-./mvnw spring-boot:run
+cp .env.example .env
+chmod 600 .env
+# Then fill in the four blank secrets. ./scripts/check-env.sh --secrets prints how.
 
-# Frontend: Next.js on :3000, talks to the API on :8080
-cd ../frontend
-npm install
-npm run dev
+./scripts/check-env.sh
 ```
 
-Flyway runs migrations automatically on startup. Swagger UI is at `http://localhost:8080/swagger-ui.html`.
+`check-env.sh` is the preflight: it exits non-zero if your machine cannot build the project and
+prints the command that fixes each problem. Run it before you conclude that a bug is real.
 
-**Configuration comes from environment variables, never from committed files.** Copy `.env.example` to
-`.env` and fill it in. `.env` is git-ignored; a credential that reaches a commit is a credential that has
-to be rotated, so treat it as a bug, not an inconvenience.
+**Versions are pinned in the repository, not in this file.** Java 25 lives in `.sdkmanrc`, Node 24 in
+`.node-version`, and `check-env.sh` reads both — so changing a version is a reviewable commit rather
+than something four people have to be told about. Maven comes from the wrapper: do not install Maven,
+and do not commit a `mvn` binary.
+
+**Configuration comes from environment variables, never from committed files.** `.env` is git-ignored;
+a credential that reaches a commit is a credential that has to be rotated, so treat that as a bug, not
+an inconvenience. `.env.example` is the committed contract, and it is the complete list — if you need
+a variable that is not in it, add it, because a value that exists only in your `.env` is a value the
+other three people do not have. If you change or rename a key there, say so in your PR, because the
+other three `.env` files are now out of date.
+
+Local services run in Docker Compose: MySQL on **:3307** (not 3306 — a native MySQL usually already
+holds that port, and the clash looks like an unrelated failure), MinIO for prescription uploads, and
+Mailpit so outgoing mail is caught in a browser at <http://localhost:8025> instead of being sent.
+
+Once the backend and frontend skeletons land:
+
+```bash
+cd backend && docker compose up -d && ./mvnw spring-boot:run   # API on :8080
+cd frontend && npm install && npm run dev                     # web app on :3000
+```
+
+Flyway applies migrations on startup, so a fresh database builds itself. Swagger UI is at
+`http://localhost:8080/swagger-ui.html`.
 
 ---
 
@@ -267,6 +288,9 @@ Rules:
 Run these yourself first. It is faster than waiting for CI to tell you the same thing.
 
 ```bash
+# Environment — four seconds, and it rules out "my machine" being the problem
+./scripts/check-env.sh
+
 # Backend — builds every module, runs all tests
 cd backend && ./mvnw verify
 
@@ -279,9 +303,11 @@ cd ../frontend && npm run lint && npm run build
 
 Then confirm, before you push:
 
+- [ ] `./scripts/check-env.sh` exits 0.
 - [ ] Branch is named `<type>/<module>-<description>` and branched from `main`.
 - [ ] Nothing of mine is outside my module, except via `contracts`.
 - [ ] No `.env`, no credentials, no API keys in the diff.
+- [ ] No new environment variable is missing from `.env.example`.
 - [ ] No commented-out code left behind.
 - [ ] New endpoints are documented in the module section of `README.md`.
 - [ ] Tests cover the new behaviour, and the existing suite still passes.

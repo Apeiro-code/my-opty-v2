@@ -1,0 +1,28 @@
+# Normalise line endings in the repository; check them out per-platform.
+#
+# Without this, a Windows contributor and a Linux contributor can disagree about
+# the last character of every line, which turns a one-line change into a whole-
+# file diff and makes review useless.
+
+* text=auto eol=lf
+
+# Files that must never be treated as text.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.jar binary
+*.class binary
+*.woff binary
+*.woff2 binary
+
+# Shell scripts must stay LF even on Windows, or they fail with a baffling
+# "bad interpreter: /bin/sh^M" when run under WSL or Git Bash.
+*.sh text eol=lf
+
+# Lockfiles and generated config that must not be touched.
+package-lock.json linguist-generated=true -diff

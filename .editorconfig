@@ -1,0 +1,32 @@
+# EditorConfig -- https://editorconfig.org
+#
+# Honest caveat: this file only binds editors that read it (VS Code, IntelliJ,
+# and most others do). It does not fail CI on its own, so "my editor reformatted
+# the whole file" is still possible. It exists so that a contributor who has never
+# opened this file writes code in the shape the rest of the repository already is.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+# The frontend is JavaScript-flavoured: 2 spaces, as created by create-next-app.
+[*.{js,jsx,mjs,cjs,ts,tsx,json,jsonc,css,scss,html}]
+indent_size = 2
+
+[*.{yml,yaml}]
+indent_size = 2
+
+# Trailing spaces are Markdown line breaks, so stripping them changes rendering.
+[*.md]
+trim_trailing_whitespace = false
+
+[Makefile]
+indent_style = tab
+
+[*.{bat,cmd}]
+end_of_line = crlf

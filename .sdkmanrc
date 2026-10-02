@@ -1,0 +1,12 @@
+# SDKMAN reads this file when you `cd` into the repository and switches to the
+# versions listed below, provided auto-switching is enabled:
+#
+#     sdkman_auto_env=true   # or sdkman_auto=3.3.0 in ~/.sdkman/etc/config
+#
+# With it enabled, `cd` into this repo is enough: Java is correct without anyone
+# reading a setup document first.
+#
+# Any Java 25 patch release builds the project -- the compiler targets release 25,
+# not this exact build -- so if you already have a different 25.x installed and
+# would rather keep it, run `sdk use java <your-version>` and carry on.
+java=25.0.4-tem
