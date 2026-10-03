@@ -50,6 +50,10 @@ cp .env.example .env
 chmod 600 .env
 # Then fill in the four blank secrets. ./scripts/check-env.sh --secrets prints how.
 
+# The backend and frontend each read .env from their own directory:
+ln -sfn ../.env backend/.env
+ln -sfn ../.env frontend/.env
+
 ./scripts/check-env.sh
 ```
 
@@ -69,10 +73,10 @@ other three people do not have. If you change or rename a key there, say so in y
 other three `.env` files are now out of date.
 
 Local services run in Docker Compose: MySQL on **:3307** (not 3306 — a native MySQL usually already
-holds that port, and the clash looks like an unrelated failure), MinIO for prescription uploads, and
-Mailpit so outgoing mail is caught in a browser at <http://localhost:8025> instead of being sent.
-
-Once the backend and frontend skeletons land:
+holds that port, and the clash looks like an unrelated failure) and Mailpit so outgoing mail is caught
+in a browser at <http://localhost:8025> instead of being sent. `compose.yaml` reads its variables from
+`backend/.env`, which is a symlink to the root `.env` — that is why the symlinks above matter. MinIO
+is not in the compose file yet; it belongs to the prescription upload story.
 
 ```bash
 cd backend && docker compose up -d && ./mvnw spring-boot:run   # API on :8080
@@ -262,7 +266,7 @@ Example: `backend/catalog/src/main/resources/db/migration/V2__catalog_create_fra
 
 | Module | Version band |
 |---|---|
-| `shared` | V1 |
+| `shared` | V1 (nested: V1, V1_1, V1_2 — see below) |
 | `catalog` | V2 – V99 |
 | `order` | V100 – V199 |
 | `workflow` | V200 – V299 |
@@ -271,6 +275,10 @@ Example: `backend/catalog/src/main/resources/db/migration/V2__catalog_create_fra
 Four people writing `V3__something` on the same afternoon is the predictable failure here, and Flyway
 fails the whole build on a duplicate version. Take the next free number inside your band. Never edit an
 already-merged migration — add a new one; the database has already run the old file.
+
+`shared` is the exception that proves the rule. It owns four tables and the band has room for one
+version, so it uses Flyway's nested versions: `V1`, `V1_1`, `V1_2`. Flyway orders those as 1, 1.1, 1.2,
+which keeps `shared` inside its documented band without putting four unrelated tables in one file.
 
 Rules:
 

@@ -164,6 +164,25 @@ These stay **blank on purpose**, because the local services need no credentials:
 | `MAIL_USERNAME`, `MAIL_PASSWORD` | Mailpit accepts anything |
 | `PAYMENT_GATEWAY_MERCHANT_ID`, `PAYMENT_GATEWAY_SECRET_KEY` | `PAYMENT_GATEWAY_PROVIDER=fake` needs none |
 
+### Two symlinks
+
+The backend and the frontend each read `.env` from their own directory, but the file you just
+created is at the repository root. Two symlinks fix that, and both are git-ignored:
+
+```bash
+ln -sfn ../.env backend/.env
+ln -sfn ../.env frontend/.env
+```
+
+Without them:
+
+- `docker compose` finds no `.env` beside `compose.yaml` and starts MySQL with an empty root
+  password, or refuses to start at all.
+- Next.js does not see `NEXT_PUBLIC_API_BASE_URL`, so the browser bundle is built pointing
+  nowhere. It fails silently, which is worse.
+
+Run them again after any `git clone` or a branch switch that removes them.
+
 ---
 
 ## 5. Check your machine
@@ -178,19 +197,38 @@ each problem. Expected result:
 ```
 Java
   ok    java 25.0.4 (major 25 as required)
+        vendor: Eclipse Adoptium
+
 Node
   ok    node v24.21.0 (major 24 as required)
+        npm  11.19.0
+  ok    .node-version pins Node 24 (fnm reads it on cd)
+
 Docker
-  ok    docker 29.8.1
+  ok    docker 29.8.2
   ok    docker daemon is reachable
-  ok    docker compose 5.5.1
+  ok    docker compose 5.6.0
+
+Maven
+  ok    backend/mvnw is executable
+  ok    Maven comes from the wrapper; there is deliberately no committed mvn binary
+
 Environment file
+  ok    .env exists
   ok    .env defines every key in .env.example
   ok    every required secret has a value
   ok    .env is mode 600
+
 Secret hygiene
   ok    .env is not tracked by git
+  ok    .env.example is tracked, which is how the contract reaches everyone
+
+Environment is ready.
 ```
+
+The patch-level versions of Docker and Compose will differ from the sample above — those lines only
+assert that a recent enough version is present. The `ok` on the `java`/`node` **major** version is the
+part that matters, because a mismatched major fails the build in ways that look like source errors.
 
 A `warn` is worth reading but does not stop you. A `FAIL` means the next error
 you hit will be confusing and unrelated to the real cause.
@@ -199,11 +237,8 @@ you hit will be confusing and unrelated to the real cause.
 
 ## 6. Run it
 
-The backend and frontend skeletons land in a later Epic 0 commit. When they are
-here:
-
 ```bash
-# MySQL on :3307, MinIO on :9000, Mailpit UI on :8025, then the API on :8080
+# MySQL on :3307, Mailpit UI on :8025, then the API on :8080
 cd backend
 docker compose up -d
 ./mvnw spring-boot:run
@@ -214,13 +249,20 @@ npm install
 npm run dev
 ```
 
-Flyway applies migrations on startup, so a fresh database builds itself. Swagger
-UI is at <http://localhost:8080/swagger-ui.html> and Mailpit at
-<http://localhost:8025>.
+Flyway applies migrations on startup, so a fresh database builds itself: 21 migrations create
+22 tables, and a second start reports the schema is already up to date. Swagger UI is at
+<http://localhost:8080/swagger-ui.html> and Mailpit at <http://localhost:8025>.
 
 Note **:3307**, not 3306. A native MySQL often already holds 3306 on developer
 machines, and a port clash there stops the stack for a reason that looks
 unrelated to ports.
+
+To start from an empty database — which is the same thing as undoing a schema change you are
+not sure about — drop the volume and bring it back:
+
+```bash
+cd backend && docker compose down -v && docker compose up -d
+```
 
 ---
 
@@ -232,10 +274,19 @@ unrelated to ports.
 | `bash -c 'node -v'` fails | Shell never reads `.bashrc` | Symlink node/npm/npx into `~/.local/bin` (section 2) |
 | `cannot find symbol` on every class | JRE, not JDK | `sdk install java 25.0.4-tem` |
 | Flyway cannot connect | Container not up, or port 3306 assumed | `docker compose ps`; confirm `DB_URL` says 3307 |
+| `docker compose` says a variable is unset | `backend/.env` symlink missing | `ln -sfn ../.env backend/.env` (section 4) |
+| Frontend calls nothing / bundle points at `localhost:3000` for the API | `frontend/.env` symlink missing | `ln -sfn ../.env frontend/.env` (section 4) |
+| `./mvnw spring-boot:run` says "Unable to find a suitable main class" | Run from the wrong directory | `cd backend` first; only `myopty-app` is runnable |
 | Mail arrives nowhere | Looking at your inbox | Mailpit is local: <http://localhost:8025> |
 | `401` on everything | `JWT_SECRET` blank or changed mid-session | Fill it in, then log in again |
 | A teammate's value is not in your `.env` | They added a key and did not say so | `cp .env.example .env`, re-apply your secrets |
 | Line endings churn the whole file | Windows editor writing CRLF | `.gitattributes` normalises to LF; check the editor is not fighting it |
+
+MinIO is not in `compose.yaml` yet. It holds prescription uploads, which is the
+prescription story rather than the skeleton, and the image is not pullable on every
+machine — a service that cannot start would fail `docker compose up -d` for a reason
+unrelated to the code. It arrives with that story; the `MINIO_*` keys in `.env` are
+already there waiting for it.
 
 ---
 

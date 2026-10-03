@@ -5,6 +5,30 @@ Four distinct business systems, each owned by a team member.
 
 ---
 
+## Status
+
+**Epic 0 is partially landed. No endpoints exist yet.**
+
+What is built and working:
+
+| Piece | State |
+|---|---|
+| Maven reactor, 7 modules | Builds on Java 25; `./mvnw verify` is green |
+| Database | MySQL 8 on **:3307** via Docker Compose, Flyway applies 21 migrations creating **22 tables** |
+| API docs | springdoc serves `/swagger-ui.html`; Actuator `/actuator/health` reports the datasource |
+| Frontend | Next.js 16 App Router, TypeScript, Tailwind v4; `npm run lint` and `npm run build` pass |
+| Mail | Mailpit catches outgoing mail at <http://localhost:8025> |
+
+What is **not** built: every endpoint listed in this file, authentication, the object store, and seed
+data. The API answers `/actuator/health` and nothing else, and it has **no authentication**, so it must
+not be exposed to a network before the shared module's auth story lands.
+
+Where a section below describes endpoint behaviour in detail, read it as the specification those
+features are built against, not as a description of running software. Two places say as much
+explicitly: the note under the Order module, and the authentication warning in it.
+
+---
+
 ## System Architecture (4 Modules)
 
 | Module | Package | Owner | Student ID | Epics |
@@ -78,7 +102,8 @@ POST   /api/inventory/report/export   # Export PDF/Excel
 - Customer notifications on status changes
 
 **API Endpoints:**
-Prescription and order endpoints are implemented. The rest are still planned.
+None implemented yet. These are the planned surface: `POST /api/prescriptions`,
+`GET /api/orders`, `PUT /api/orders/{id}/approve` and the rest. Nothing below is running code.
 
 ```
 POST   /api/prescriptions                  # Submit prescription, multipart (customer)
@@ -107,7 +132,8 @@ POST   /api/stock/updates                  # Record new stock (client)
 GET    /api/stock/updates                  # History
 ```
 
-Notes on the implemented endpoints:
+Notes on the planned endpoints — decisions to honour when this module is built, not a description of
+existing behaviour:
 
 - `POST /api/prescriptions` is `multipart/form-data`, not JSON: the `prescription`
   part carries the optical values as a JSON object, the `document` part carries the
@@ -122,8 +148,8 @@ Notes on the implemented endpoints:
   unreviewed reaches production. Reviewing is one-way: there is no re-review.
 - Approving quotes an estimated receive date from the lab lead time configured for
   that order type (`myopty.lab.lead-days`). The client can correct it, since only
-  the shop knows its real queue. Stock is not part of the calculation until the
-  catalog module's frame table (V2) exists.
+  the shop knows its real queue. The `frame` and `lens` tables now exist, so stock
+  can be part of that calculation.
 - The client moves an approved order along with `/processing`, `/ready` and
   `/dispatched`. The workflow is forward-only and a step may be skipped (a frame
   already in stock never gets processed); `DISPATCHED` and `REJECTED` are terminal.
@@ -343,24 +369,27 @@ Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`
 my-opty/
 ├── backend/                     # Spring Boot API (Java 25, Maven Wrapper) — a reactor of 7 modules
 │   ├── pom.xml                  # Parent: Spring Boot BOM, dependency & plugin management
-│   ├── compose.yaml             # Local MySQL (:3307) + MinIO + Mailpit via Docker Compose
+│   ├── mvnw                     # Maven Wrapper 3.9.16 — no local Maven install needed
+│   ├── compose.yaml             # Local MySQL (:3307) + Mailpit via Docker Compose
 │   ├── compose.prod.yaml
-│   ├── myopty-app/              # The only runnable module; @SpringBootApplication + assembly
+│   ├── myopty-app/              # The only runnable module; @SpringBootApplication + config
 │   ├── contracts/               # com.myopty.contracts — cross-module interfaces & events only
 │   ├── shared/                  # com.myopty.shared — Auth, Users, Q&A, Config (team-wide)
 │   ├── catalog/                 # com.myopty.catalog   (Amarasekara)
 │   ├── order/                   # com.myopty.order     (Welikuburawatta)
 │   ├── workflow/                # com.myopty.workflow  (Karunarathna)
 │   └── billing/                 # com.myopty.billing   (Kankanamge)
-├── frontend/                    # Next.js 16 web app (TypeScript, Tailwind CSS)
+├── frontend/                    # Next.js 16 web app (TypeScript, Tailwind v4)
 │   ├── app/                     # App Router: routing + thin server components only
-│   │   ├── (customer)/          # Route group — customers
-│   │   ├── (client)/            # Route group — shop owner
-│   │   └── api/                 # Route handlers (BFF: auth cookie → :8080)
-│   ├── features/                # Per-module code: catalog, order, workflow, billing, shared
-│   ├── components/ui/           # Shared presentational primitives
-│   ├── lib/                     # api/ fetch wrapper · auth/ session & role guards
-│   ├── types/                   # Mirrors backend/contracts
+│   │   ├── (customer)/          # Route group — storefront: /, /frames, /lenses, /orders, /account, …
+│   │   ├── (client)/shop/       # Route group — shop owner: /shop/orders, /shop/inventory, …
+│   │   └── api/                 # Route handlers (BFF: auth cookie → :8080)  [empty]
+│   ├── features/                # Per-module code: catalog, order, workflow, billing, shared [empty]
+│   ├── components/ui/           # Shared presentational primitives [empty]
+│   ├── lib/
+│   │   ├── api/client.ts        # The one fetch wrapper: base URL + envelope unwrapping
+│   │   └── auth/                # Session & role guards [empty]
+│   ├── types/api.ts             # Mirrors backend/contracts
 │   └── public/
 ├── database/        # DB-wide artifacts (ERD sources, data dictionary, migration notes)
 ├── docs/            # Project documentation (setup guide, deployment plan, API specs)
@@ -377,6 +406,10 @@ my-opty/
 ├── CONTRIBUTING.md  # Contribution, branch & PR conventions
 └── README.md        # Project plan, epics, user stories, diagrams
 ```
+
+Marked `[empty]` means the directory exists with a `.gitkeep` and nothing else, so the shape is agreed
+but the code is not written. MinIO is deliberately absent from `compose.yaml`; see the "Status" section
+at the top.
 
 ### Backend module layout
 
@@ -461,7 +494,7 @@ colliding on `V3__`:
 ### Prerequisites
 - Java 25 (pinned in `.sdkmanrc`)
 - Node.js 24 (pinned in `.node-version`)
-- Docker & Docker Compose v2 (for MySQL, MinIO, Mailpit)
+- Docker & Docker Compose v2 (for MySQL and Mailpit)
 - Maven comes from the wrapper (`./mvnw`) — do not install Maven
 
 ### Backend
@@ -469,7 +502,7 @@ colliding on `V3__`:
 ```bash
 cd backend
 
-# Start MySQL, MinIO and Mailpit via Docker Compose
+# Start MySQL and Mailpit via Docker Compose
 docker compose up -d
 
 # Flyway applies migrations automatically on startup
