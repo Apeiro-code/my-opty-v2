@@ -1,0 +1,7 @@
+# Installed and rebuilt inside the image; the runner stage does its own npm ci.
+node_modules
+.next
+
+# Local env and editor files never reach the build.
+.env*
+*.local

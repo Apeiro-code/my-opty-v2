@@ -14,14 +14,16 @@ What is built and working:
 | Piece | State |
 |---|---|
 | Maven reactor, 7 modules | Builds on Java 25; `./mvnw verify` is green |
-| Database | MySQL 8 on **:3307** via Docker Compose, Flyway applies 21 migrations creating **22 tables** |
+| Database | MySQL 8 on **:3307** via Docker Compose, Flyway applies 23 migrations creating **22 tables** |
+| Seed data | V7/V105 insert sample categories, frames, lenses and discounts on every fresh database |
 | API docs | springdoc serves `/swagger-ui.html`; Actuator `/actuator/health` reports the datasource |
 | Frontend | Next.js 16 App Router, TypeScript, Tailwind v4; `npm run lint` and `npm run build` pass |
 | Mail | Mailpit catches outgoing mail at <http://localhost:8025> |
+| Staging preview | `compose.prod.yaml` builds API + web images behind one nginx proxy on **:8088** |
 
-What is **not** built: every endpoint listed in this file, authentication, the object store, and seed
-data. The API answers `/actuator/health` and nothing else, and it has **no authentication**, so it must
-not be exposed to a network before the shared module's auth story lands.
+What is **not** built: every endpoint listed in this file, authentication, and the object store. The
+API answers `/actuator/health` and nothing else, and it has **no authentication**, so it must not be
+exposed to a network before the shared module's auth story lands.
 
 Where a section below describes endpoint behaviour in detail, read it as the specification those
 features are built against, not as a description of running software. Two places say as much
@@ -371,7 +373,9 @@ my-opty/
 │   ├── pom.xml                  # Parent: Spring Boot BOM, dependency & plugin management
 │   ├── mvnw                     # Maven Wrapper 3.9.16 — no local Maven install needed
 │   ├── compose.yaml             # Local MySQL (:3307) + Mailpit via Docker Compose
-│   ├── compose.prod.yaml
+│   ├── compose.prod.yaml        # Staging preview: API + web behind nginx on :8088
+│   ├── Dockerfile               # API image (JDK build stage → JRE runtime)
+│   ├── nginx/preview.conf       # The proxy: /api and docs → API, everything else → web
 │   ├── myopty-app/              # The only runnable module; @SpringBootApplication + config
 │   ├── contracts/               # com.myopty.contracts — cross-module interfaces & events only
 │   ├── shared/                  # com.myopty.shared — Auth, Users, Q&A, Config (team-wide)
@@ -380,6 +384,7 @@ my-opty/
 │   ├── workflow/                # com.myopty.workflow  (Karunarathna)
 │   └── billing/                 # com.myopty.billing   (Kankanamge)
 ├── frontend/                    # Next.js 16 web app (TypeScript, Tailwind v4)
+│   ├── Dockerfile               # Production bundle for the staging preview
 │   ├── app/                     # App Router: routing + thin server components only
 │   │   ├── (customer)/          # Route group — storefront: /, /frames, /lenses, /orders, /account, …
 │   │   ├── (client)/shop/       # Route group — shop owner: /shop/orders, /shop/inventory, …
@@ -538,13 +543,29 @@ Next.js 16 App Router on `http://localhost:3000`, calling the API on `:8080`.
 
 ## Deployment
 
-```bash
-# Build Docker image
-./mvnw spring-boot:build-image
+The whole stack — MySQL, Mailpit, API and storefront — comes up behind one nginx
+proxy with a single command:
 
-# Or use compose for full stack
-docker compose -f compose.yaml -f compose.prod.yaml up -d
+```bash
+cd backend
+docker compose -f compose.yaml -f compose.prod.yaml up -d --build
 ```
+
+Preview at **<http://localhost:8088>** (change the port with `PREVIEW_PORT` in `.env`).
+The proxy sends `/api`, `/actuator`, `/swagger` and `/v3/api-docs` to the API and
+everything else to Next.js, all on **one origin** — so the preview needs no CORS and
+the web image is built with an empty `NEXT_PUBLIC_API_BASE_URL`. Nothing is published
+on a routable address: the API has no authentication yet (see the Status section).
+
+Re-running the command rebuilds only what changed. To stop the preview while keeping
+the databases:
+
+```bash
+cd backend && docker compose -f compose.yaml -f compose.prod.yaml down
+```
+
+Images are built by `backend/Dockerfile` and `frontend/Dockerfile`; the dev workflow
+(`docker compose up -d`, `./mvnw spring-boot:run`, `npm run dev`) is unchanged.
 
 ---
 

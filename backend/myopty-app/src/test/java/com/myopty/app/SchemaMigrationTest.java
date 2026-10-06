@@ -56,8 +56,8 @@ class SchemaMigrationTest {
 
         assertThat(versions).containsExactly(
                 "1", "1.1", "1.2",
-                "2", "3", "4", "5", "6",
-                "100", "101", "102", "103", "104",
+                "2", "3", "4", "5", "6", "7",
+                "100", "101", "102", "103", "104", "105",
                 "200", "201", "202", "203",
                 "300", "301", "302", "303");
     }
@@ -93,6 +93,57 @@ class SchemaMigrationTest {
                 "stock_entry",
                 "stock_update",
                 "todo_task");
+    }
+
+    /**
+     * The seed migrations (V7, V105) exist so the team can build features against realistic
+     * data. A migration that runs but inserts nothing, or whose discount points at product ids
+     * that were never inserted, would fail here rather than in someone's demo.
+     */
+    @Test
+    void sampleDataIsSeededAndSelfConsistent() {
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM category", Long.class))
+                .isGreaterThanOrEqualTo(6);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM frame", Long.class))
+                .isGreaterThanOrEqualTo(10);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM lens", Long.class))
+                .isGreaterThanOrEqualTo(6);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM discount", Long.class))
+                .isGreaterThanOrEqualTo(4);
+
+        // The variety the shopping and inventory features need, not just row counts.
+        assertThat(jdbc.queryForObject(
+                "SELECT COUNT(*) FROM lens WHERE type = 'PROGRESSIVE'", Long.class))
+                .isPositive();
+        assertThat(jdbc.queryForObject(
+                "SELECT COUNT(*) FROM frame WHERE stock_qty < low_stock_threshold", Long.class))
+                .isPositive();
+        assertThat(jdbc.queryForObject(
+                "SELECT COUNT(*) FROM frame WHERE is_active = FALSE", Long.class))
+                .isPositive();
+        assertThat(jdbc.queryForObject(
+                "SELECT COUNT(*) FROM discount WHERE is_active = FALSE AND ended_at IS NOT NULL "
+                        + "AND valid_to < CURDATE()", Long.class))
+                .isPositive();
+
+        // Every id a discount names must be a frame or a lens that exists. The two tables have
+        // independent id spaces, so the same number can legitimately name both — that ambiguity
+        // is the documented cost of target_item_ids being JSON (see V103).
+        List<Long> referenced = jdbc.queryForList("""
+                SELECT jt.id FROM discount d,
+                JSON_TABLE(d.target_item_ids, '$[*]' COLUMNS (id BIGINT PATH '$')) jt
+                WHERE d.target_item_ids IS NOT NULL
+                """, Long.class);
+        assertThat(referenced).isNotEmpty();
+        for (Long id : referenced) {
+            Integer matches = jdbc.queryForObject("""
+                    SELECT (SELECT COUNT(*) FROM frame WHERE id = ?)
+                         + (SELECT COUNT(*) FROM lens WHERE id = ?)
+                    """, Integer.class, id, id);
+            assertThat(matches)
+                    .as("discount target id %s names an existing product", id)
+                    .isGreaterThanOrEqualTo(1);
+        }
     }
 
     /**

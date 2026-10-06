@@ -276,6 +276,12 @@ Four people writing `V3__something` on the same afternoon is the predictable fai
 fails the whole build on a duplicate version. Take the next free number inside your band. Never edit an
 already-merged migration — add a new one; the database has already run the old file.
 
+Because the bands fill in parallel, a `catalog` V8 can be written after `order`'s V105 has already run
+on a teammate's database. That is an out-of-order migration, which Flyway rejects by default, so
+`spring.flyway.out-of-order: true` is set in `application.yml` — otherwise the only fix for a pulled
+migration is dropping someone's volume. It does not relax anything on a fresh database: versions are
+still applied in ascending order, and duplicate versions still fail the build.
+
 `shared` is the exception that proves the rule. It owns four tables and the band has room for one
 version, so it uses Flyway's nested versions: `V1`, `V1_1`, `V1_2`. Flyway orders those as 1, 1.1, 1.2,
 which keeps `shared` inside its documented band without putting four unrelated tables in one file.

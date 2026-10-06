@@ -24,6 +24,12 @@ spring:
     enabled: ${DB_FLYWAY_ENABLED:true}
     locations: classpath:db/migration
     baseline-on-migrate: false
+    # The bands are allocated per module and filled in parallel, so a catalog V8 can be
+    # written after order's V105 has already run on a teammate's database. Without this,
+    # every existing database rejects the newer-but-lower migration and the only fix is
+    # dropping the volume. Fresh databases (CI, tests, `compose down -v`) are unaffected:
+    # they still apply everything in version order.
+    out-of-order: true
 
   jackson:
     default-property-inclusion: non_null

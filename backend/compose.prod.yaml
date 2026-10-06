@@ -1,0 +1,62 @@
+# Staging preview stack. Overlay on compose.yaml — run both files together:
+#
+#     cd backend && docker compose -f compose.yaml -f compose.prod.yaml up -d --build
+#
+# then open http://localhost:8088 (PREVIEW_PORT changes it). Same project name as
+# the dev stack, so MySQL and Mailpit are the containers you already have, not
+# duplicates.
+#
+# Loopback only. The API has no authentication yet (README says as much), so
+# nothing here listens on a routable address — a preview a teammate can reach is
+# an unauthenticated API they can reach.
+
+services:
+  api:
+    build:
+      context: .
+    image: myopty-api:staging
+    restart: unless-stopped
+    # Secrets come from the repository-root .env (via the backend/.env symlink
+    # convention in docs/SETUP.md), exactly like `spring-boot:run`.
+    env_file: ../.env
+    environment:
+      # The one value that must differ inside the compose network: DB_URL's
+      # `localhost:3307` is the host's view, and here MySQL is the `mysql`
+      # service on the container network. `environment` outranks `env_file`.
+      DB_URL: jdbc:mysql://mysql:3306/${DB_NAME:-myopty}?createDatabaseIfNotExist=true
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    # Tomcat only binds once the context is up, and Flyway runs before that, so an
+    # open port means migrations and seed data have already landed.
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 45s
+
+  web:
+    build:
+      context: ../frontend
+      args:
+        # Empty => the bundle calls /api on its own origin, which the proxy
+        # forwards. Never bake http://localhost:8080 into a shared image.
+        NEXT_PUBLIC_API_BASE_URL: ""
+    image: myopty-web:staging
+    restart: unless-stopped
+
+  preview:
+    image: nginx:1.27-alpine
+    container_name: myopty-preview
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${PREVIEW_PORT:-8088}:80"
+    volumes:
+      - ./nginx/preview.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_started

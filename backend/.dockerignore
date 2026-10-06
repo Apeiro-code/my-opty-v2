@@ -1,0 +1,7 @@
+# Build outputs — the image compiles from source, never from a teammate's target/.
+**/target/
+
+# Secrets live at the repository root and arrive as compose env vars instead.
+.env
+
+.git

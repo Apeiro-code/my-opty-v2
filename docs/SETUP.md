@@ -249,8 +249,11 @@ npm install
 npm run dev
 ```
 
-Flyway applies migrations on startup, so a fresh database builds itself: 21 migrations create
-22 tables, and a second start reports the schema is already up to date. Swagger UI is at
+Flyway applies migrations on startup, so a fresh database builds itself: 23 migrations create
+22 tables, and a second start reports the schema is already up to date. Two of those migrations
+(V7 and V105) also insert sample categories, frames, lenses and discounts, so browsing and
+inventory features have realistic rows to work against — look rows up by model, name or slug
+rather than by id, because seed ids are not fixed. Swagger UI is at
 <http://localhost:8080/swagger-ui.html> and Mailpit at <http://localhost:8025>.
 
 Note **:3307**, not 3306. A native MySQL often already holds 3306 on developer
@@ -266,6 +269,38 @@ cd backend && docker compose down -v && docker compose up -d
 
 ---
 
+## 7. Staging preview
+
+To see the site the way a reviewer would — one origin, no dev servers running —
+the compose overlay builds the API and the web app into images and puts them
+behind an nginx proxy:
+
+```bash
+cd backend
+docker compose -f compose.yaml -f compose.prod.yaml up -d --build
+```
+
+Then open <http://localhost:8088>. The proxy routes `/api`, `/actuator`,
+`/swagger` and `/v3/api-docs` to the API and everything else to Next.js, so the
+preview needs neither CORS nor `NEXT_PUBLIC_API_BASE_URL` (the web image is built
+with it empty on purpose). The port comes from `PREVIEW_PORT` in `.env`.
+
+Notes:
+
+- First build compiles the Maven reactor and the Next.js bundle; both are cached,
+  so later builds only redo what changed.
+- The preview is bound to `127.0.0.1` only. The API has no authentication yet —
+  do not publish it on a routable address.
+- It reuses the same MySQL container as the dev workflow, so your migrations and
+  seed data are already there. To stop the preview but keep the data:
+  `docker compose -f compose.yaml -f compose.prod.yaml down` (add `-v` only if
+  you want to drop the database too).
+- Plain `docker compose up -d` (dev) prints a warning about "orphan containers"
+  while the preview is running. That is Compose noticing services it was not
+  given this time; it changes nothing. The command above stops them properly.
+
+---
+
 ## Troubleshooting
 
 | Symptom | Cause | Fix |
@@ -278,6 +313,8 @@ cd backend && docker compose down -v && docker compose up -d
 | Frontend calls nothing / bundle points at `localhost:3000` for the API | `frontend/.env` symlink missing | `ln -sfn ../.env frontend/.env` (section 4) |
 | `./mvnw spring-boot:run` says "Unable to find a suitable main class" | Run from the wrong directory | `cd backend` first; only `myopty-app` is runnable |
 | Mail arrives nowhere | Looking at your inbox | Mailpit is local: <http://localhost:8025> |
+| Preview site shows "502" or "can't connect" | API still starting, or image stale | Wait for `/actuator/health`, or re-run the overlay command with `--build` |
+| `docker compose` build fails on `mvnw: permission denied` | Wrapper lost its exec bit | `chmod +x backend/mvnw` |
 | `401` on everything | `JWT_SECRET` blank or changed mid-session | Fill it in, then log in again |
 | A teammate's value is not in your `.env` | They added a key and did not say so | `cp .env.example .env`, re-apply your secrets |
 | Line endings churn the whole file | Windows editor writing CRLF | `.gitattributes` normalises to LF; check the editor is not fighting it |
