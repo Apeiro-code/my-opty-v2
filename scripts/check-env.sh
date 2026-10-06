@@ -249,6 +249,44 @@ else
       ;;
   esac
 
+  # Provider-conditional requirements. `fake` needs no merchant account, so
+  # demanding these unconditionally would fail every developer who has not
+  # registered one. The moment a real provider is named the credentials stop
+  # being optional — the application refuses to start without them, and the
+  # preflight says so first. docs/DEPLOYMENT.md is the registration runbook.
+  payment_provider="$(grep -m1 -E '^PAYMENT_GATEWAY_PROVIDER=' .env | cut -d= -f2- || true)"
+  if [ -n "$payment_provider" ] && [ "$payment_provider" != "fake" ]; then
+    missing_creds=""
+    for key in PAYMENT_GATEWAY_MERCHANT_ID PAYMENT_GATEWAY_SECRET_KEY; do
+      cred_value="$(grep -m1 -E "^${key}=" .env | cut -d= -f2- || true)"
+      [ -z "$cred_value" ] && missing_creds="$missing_creds $key"
+    done
+    if [ -n "$missing_creds" ]; then
+      fail "PAYMENT_GATEWAY_PROVIDER=$payment_provider but these are blank:"
+      for key in $missing_creds; do detail "$key"; done
+      hint "Copy the sandbox values per docs/DEPLOYMENT.md, or set PAYMENT_GATEWAY_PROVIDER=fake."
+    else
+      pass "PAYMENT_GATEWAY_PROVIDER=$payment_provider has its credentials"
+    fi
+  else
+    pass "PAYMENT_GATEWAY_PROVIDER=fake needs no merchant account"
+  fi
+
+  # Mail follows the same shape but only warns: some relays on a private network
+  # authenticate nothing, and a real send failure is loud where it happens.
+  mail_host="$(grep -m1 -E '^MAIL_HOST=' .env | cut -d= -f2- || true)"
+  if [ -z "$mail_host" ] || [ "$mail_host" = "localhost" ]; then
+    pass "MAIL_HOST is local (Mailpit) and needs no credentials"
+  else
+    mail_user="$(grep -m1 -E '^MAIL_USERNAME=' .env | cut -d= -f2- || true)"
+    if [ -z "$mail_user" ]; then
+      warn "MAIL_HOST=$mail_host but MAIL_USERNAME is blank"
+      hint "Staging SMTP providers need credentials — docs/DEPLOYMENT.md has the recipe."
+    else
+      pass "MAIL_HOST=$mail_host has a MAIL_USERNAME"
+    fi
+  fi
+
   # A .env copied weeks ago is the quiet cause of "works on my machine": the
   # example moved on and this file did not. Generated secrets always differ, so
   # they are excluded from the comparison.

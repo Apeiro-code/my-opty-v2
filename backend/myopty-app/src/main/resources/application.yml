@@ -34,6 +34,26 @@ spring:
   jackson:
     default-property-inclusion: non_null
 
+  # Outbound mail, read from the MAIL_* contract in .env. Locally those point at
+  # Mailpit (compose service), which accepts any credentials and shows every
+  # message at http://localhost:8025 — so auth and STARTTLS are off by default
+  # and must be flipped explicitly when a real SMTP provider is configured
+  # (docs/DEPLOYMENT.md). JavaMail does not infer auth from a non-blank
+  # username, which is why MAIL_SMTP_AUTH exists rather than being assumed.
+  # The defaults mirror Mailpit's ports so a test without .env still resolves
+  # (same contract as CORS_ALLOWED_ORIGINS below: a fresh clone must boot).
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_SMTP_AUTH:false}
+          starttls:
+            enable: ${MAIL_STARTTLS:false}
+
 server:
   port: 8080
   error:
@@ -47,6 +67,18 @@ springdoc:
 myopty:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+
+  # Payment gateway credentials, read from the PAYMENT_GATEWAY_* contract in .env.
+  # `fake` needs no credentials and must never leave a developer's machine;
+  # `payhere` requires the sandbox values from docs/DEPLOYMENT.md. The properties
+  # class fails startup on a provider it does not know or on missing credentials,
+  # so a bad .env shows up here rather than at checkout.
+  payment:
+    provider: ${PAYMENT_GATEWAY_PROVIDER:fake}
+    merchant-id: ${PAYMENT_GATEWAY_MERCHANT_ID:}
+    secret-key: ${PAYMENT_GATEWAY_SECRET_KEY:}
+    api-version: ${PAYMENT_GATEWAY_API_VERSION:}
+    sandbox: ${PAYMENT_GATEWAY_SANDBOX:true}
 
 management:
   endpoints:

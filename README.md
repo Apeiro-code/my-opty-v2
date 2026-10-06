@@ -20,6 +20,8 @@ What is built and working:
 | Frontend | Next.js 16 App Router, TypeScript, Tailwind v4; `npm run lint` and `npm run build` pass |
 | Mail | Mailpit catches outgoing mail at <http://localhost:8025> |
 | Staging preview | `compose.prod.yaml` builds API + web images behind one nginx proxy on **:8088** |
+| Payment config | PayHere sandbox runbook in `docs/DEPLOYMENT.md`; bad `PAYMENT_GATEWAY_*` config fails startup naming the variable |
+| Email | `spring.mail` wired from `MAIL_*`; `MailSendingTest` proves a real send through Mailpit |
 
 What is **not** built: every endpoint listed in this file, authentication, and the object store. The
 API answers `/actuator/health` and nothing else, and it has **no authentication**, so it must not be

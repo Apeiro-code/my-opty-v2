@@ -164,6 +164,11 @@ These stay **blank on purpose**, because the local services need no credentials:
 | `MAIL_USERNAME`, `MAIL_PASSWORD` | Mailpit accepts anything |
 | `PAYMENT_GATEWAY_MERCHANT_ID`, `PAYMENT_GATEWAY_SECRET_KEY` | `PAYMENT_GATEWAY_PROVIDER=fake` needs none |
 
+Registering a PayHere sandbox account or configuring a real SMTP provider for staging is
+documented in [DEPLOYMENT.md](DEPLOYMENT.md). The moment you set
+`PAYMENT_GATEWAY_PROVIDER` to something other than `fake`, the preflight and the
+application both require those credentials, each naming the variable to fix.
+
 ### Two symlinks
 
 The backend and the frontend each read `.env` from their own directory, but the file you just
