@@ -14,23 +14,26 @@ What is built and working:
 | Piece | State |
 |---|---|
 | Maven reactor, 7 modules | Builds on Java 25; `./mvnw verify` is green |
-| Database | MySQL 8 on **:3307** via Docker Compose, Flyway applies 23 migrations creating **22 tables** |
-| Seed data | V7/V105 insert sample categories, frames, lenses and discounts on every fresh database |
+| Database | MySQL 8 on **:3307** via Docker Compose, Flyway applies 24 migrations creating **22 tables** |
+| Seed data | V7/V105 insert sample categories, frames, lenses and discounts; V1_3 seeds the two demo accounts |
 | API docs | springdoc serves `/swagger-ui.html`; Actuator `/actuator/health` reports the datasource |
 | Frontend | Next.js 16 App Router, TypeScript, Tailwind v4; `npm run lint` and `npm run build` pass |
 | Mail | Mailpit catches outgoing mail at <http://localhost:8025> |
 | Coding standard | Spotless (Palantir format) bound to `./mvnw verify`, ESLint + Prettier on the frontend; `./scripts/lint.sh` runs all three |
+| Authentication | Session login/logout with `CUSTOMER` vs `CLIENT` roles (Spring Security, deny-by-default on `/api/**`); `AuthFlowTest` proves the whole flow |
 | Staging preview | `compose.prod.yaml` builds API + web images behind one nginx proxy on **:8088** |
 | Payment config | PayHere sandbox runbook in `docs/DEPLOYMENT.md`; bad `PAYMENT_GATEWAY_*` config fails startup naming the variable |
 | Email | `spring.mail` wired from `MAIL_*`; `MailSendingTest` proves a real send through Mailpit |
 
-What is **not** built: every endpoint listed in this file, authentication, and the object store. The
-API answers `/actuator/health` and nothing else, and it has **no authentication**, so it must not be
-exposed to a network before the shared module's auth story lands.
+What is **not** built: every feature endpoint listed in this file, and the object store. The
+API answers `/actuator/health`, `POST /api/auth/login`, `GET /api/auth/me`,
+`POST /api/auth/logout` and nothing else — every other route returns 401 until the module
+that owns it builds it.
 
 Where a section below describes endpoint behaviour in detail, read it as the specification those
 features are built against, not as a description of running software. Two places say as much
-explicitly: the note under the Order module, and the authentication warning in it.
+explicitly: the note under the Order module, and the warning about which role its approval
+endpoints must require.
 
 ---
 
@@ -162,19 +165,24 @@ existing behaviour:
   state the workflow has not reached.
 - Every status change writes a notification recording the move, and the customer
   is told through a pluggable `NotificationSender`. The only implementation logs it,
-  because sending mail needs a provider the shared module has not got yet; a real
-  transport replaces the log one by declaring its own bean. The message is stored
+  because nothing yet turns a notification into a sent message — `spring.mail` is
+  configured and a `JavaMailSender` is in the context, but no `NotificationSender`
+  implementation uses them; a real transport replaces the log one by declaring its own
+  bean. The message is stored
   as it was written, so rewording the templates never changes what past
   notifications claim was said.
 - `GET /api/notifications` needs `customerId` or `orderId`, and `orderId` wins if
   both are sent. It returns at most 100 rows, newest first.
-- **These review and approval endpoints are not yet authenticated.** The module has
-  no authentication or roles yet, so anyone who can reach the API can approve or
-  reject production work. Auth belongs to the shared module; see CONTRIBUTING.md.
-- **`GET /api/notifications` is the sharpest edge of that.** Without auth there is
-  no way to tell who is asking, so supplying any `customerId` returns that
-  customer's order history to anyone who asks. Requiring a filter stops the
-  unbounded read but is not a substitute for authentication.
+- **These review and approval endpoints do not exist yet; when they do, they need a role
+  rule, not an authentication rule.** Everything under `/api/**` already requires a
+  session — the shared module's filter chain is deny-by-default — but nothing yet says
+  *which* role may approve. Until `SecurityConfig` adds a `hasRole("CLIENT")` rule for
+  them, any logged-in customer could approve production work. Auth belongs to the shared
+  module; see CONTRIBUTING.md.
+- **`GET /api/notifications` is the sharpest edge of that.** A session now tells the
+  server *who* is asking, so the endpoint must take `customerId` from the session, not
+  from a query parameter — a parameter still lets one customer read another's history,
+  and the filter that stops the unbounded read is not a substitute for doing that.
 
 **Database Tables:** `prescription`, `progressive_order`, `order_notification`, `discount`, `stock_update`
 
@@ -280,27 +288,30 @@ POST   /api/billing/reports/{id}/export  # Export PDF/Excel
 - **Question** - Q&A/FAQ system
 
 **Key Features:**
-- JWT-based authentication
-- Role-based access control (CUSTOMER vs CLIENT)
-- Registration with email/phone verification (OTP)
-- Login/logout, password reset
-- Profile management
-- Q&A: customers ask, clients answer, FAQ marking
-- Global exception handling, validation, audit logging
+- Session-based authentication — **built**: login/logout/current-user endpoints, server-side
+  session in a `SameSite=Lax` cookie, `AuthFlowTest` proves it
+- Role-based access control (CUSTOMER vs CLIENT) — **built**: deny-by-default on `/api/**`,
+  `CLIENT` required on `/api/shop/**`
+- Registration with email/phone verification (OTP) — planned
+- Password reset — planned
+- Profile management — planned
+- Q&A: customers ask, clients answer, FAQ marking — planned
+- Global exception handling, validation, audit logging — partial (validation and auditing
+  are in; global handlers are per module)
 
-**API Endpoints (Planned):**
+**API Endpoints:**
 ```
-POST   /api/auth/register                # Register (customer/client)
-POST   /api/auth/login                   # Login
-POST   /api/auth/refresh                 # Refresh token
-POST   /api/auth/forgot-password         # Request reset
-POST   /api/auth/reset-password          # Reset with token
-GET    /api/auth/me                      # Current user profile
-PUT    /api/auth/me                      # Update profile
-POST   /api/questions                    # Ask question (customer)
-GET    /api/questions                    # List (customer: own; client: all)
-PUT    /api/questions/{id}/answer        # Answer question (client)
-GET    /api/questions/faq                # Public FAQ
+POST   /api/auth/login                   # Login (built) — returns the session cookie
+GET    /api/auth/me                      # Current user (built)
+POST   /api/auth/logout                  # Logout (built)
+POST   /api/auth/register                # Register (customer/client) — planned
+POST   /api/auth/forgot-password         # Request reset — planned
+POST   /api/auth/reset-password          # Reset with token — planned
+PUT    /api/auth/me                      # Update profile — planned
+POST   /api/questions                    # Ask question (customer) — planned
+GET    /api/questions                    # List (customer: own; client: all) — planned
+PUT    /api/questions/{id}/answer        # Answer question (client) — planned
+GET    /api/questions/faq                # Public FAQ — planned
 ```
 
 **Database Tables:** `app_user`, `client_profile`, `customer_profile`, `question`
@@ -561,7 +572,8 @@ Preview at **<http://localhost:8088>** (change the port with `PREVIEW_PORT` in `
 The proxy sends `/api`, `/actuator`, `/swagger` and `/v3/api-docs` to the API and
 everything else to Next.js, all on **one origin** — so the preview needs no CORS and
 the web image is built with an empty `NEXT_PUBLIC_API_BASE_URL`. Nothing is published
-on a routable address: the API has no authentication yet (see the Status section).
+on a routable address, and until staging has real accounts and TLS behind it, nothing
+should be (see `docs/DEPLOYMENT.md`).
 
 Re-running the command rebuilds only what changed. To stop the preview while keeping
 the databases:

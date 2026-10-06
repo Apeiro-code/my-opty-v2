@@ -58,6 +58,15 @@ server:
   port: 8080
   error:
     include-message: always
+  servlet:
+    session:
+      cookie:
+        # The session cookie's security posture, stated once here:
+        # http-only keeps scripts from reading it, and same-site=lax means a
+        # cross-site POST never carries it — which is what makes disabling CSRF
+        # tokens defensible (see SecurityConfig's class comment).
+        http-only: true
+        same-site: lax
 
 springdoc:
   swagger-ui:

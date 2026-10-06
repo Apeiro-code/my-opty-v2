@@ -32,6 +32,13 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
+        <!-- Authentication and sessions live here because the identity they protect
+             (app_user, the V1 band) is this module's table. Every other module gets
+             the filter chain transitively and writes no security code of its own. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
         <!-- Outbound mail: Q&A notifications, dealer emails, payment receipts. It lives
              here rather than in the module that sends because every one of those modules
              needs the same JavaMailSender and the same MAIL_* configuration. -->

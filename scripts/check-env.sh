@@ -30,7 +30,6 @@ SECRETS
   printf '\n  openssl rand -hex 16      # DB_PASSWORD\n'
   printf '  openssl rand -hex 16      # DB_ROOT_PASSWORD\n'
   printf '  openssl rand -hex 24      # MINIO_SECRET_KEY\n'
-  printf '  openssl rand -base64 48   # JWT_SECRET\n'
   printf '\nThen re-run: ./scripts/check-env.sh\n'
   exit 0
 fi
@@ -42,7 +41,7 @@ REQUIRED_JAVA_BUILD="$(grep -E '^java=' .sdkmanrc 2>/dev/null | cut -d= -f2 || e
 
 # Keys that must carry a real value in a local .env. See the comment above the
 # loop that reads it for why this is a list rather than "whatever is blank".
-REQUIRED_SECRET_KEYS="DB_PASSWORD DB_ROOT_PASSWORD MINIO_SECRET_KEY JWT_SECRET"
+REQUIRED_SECRET_KEYS="DB_PASSWORD DB_ROOT_PASSWORD MINIO_SECRET_KEY"
 
 FAILURES=0
 WARNINGS=0
@@ -224,7 +223,7 @@ else
   # gateway has none. Treating blank-as-required would demand values for all of
   # them and train people to fill in junk to make a checker quiet.
   #
-  # These four are the ones where a blank value is either a crash or a security
+  # These three are the ones where a blank value is either a crash or a security
   # problem, so they are named here. Adding a new one is a one-word change.
   blank_secrets=""
   for key in $REQUIRED_SECRET_KEYS; do
@@ -243,7 +242,6 @@ else
       for key in $blank_secrets; do detail "$key"; done
       hint "openssl rand -hex 16   # DB_PASSWORD, DB_ROOT_PASSWORD"
       hint "openssl rand -hex 24   # MINIO_SECRET_KEY"
-      hint "openssl rand -base64 48   # JWT_SECRET"
       hint "./scripts/check-env.sh --secrets prints these on their own."
       hint "Each developer generates their own. Never copy them from a teammate."
       ;;

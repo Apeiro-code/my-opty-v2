@@ -139,7 +139,7 @@ the contract: every variable the application reads, with the default that works
 on a fresh clone. **If you need a variable that is not in it, add it** — a value
 that only exists in your `.env` is a value the other three people do not have.
 
-Now fill in the four secrets. Generate your own; never copy a teammate's, and
+Now fill in the three secrets. Generate your own; never copy a teammate's, and
 never commit one:
 
 ```bash
@@ -151,11 +151,9 @@ never commit one:
 | `DB_PASSWORD` | `openssl rand -hex 16` |
 | `DB_ROOT_PASSWORD` | `openssl rand -hex 16` |
 | `MINIO_SECRET_KEY` | `openssl rand -hex 24` |
-| `JWT_SECRET` | `openssl rand -base64 48` |
 
-`JWT_SECRET` signs the tokens that stand in for a session. An empty or guessable
-one lets anyone mint a token for any account, which is why a blank value fails
-the preflight rather than quietly starting.
+There is no session secret to generate: login hands back a server-side session
+cookie (section 6), so an empty authentication block in `.env` is correct.
 
 These stay **blank on purpose**, because the local services need no credentials:
 
@@ -254,12 +252,24 @@ npm install
 npm run dev
 ```
 
-Flyway applies migrations on startup, so a fresh database builds itself: 23 migrations create
+Flyway applies migrations on startup, so a fresh database builds itself: 24 migrations create
 22 tables, and a second start reports the schema is already up to date. Two of those migrations
 (V7 and V105) also insert sample categories, frames, lenses and discounts, so browsing and
 inventory features have realistic rows to work against — look rows up by model, name or slug
 rather than by id, because seed ids are not fixed. Swagger UI is at
 <http://localhost:8080/swagger-ui.html> and Mailpit at <http://localhost:8025>.
+
+Migration `V1_3` seeds the only two accounts that exist, one per role:
+
+| Role | Email | Password |
+|---|---|---|
+| `CUSTOMER` (a shopper) | `customer@myopty.local` | `customer123` |
+| `CLIENT` (staff: catalog, shop, approvals) | `client@myopty.local` | `client123` |
+
+`POST /api/auth/login` with either pair returns the session cookie every other `/api/**`
+call needs. They are development fixtures with published passwords — there is no
+registration flow yet, so any environment beyond this laptop must replace them before a
+stranger can reach it.
 
 Note **:3307**, not 3306. A native MySQL often already holds 3306 on developer
 machines, and a port clash there stops the stack for a reason that looks
@@ -294,8 +304,9 @@ Notes:
 
 - First build compiles the Maven reactor and the Next.js bundle; both are cached,
   so later builds only redo what changed.
-- The preview is bound to `127.0.0.1` only. The API has no authentication yet —
-  do not publish it on a routable address.
+- The preview is bound to `127.0.0.1` only. The API has login and roles now, but its
+  only accounts are the seeded demo ones (see section 6) — do not publish it on a
+  routable address.
 - It reuses the same MySQL container as the dev workflow, so your migrations and
   seed data are already there. To stop the preview but keep the data:
   `docker compose -f compose.yaml -f compose.prod.yaml down` (add `-v` only if
@@ -320,7 +331,8 @@ Notes:
 | Mail arrives nowhere | Looking at your inbox | Mailpit is local: <http://localhost:8025> |
 | Preview site shows "502" or "can't connect" | API still starting, or image stale | Wait for `/actuator/health`, or re-run the overlay command with `--build` |
 | `docker compose` build fails on `mvnw: permission denied` | Wrapper lost its exec bit | `chmod +x backend/mvnw` |
-| `401` on everything | `JWT_SECRET` blank or changed mid-session | Fill it in, then log in again |
+| `401` on every API call | Not logged in, or the session expired | `POST /api/auth/login` with a demo account (section 6); logout ends the session on purpose |
+| `403` on a shop route | Logged in as `CUSTOMER` | Shop routes need the `CLIENT` account (section 6) |
 | A teammate's value is not in your `.env` | They added a key and did not say so | `cp .env.example .env`, re-apply your secrets |
 | Line endings churn the whole file | Windows editor writing CRLF | `.gitattributes` normalises to LF; check the editor is not fighting it |
 
