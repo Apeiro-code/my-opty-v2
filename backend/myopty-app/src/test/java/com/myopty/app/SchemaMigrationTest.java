@@ -1,7 +1,9 @@
 package com.myopty.app;
 
-import java.util.List;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -11,9 +13,6 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.mysql.MySQLContainer;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Proves the schema story on a database nobody has to remember to start.
@@ -51,15 +50,12 @@ class SchemaMigrationTest {
     @Test
     void everyMigrationApplies() {
         List<String> versions = jdbc.queryForList(
-                "SELECT version FROM flyway_schema_history WHERE success = TRUE ORDER BY installed_rank",
-                String.class);
+                "SELECT version FROM flyway_schema_history WHERE success = TRUE ORDER BY installed_rank", String.class);
 
-        assertThat(versions).containsExactly(
-                "1", "1.1", "1.2",
-                "2", "3", "4", "5", "6", "7",
-                "100", "101", "102", "103", "104", "105",
-                "200", "201", "202", "203",
-                "300", "301", "302", "303");
+        assertThat(versions)
+                .containsExactly(
+                        "1", "1.1", "1.2", "2", "3", "4", "5", "6", "7", "100", "101", "102", "103", "104", "105",
+                        "200", "201", "202", "203", "300", "301", "302", "303");
     }
 
     @Test
@@ -70,29 +66,30 @@ class SchemaMigrationTest {
                         + "ORDER BY table_name",
                 String.class);
 
-        assertThat(tables).containsExactly(
-                "app_user",
-                "availability_report",
-                "billing_report",
-                "category",
-                "client_profile",
-                "customer_profile",
-                "dealer",
-                "dealer_email",
-                "discount",
-                "frame",
-                "invoice",
-                "lens",
-                "monthly_report",
-                "order_notification",
-                "payment",
-                "payment_method",
-                "prescription",
-                "progressive_order",
-                "question",
-                "stock_entry",
-                "stock_update",
-                "todo_task");
+        assertThat(tables)
+                .containsExactly(
+                        "app_user",
+                        "availability_report",
+                        "billing_report",
+                        "category",
+                        "client_profile",
+                        "customer_profile",
+                        "dealer",
+                        "dealer_email",
+                        "discount",
+                        "frame",
+                        "invoice",
+                        "lens",
+                        "monthly_report",
+                        "order_notification",
+                        "payment",
+                        "payment_method",
+                        "prescription",
+                        "progressive_order",
+                        "question",
+                        "stock_entry",
+                        "stock_update",
+                        "todo_task");
     }
 
     /**
@@ -106,24 +103,21 @@ class SchemaMigrationTest {
                 .isGreaterThanOrEqualTo(6);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM frame", Long.class))
                 .isGreaterThanOrEqualTo(10);
-        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM lens", Long.class))
-                .isGreaterThanOrEqualTo(6);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM lens", Long.class)).isGreaterThanOrEqualTo(6);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM discount", Long.class))
                 .isGreaterThanOrEqualTo(4);
 
         // The variety the shopping and inventory features need, not just row counts.
-        assertThat(jdbc.queryForObject(
-                "SELECT COUNT(*) FROM lens WHERE type = 'PROGRESSIVE'", Long.class))
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM lens WHERE type = 'PROGRESSIVE'", Long.class))
+                .isPositive();
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM frame WHERE stock_qty < low_stock_threshold", Long.class))
+                .isPositive();
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM frame WHERE is_active = FALSE", Long.class))
                 .isPositive();
         assertThat(jdbc.queryForObject(
-                "SELECT COUNT(*) FROM frame WHERE stock_qty < low_stock_threshold", Long.class))
-                .isPositive();
-        assertThat(jdbc.queryForObject(
-                "SELECT COUNT(*) FROM frame WHERE is_active = FALSE", Long.class))
-                .isPositive();
-        assertThat(jdbc.queryForObject(
-                "SELECT COUNT(*) FROM discount WHERE is_active = FALSE AND ended_at IS NOT NULL "
-                        + "AND valid_to < CURDATE()", Long.class))
+                        "SELECT COUNT(*) FROM discount WHERE is_active = FALSE AND ended_at IS NOT NULL "
+                                + "AND valid_to < CURDATE()",
+                        Long.class))
                 .isPositive();
 
         // Every id a discount names must be a frame or a lens that exists. The two tables have
@@ -156,8 +150,8 @@ class SchemaMigrationTest {
                 INSERT INTO app_user (email, password_hash, full_name, role)
                 VALUES ('schema-test@example.com', 'not-a-real-hash', 'Schema Test', 'CUSTOMER')
                 """);
-        Long customerId = jdbc.queryForObject(
-                "SELECT id FROM app_user WHERE email = 'schema-test@example.com'", Long.class);
+        Long customerId =
+                jdbc.queryForObject("SELECT id FROM app_user WHERE email = 'schema-test@example.com'", Long.class);
 
         assertThatThrownBy(() -> jdbc.update("""
                 INSERT INTO progressive_order (order_number, customer_id, prescription_id, lens_id)

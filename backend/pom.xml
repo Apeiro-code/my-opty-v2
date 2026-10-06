@@ -50,6 +50,7 @@
 
         <!-- Not managed by the Spring Boot BOM; pinned here so all modules agree. -->
         <springdoc.version>3.1.0</springdoc.version>
+        <spotless.version>3.10.3</spotless.version>
     </properties>
 
     <dependencyManagement>
@@ -110,6 +111,33 @@
                 <configuration>
                     <skip>true</skip>
                 </configuration>
+            </plugin>
+
+            <!--
+                The coding standard, enforced by the same command as the tests.
+                Palantir's formatter, not Google's, because it indents four spaces
+                and wraps at 120 columns — what .editorconfig and every existing
+                file already do. `verify` runs `spotless:check`, so a formatting
+                violation fails the build; `./mvnw spotless:apply` fixes it.
+            -->
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>${spotless.version}</version>
+                <configuration>
+                    <java>
+                        <palantirJavaFormat/>
+                    </java>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>spotless-check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

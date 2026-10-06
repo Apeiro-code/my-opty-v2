@@ -10,6 +10,7 @@ says *what* the rules are; this file says *how to satisfy them*. Where the two d
 - [Opening a pull request](#opening-a-pull-request)
 - [Review rules](#review-rules)
 - [Where your code goes](#where-your-code-goes)
+- [Code style & tooling](#code-style--tooling)
 - [Cross-module rules](#cross-module-rules)
 - [Database migrations](#database-migrations)
 - [Before you request review](#before-you-request-review)
@@ -116,8 +117,10 @@ Use `chore/shared-*` or `feat/shared-*` for anything touching `shared` or `contr
 after your module makes the ownership question obvious in the PR list instead of something a reviewer has
 to infer.
 
-**Branch lifecycle:** create from `main` → work and commit → open a PR → review → CI green →
-squash-merge → **delete the branch.**
+**Branch lifecycle:** create from `main` → work and commit → open a PR → review →
+lint + build green locally → squash-merge → **delete the branch.**
+(A CI runner that checks the lint + build step for you is the remaining Epic 0 CI
+story; today the author runs it.)
 
 - Never commit directly to `main`. If you find yourself needing to, something upstream is broken —
   fix that in its own PR.
@@ -157,7 +160,7 @@ bisecting mid-review. The PR title becomes the commit message on `main`, so writ
 
 ## Opening a pull request
 
-Fill in `.github/pull_request_template.md`. Specifically:
+Put these five things in the PR description:
 
 1. **Title** follows the commit convention: `feat(order): ...`.
 2. **Module** — say which module you own.
@@ -177,16 +180,18 @@ A PR merges when **all** of the following hold:
 - **≥1 approval** from a team member who is not the author.
 - **The module owner's approval**, if the PR touches that module. This is non-negotiable even if you are
   the module owner — a self-approval is not a review. Owners: see [the table above](#who-owns-what).
-- **CI is green** — backend build + tests, frontend lint + build.
+- **Linters and builds are green** — `./scripts/lint.sh` and `./mvnw verify` on the backend,
+  `npm run lint && npm run build` on the frontend. No CI runs these for you yet; the author does.
 - **No unresolved review comments.**
 - **Squash-merged** with a conventional-commit title, then the branch is deleted.
 
-Reviewers: read for correctness and for whether it fits the module, not for style preferences that no
-linter enforces. If something is a matter of taste, say so and approve. If it is wrong or dangerous, say
-exactly what breaks and block.
+Reviewers: read for correctness and for whether it fits the module, not for style — the linters
+already enforce what they can, so anything they let through is either correct or a matter of taste.
+If it is taste, say so and approve. If it is wrong or dangerous, say exactly what breaks and block.
 
-The module-owner rule is enforced by `.github/CODEOWNERS`. GitHub will not let you merge your own PR
-against your own code path — that is the point of it, not an obstacle to route around.
+The module-owner rule is a rule, not yet a machine: `.github/CODEOWNERS` would enforce it, but
+`.github/` does not exist yet (Epic 0 CI/tooling). Until it does, nothing stops you merging your own
+PR — which is precisely why the rule has to be taken seriously by hand.
 
 ---
 
@@ -226,6 +231,50 @@ repositories. Anything that another module needs from you goes here.
   `{ success, data, meta }` envelope. Call this; do not call `fetch` directly from a feature.
 - `lib/auth/` — session and role-guard helpers.
 - `types/` — mirrors `backend/contracts`.
+
+---
+
+## Code style & tooling
+
+The standard is enforced by machines, not by memory. One command runs everything:
+
+```bash
+./scripts/lint.sh
+```
+
+| Surface | Tool | Check | Fix |
+|---|---|---|---|
+| Java | Spotless, Palantir format | `cd backend && ./mvnw spotless:check` | `./mvnw spotless:apply` |
+| TS / JSX rules | ESLint | `cd frontend && npm run lint` | by hand — the rule text says why |
+| All frontend text | Prettier | `cd frontend && npm run format:check` | `npm run format` |
+
+- `./mvnw verify` runs `spotless:check` as part of the build, so an unformatted Java file fails
+  the same command the tests run in. You do not have to remember the linter; the build remembers.
+- Prettier runs on its defaults plus `.editorconfig` (2-space indent, LF, final newline) — there is
+  deliberately no `.prettierrc`, because "Prettier defaults" is a smaller thing to agree on than a
+  config file of near-defaults. `eslint-config-prettier` disables any ESLint rule that would
+  disagree with it.
+- The Java formatter is Palantir, not Google, because it indents four spaces and wraps at 120
+  columns — what `.editorconfig` and every existing file already did.
+
+### What the tools do not decide
+
+A linter enforces syntax and formatting; it cannot enforce that a comment explains *why*. These are
+the conventions reviewers check for — they are how the existing code is already written:
+
+- **Every class and test class carries a Javadoc paragraph** stating the contract it holds or why it
+  exists — prose, not `@param`/`@return` boilerplate. `PaymentGatewayProperties` is the reference
+  shape.
+- **Tests** are package-private classes named `*Test`, with method names that describe the behaviour
+  (`payhereWithoutASecretFailsAndNamesTheVariable`, not `testValidation`). JUnit 5 with AssertJ
+  (`assertThat`); an `ApplicationContextRunner` for slice tests, `@SpringBootTest` + Testcontainers
+  when the test needs a real database or socket.
+- **DTOs are records; entities are classes.** No Lombok — the project does not use it, and adding it
+  is a team decision, not an individual one.
+- **No wildcard imports.** Spotless orders the rest; when it moves a static import, that is the
+  formatter working, not a mistake to undo.
+- **Comments are complete sentences ending in a period.** Inline comments explain *why*; anything
+  that only restates the code should be deleted instead of written.
 
 ---
 
@@ -299,13 +348,16 @@ Rules:
 
 ## Before you request review
 
-Run these yourself first. It is faster than waiting for CI to tell you the same thing.
+Run these yourself first. It is faster than waiting for a reviewer to tell you the same thing.
 
 ```bash
 # Environment — four seconds, and it rules out "my machine" being the problem
 ./scripts/check-env.sh
 
-# Backend — builds every module, runs all tests
+# Style — every linter, one command, one exit code
+./scripts/lint.sh
+
+# Backend — builds every module, runs all tests, checks formatting
 cd backend && ./mvnw verify
 
 # One module, one test
@@ -318,6 +370,7 @@ cd ../frontend && npm run lint && npm run build
 Then confirm, before you push:
 
 - [ ] `./scripts/check-env.sh` exits 0.
+- [ ] `./scripts/lint.sh` exits 0.
 - [ ] Branch is named `<type>/<module>-<description>` and branched from `main`.
 - [ ] Nothing of mine is outside my module, except via `contracts`.
 - [ ] No `.env`, no credentials, no API keys in the diff.

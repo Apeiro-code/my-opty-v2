@@ -1,14 +1,15 @@
 package com.myopty.app;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Instant;
 import java.util.Objects;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -21,8 +22,6 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.mysql.MySQLContainer;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Proves the MAIL_* contract actually reaches a socket.
@@ -54,8 +53,8 @@ class MailSendingTest {
             .withPassword("myopty");
 
     @Container
-    static final GenericContainer<?> MAILPIT = new GenericContainer<>("axllent/mailpit:v1.31")
-            .withExposedPorts(SMTP_PORT, API_PORT);
+    static final GenericContainer<?> MAILPIT =
+            new GenericContainer<>("axllent/mailpit:v1.31").withExposedPorts(SMTP_PORT, API_PORT);
 
     /**
      * Sets the contract variables rather than {@code spring.mail.*} directly: the point is
@@ -101,17 +100,16 @@ class MailSendingTest {
      * returned.
      */
     private void awaitMailpitHasSubject(String subject) throws Exception {
-        URI messages = URI.create("http://" + MAILPIT.getHost() + ":"
-                + MAILPIT.getMappedPort(API_PORT) + "/api/v1/messages");
+        URI messages =
+                URI.create("http://" + MAILPIT.getHost() + ":" + MAILPIT.getMappedPort(API_PORT) + "/api/v1/messages");
         HttpClient http = HttpClient.newHttpClient();
         ObjectMapper objectMapper = new ObjectMapper();
         Instant deadline = Instant.now().plusSeconds(10);
         String lastSeen = "no messages yet";
 
         while (Instant.now().isBefore(deadline)) {
-            HttpResponse<String> response = http.send(
-                    HttpRequest.newBuilder(messages).GET().build(),
-                    HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> response =
+                    http.send(HttpRequest.newBuilder(messages).GET().build(), HttpResponse.BodyHandlers.ofString());
             JsonNode body = objectMapper.readTree(response.body());
             lastSeen = "total=" + body.path("total").asInt();
             if (body.path("total").asInt() > 0) {

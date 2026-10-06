@@ -1,0 +1,7 @@
+# Generated output and vendored files: never formatted, never checked.
+.next/
+out/
+build/
+node_modules/
+package-lock.json
+next-env.d.ts

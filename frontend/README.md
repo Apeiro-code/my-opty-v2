@@ -14,14 +14,14 @@ npm run build    # production build + type check
 Only enough to make the shape of the app visible and to prove the toolchain works. There are no
 features, no data fetching in any component, and the only route that renders is `/`.
 
-| Path | What it is |
-|---|---|
-| `app/layout.tsx` | Root HTML/body, metadata, `globals.css` |
-| `app/(customer)/page.tsx` | Public storefront landing page — the one working route |
-| `app/(customer)/layout.tsx` | Storefront header and nav |
-| `app/(client)/layout.tsx` | Shop-owner nav |
-| `lib/api/client.ts` | The single `fetch` wrapper |
-| `types/api.ts` | `ApiResult` / `ApiError` / `ApiMeta` |
+| Path                        | What it is                                             |
+| --------------------------- | ------------------------------------------------------ |
+| `app/layout.tsx`            | Root HTML/body, metadata, `globals.css`                |
+| `app/(customer)/page.tsx`   | Public storefront landing page — the one working route |
+| `app/(customer)/layout.tsx` | Storefront header and nav                              |
+| `app/(client)/layout.tsx`   | Shop-owner nav                                         |
+| `lib/api/client.ts`         | The single `fetch` wrapper                             |
+| `types/api.ts`              | `ApiResult` / `ApiError` / `ApiMeta`                   |
 
 Everything else — `app/api/`, `features/`, `components/ui/`, `lib/auth/`, and the `(customer)` and
 `(client)` subdirectories — is an empty directory holding a `.gitkeep`. The shape is agreed; the code is
@@ -47,20 +47,20 @@ The two route groups are **not** namespaced in the URL — that is deliberate, b
 address should read like a shopfront rather than like a dashboard. A customer sees `/orders`; the shop
 owner sees `/shop/orders`. The `/shop` segment is what separates them.
 
-| URL | Directory | Audience |
-|---|---|---|
-| `/` | `app/(customer)/page.tsx` | Anyone |
-| `/frames` | `app/(customer)/frames/` | Anyone |
-| `/lenses` | `app/(customer)/lenses/` | Anyone |
-| `/questions` | `app/(customer)/questions/` | Anyone |
-| `/prescriptions` | `app/(customer)/prescriptions/` | Customer |
-| `/orders` | `app/(customer)/orders/` | Customer — their own orders |
-| `/account` | `app/(customer)/account/` | Customer |
-| `/shop/orders` | `app/(client)/shop/orders/` | Shop owner — the approval queue |
-| `/shop/inventory` | `app/(client)/shop/inventory/` | Shop owner |
-| `/shop/tasks` | `app/(client)/shop/tasks/` | Shop owner |
-| `/shop/billing` | `app/(client)/shop/billing/` | Shop owner |
-| `/api/*` | `app/api/` | BFF route handlers |
+| URL               | Directory                       | Audience                        |
+| ----------------- | ------------------------------- | ------------------------------- |
+| `/`               | `app/(customer)/page.tsx`       | Anyone                          |
+| `/frames`         | `app/(customer)/frames/`        | Anyone                          |
+| `/lenses`         | `app/(customer)/lenses/`        | Anyone                          |
+| `/questions`      | `app/(customer)/questions/`     | Anyone                          |
+| `/prescriptions`  | `app/(customer)/prescriptions/` | Customer                        |
+| `/orders`         | `app/(customer)/orders/`        | Customer — their own orders     |
+| `/account`        | `app/(customer)/account/`       | Customer                        |
+| `/shop/orders`    | `app/(client)/shop/orders/`     | Shop owner — the approval queue |
+| `/shop/inventory` | `app/(client)/shop/inventory/`  | Shop owner                      |
+| `/shop/tasks`     | `app/(client)/shop/tasks/`      | Shop owner                      |
+| `/shop/billing`   | `app/(client)/shop/billing/`    | Shop owner                      |
+| `/api/*`          | `app/api/`                      | BFF route handlers              |
 
 Only `/` has a page. Every other directory holds a `.gitkeep` and nothing else.
 
@@ -91,7 +91,7 @@ Error: You cannot have two parallel pages that resolve to the same path.
 Please check /(client)/orders and /(customer).
 ```
 
-That error is the reason to care: it appears at build time, but only *after* someone has written two
+That error is the reason to care: it appears at build time, but only _after_ someone has written two
 pages and possibly linked to them. Changing URL structure later is a breaking change. Verified by
 building all twelve routes together — they generate cleanly.
 

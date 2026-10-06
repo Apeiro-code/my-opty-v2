@@ -21,9 +21,9 @@ repository rather than left to each person's memory.
 | Maven | 3.9.16 | `backend/mvnw` | Wrapper. Never install Maven |
 | Docker + Compose | v2+ | — | Must be running |
 
-Java 26 also works, but nothing in the project is tested against it and CI uses
-25, so a build that only fails on your machine is worth reporting rather than
-working around.
+Java 26 also works, but nothing in the project is tested against it — every
+build and test run happens on 25, so a build that only fails on your machine is
+worth reporting rather than working around.
 
 ---
 

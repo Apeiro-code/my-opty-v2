@@ -1,10 +1,10 @@
 package com.myopty.billing.config;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.context.annotation.UserConfigurations;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * The startup contract for payment configuration.
@@ -16,8 +16,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class PaymentGatewayPropertiesTest {
 
-    private final ApplicationContextRunner runner = new ApplicationContextRunner()
-            .withConfiguration(UserConfigurations.of(PaymentGatewayConfig.class));
+    private final ApplicationContextRunner runner =
+            new ApplicationContextRunner().withConfiguration(UserConfigurations.of(PaymentGatewayConfig.class));
 
     @Test
     void defaultsAreTheLocalFakeProvider() {
@@ -32,17 +32,13 @@ class PaymentGatewayPropertiesTest {
     @Test
     void fakeProviderNeedsNoCredentials() {
         runner.withPropertyValues(
-                        "myopty.payment.provider=fake",
-                        "myopty.payment.merchant-id=",
-                        "myopty.payment.secret-key=")
+                        "myopty.payment.provider=fake", "myopty.payment.merchant-id=", "myopty.payment.secret-key=")
                 .run(context -> assertThat(context).hasNotFailed());
     }
 
     @Test
     void payhereWithoutASecretFailsAndNamesTheVariable() {
-        runner.withPropertyValues(
-                        "myopty.payment.provider=payhere",
-                        "myopty.payment.merchant-id=121000000")
+        runner.withPropertyValues("myopty.payment.provider=payhere", "myopty.payment.merchant-id=121000000")
                 .run(context -> {
                     assertThat(context).hasFailed();
                     assertThat(context.getStartupFailure())
@@ -53,13 +49,10 @@ class PaymentGatewayPropertiesTest {
 
     @Test
     void payhereWithoutAMerchantIdFailsAndNamesTheVariable() {
-        runner.withPropertyValues(
-                        "myopty.payment.provider=payhere",
-                        "myopty.payment.secret-key=abc123")
+        runner.withPropertyValues("myopty.payment.provider=payhere", "myopty.payment.secret-key=abc123")
                 .run(context -> {
                     assertThat(context).hasFailed();
-                    assertThat(context.getStartupFailure())
-                            .hasStackTraceContaining("PAYMENT_GATEWAY_MERCHANT_ID");
+                    assertThat(context.getStartupFailure()).hasStackTraceContaining("PAYMENT_GATEWAY_MERCHANT_ID");
                 });
     }
 
@@ -81,13 +74,12 @@ class PaymentGatewayPropertiesTest {
 
     @Test
     void unknownProviderFailsAndListsWhatIsSupported() {
-        runner.withPropertyValues("myopty.payment.provider=stripe")
-                .run(context -> {
-                    assertThat(context).hasFailed();
-                    assertThat(context.getStartupFailure())
-                            .hasStackTraceContaining("PAYMENT_GATEWAY_PROVIDER")
-                            .hasStackTraceContaining("payhere");
-                });
+        runner.withPropertyValues("myopty.payment.provider=stripe").run(context -> {
+            assertThat(context).hasFailed();
+            assertThat(context.getStartupFailure())
+                    .hasStackTraceContaining("PAYMENT_GATEWAY_PROVIDER")
+                    .hasStackTraceContaining("payhere");
+        });
     }
 
     /**

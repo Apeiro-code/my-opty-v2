@@ -33,5 +33,4 @@ export type ApiResponse<T> = ApiSuccess<T> | ApiFailure;
 
 /** A response whose `data` has been unwrapped, or which threw. */
 export type ApiResult<T> =
-  | { ok: true; data: T; meta?: ApiMeta }
-  | { ok: false; error: ApiError };
+  { ok: true; data: T; meta?: ApiMeta } | { ok: false; error: ApiError };

@@ -13,5 +13,4 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 @EnableConfigurationProperties(PaymentGatewayProperties.class)
-public class PaymentGatewayConfig {
-}
+public class PaymentGatewayConfig {}

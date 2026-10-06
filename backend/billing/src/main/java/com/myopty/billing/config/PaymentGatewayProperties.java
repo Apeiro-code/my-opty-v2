@@ -1,8 +1,7 @@
 package com.myopty.billing.config;
 
-import java.util.Set;
-
 import jakarta.annotation.PostConstruct;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -44,18 +43,21 @@ public class PaymentGatewayProperties {
         }
 
         if (!"fake".equals(provider) && (merchantId.isBlank() || secretKey.isBlank())) {
-            throw new IllegalStateException(
-                    "PAYMENT_GATEWAY_PROVIDER is '" + provider + "', which needs "
-                            + "PAYMENT_GATEWAY_MERCHANT_ID and PAYMENT_GATEWAY_SECRET_KEY, but "
-                            + (merchantId.isBlank() ? "PAYMENT_GATEWAY_MERCHANT_ID is empty" : "PAYMENT_GATEWAY_SECRET_KEY is empty")
-                            + ". Copy the sandbox values into .env following docs/DEPLOYMENT.md, "
-                            + "or set PAYMENT_GATEWAY_PROVIDER=fake to keep developing without an account.");
+            throw new IllegalStateException("PAYMENT_GATEWAY_PROVIDER is '" + provider + "', which needs "
+                    + "PAYMENT_GATEWAY_MERCHANT_ID and PAYMENT_GATEWAY_SECRET_KEY, but "
+                    + (merchantId.isBlank()
+                            ? "PAYMENT_GATEWAY_MERCHANT_ID is empty"
+                            : "PAYMENT_GATEWAY_SECRET_KEY is empty")
+                    + ". Copy the sandbox values into .env following docs/DEPLOYMENT.md, "
+                    + "or set PAYMENT_GATEWAY_PROVIDER=fake to keep developing without an account.");
         }
 
         if (!sandbox) {
-            log.warn("PAYMENT_GATEWAY_SANDBOX=false: provider '{}' is configured against LIVE "
-                    + "credentials. Real money moves in this mode. Confirm that is intended "
-                    + "before taking a payment.", provider);
+            log.warn(
+                    "PAYMENT_GATEWAY_SANDBOX=false: provider '{}' is configured against LIVE "
+                            + "credentials. Real money moves in this mode. Confirm that is intended "
+                            + "before taking a payment.",
+                    provider);
         }
     }
 

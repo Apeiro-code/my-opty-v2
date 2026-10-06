@@ -19,6 +19,7 @@ What is built and working:
 | API docs | springdoc serves `/swagger-ui.html`; Actuator `/actuator/health` reports the datasource |
 | Frontend | Next.js 16 App Router, TypeScript, Tailwind v4; `npm run lint` and `npm run build` pass |
 | Mail | Mailpit catches outgoing mail at <http://localhost:8025> |
+| Coding standard | Spotless (Palantir format) bound to `./mvnw verify`, ESLint + Prettier on the frontend; `./scripts/lint.sh` runs all three |
 | Staging preview | `compose.prod.yaml` builds API + web images behind one nginx proxy on **:8088** |
 | Payment config | PayHere sandbox runbook in `docs/DEPLOYMENT.md`; bad `PAYMENT_GATEWAY_*` config fails startup naming the variable |
 | Email | `spring.mail` wired from `MAIL_*`; `MailSendingTest` proves a real send through Mailpit |
@@ -335,7 +336,7 @@ GET    /api/questions/faq                # Public FAQ
 - **Never** commit directly to `main`.
 - All work happens on short-lived **feature branches** created from `main`.
 - Each branch fixes `main` back to a single Pull Request; release happens from `main`.
-- **Branch lifecycle:** create from `main` → work + commit → open PR → review (≥1 approval, and the module owner must approve changes to their module) → CI green → squash-merge → **delete the branch**.
+- **Branch lifecycle:** create from `main` → work + commit → open PR → review (≥1 approval, and the module owner must approve changes to their module) → lint + build green locally → squash-merge → **delete the branch**. There is no CI runner yet (Epic 0 story); today the author runs `./scripts/lint.sh` and the builds themselves.
 - Full review rules, ownership boundaries, and migration conventions: see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ### Branch Naming
@@ -398,13 +399,12 @@ my-opty/
 │   │   └── auth/                # Session & role guards [empty]
 │   ├── types/api.ts             # Mirrors backend/contracts
 │   └── public/
-├── database/        # DB-wide artifacts (ERD sources, data dictionary, migration notes)
 ├── docs/            # Project documentation (setup guide, deployment plan, API specs)
-│   └── SETUP.md     # Local dev environment: pinned versions, install, preflight check
+│   ├── SETUP.md     # Local dev environment: pinned versions, install, preflight check
+│   └── DEPLOYMENT.md # PayHere sandbox + staging SMTP runbooks
 ├── scripts/
-│   └── check-env.sh # Preflight: verifies toolchain + .env before you blame the code
-├── .github/         # CODEOWNERS, CI workflow, PR template
-├── items.json       # Epic/user-story board export (GitHub Projects)
+│   ├── check-env.sh # Preflight: verifies toolchain + .env before you blame the code
+│   └── lint.sh      # Every linter, one command: Spotless + ESLint + Prettier
 ├── .node-version    # Node 24 — read by fnm
 ├── .sdkmanrc        # Java 25 — read by SDKMAN
 ├── .env.example     # The committed configuration contract (.env itself is ignored)
@@ -448,9 +448,10 @@ rule below stops being a review comment and becomes a build error.
 
 ### Frontend layout
 
-Ownership maps 1:1 onto `features/<module>/`, and `.github/CODEOWNERS` enforces it the same way it does
-for the backend. Pages live in `app/` and stay thin — a route handler or a server component that fetches
-data and delegates to `features/<module>/` is the shape to aim for.
+Ownership maps 1:1 onto `features/<module>/`, enforced the same way as the backend: by review,
+until `.github/CODEOWNERS` exists (Epic 0 CI story). Pages live in `app/` and stay thin — a route
+handler or a server component that fetches data and delegates to `features/<module>/` is the shape
+to aim for.
 
 ### Flyway version bands
 
@@ -534,7 +535,10 @@ Next.js 16 App Router on `http://localhost:3000`, calling the API on `:8080`.
 ## Testing
 
 ```bash
-# Unit + integration tests
+# Style — Spotless (Java), ESLint + Prettier (frontend), from the repo root
+./scripts/lint.sh
+
+# Unit + integration tests (also runs spotless:check)
 ./mvnw verify
 
 # Specific module, from backend/
@@ -573,7 +577,7 @@ Images are built by `backend/Dockerfile` and `frontend/Dockerfile`; the dev work
 
 ## Documentation
 
-- **Project Plan & Diagrams:** `MyOpty_Project_Plan.md`
+- **Project Plan & Diagrams:** this file, from [the project plan section](#project-plan-epics-user-stories--diagrams) down
 - **System Architecture (this file):** `README.md`
 - **Contribution Guide:** `CONTRIBUTING.md`
 - **API Docs (running):** `http://localhost:8080/swagger-ui.html`

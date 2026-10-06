@@ -12,8 +12,9 @@ export default function HomePage() {
       <section className="flex flex-col gap-4">
         <h1 className="text-4xl font-semibold tracking-tight">MyOpty</h1>
         <p className="max-w-prose text-lg opacity-80">
-          Frames and lenses from Flanet Opticals, Narammala. Browse the collection, send us
-          your prescription, and follow your order through to collection.
+          Frames and lenses from Flanet Opticals, Narammala. Browse the
+          collection, send us your prescription, and follow your order through
+          to collection.
         </p>
         <div className="flex gap-3">
           <Link

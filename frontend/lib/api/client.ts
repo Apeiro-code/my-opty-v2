@@ -11,7 +11,8 @@ import type { ApiError, ApiMeta, ApiResult } from "@/types/api";
  * feature does not get to invent a second convention.
  */
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
+const BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
 
 export class ApiRequestError extends Error {
   readonly status: number;
@@ -27,7 +28,9 @@ export class ApiRequestError extends Error {
 
 async function request<T>(
   path: string,
-  init: RequestInit & { params?: Record<string, string | number | boolean | undefined> },
+  init: RequestInit & {
+    params?: Record<string, string | number | boolean | undefined>;
+  },
 ): Promise<ApiResult<T>> {
   const { params, ...rest } = init;
   const search = new URLSearchParams();
@@ -102,4 +105,5 @@ export const apiPut = <T>(path: string, body: unknown) =>
     body: JSON.stringify(body),
   });
 
-export const apiDelete = <T>(path: string) => request<T>(path, { method: "DELETE" });
+export const apiDelete = <T>(path: string) =>
+  request<T>(path, { method: "DELETE" });
