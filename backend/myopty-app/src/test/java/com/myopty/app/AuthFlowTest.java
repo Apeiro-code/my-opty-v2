@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockHttpSession;
@@ -171,9 +172,20 @@ class AuthFlowTest {
 
     @Test
     void healthStaysPublic() throws Exception {
+        // What is under test is SecurityConfig's permitAll on /actuator/health:
+        // an anonymous caller must reach the endpoint and get its JSON, never a
+        // 401/403 challenge from the filter chain. The answer's status code is
+        // infrastructure, not security: the health aggregate includes the mail
+        // indicator, which dials spring.mail.host — with no SMTP listener (a CI
+        // runner has no Mailpit, and a developer may have the stack stopped)
+        // the endpoint correctly reports DOWN with 503. Pinning 200 here would
+        // assert the machine the test runs on; isIn(200, 503) still fails on
+        // 401, 403 and 404, which is what "stays public" means.
         mvc.perform(get("/actuator/health"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("UP"));
+                .andExpect(result -> assertThat(result.getResponse().getStatus())
+                        .as("health must answer an anonymous caller, not challenge it")
+                        .isIn(HttpStatus.OK.value(), HttpStatus.SERVICE_UNAVAILABLE.value()))
+                .andExpect(jsonPath("$.status").exists());
     }
 
     private MockHttpSession login(String email, String password) throws Exception {
