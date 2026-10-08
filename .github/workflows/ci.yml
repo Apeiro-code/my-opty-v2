@@ -17,6 +17,10 @@
 #             the one NEXT_PUBLIC_ variable falls back to a default in
 #             lib/api/client.ts.
 #
+# The runner image is pinned to ubuntu-24.04 rather than ubuntu-latest: `latest`
+# migrates to a new release by announcement, and docs/DEPLOYMENT.md deploys to
+# Ubuntu 24.04 anyway — the environment CI tests on should change in review.
+#
 # Local equivalents, before you push (see CONTRIBUTING.md):
 #
 #   ./scripts/lint.sh
@@ -51,10 +55,10 @@ permissions:
 jobs:
   secrets:
     name: Secret scan (gitleaks)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # The scan covers history, not just the tip: a credential committed
           # and later deleted is still a leaked credential.
@@ -78,16 +82,16 @@ jobs:
 
   backend:
     name: Backend build & test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Temurin 25, the same distribution check-env.sh asks developers for, so
       # a CI-only failure means a real bug rather than a JDK vendor difference.
       # `cache: maven` keys on the wrapper's pom hashes — only dependency
       # changes pay for a full download.
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "25"
@@ -102,15 +106,15 @@ jobs:
 
   frontend:
     name: Frontend lint & build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # .node-version is the single source of truth for the Node major (24),
       # the same file fnm reads locally — CI and developer machines cannot
       # drift apart on the version.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .node-version
           cache: npm
