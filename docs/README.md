@@ -6,7 +6,7 @@ plan, epics, user stories and diagrams.
 | Document | Purpose |
 |---|---|
 | [SETUP.md](SETUP.md) | Local development environment: pinned tool versions, install steps, preflight check |
-| [DEPLOYMENT.md](DEPLOYMENT.md) | External service accounts: PayHere sandbox registration, staging SMTP config. Hosting provider, domain and staging → live rollout still planned (Epic 0 story 15) |
+| [DEPLOYMENT.md](DEPLOYMENT.md) | Deployment plan: VPS hosting provider, domain + TLS, secrets on the server, staging → live rollout; plus the external service accounts (PayHere sandbox, SMTP) |
 | API specs | OpenAPI reference per module; the running instance is at `/swagger-ui.html` |
 
 ## Conventions

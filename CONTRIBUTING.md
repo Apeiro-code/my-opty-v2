@@ -119,8 +119,9 @@ to infer.
 
 **Branch lifecycle:** create from `main` → work and commit → open a PR → review →
 lint + build green locally → squash-merge → **delete the branch.**
-(A CI runner that checks the lint + build step for you is the remaining Epic 0 CI
-story; today the author runs it.)
+(CI runs the same lint + build + test steps for you on every push and PR —
+`.github/workflows/ci.yml` — so a red check is guaranteed to surface; green
+locally first just saves a review round trip.)
 
 - Never commit directly to `main`. If you find yourself needing to, something upstream is broken —
   fix that in its own PR.
@@ -181,7 +182,9 @@ A PR merges when **all** of the following hold:
 - **The module owner's approval**, if the PR touches that module. This is non-negotiable even if you are
   the module owner — a self-approval is not a review. Owners: see [the table above](#who-owns-what).
 - **Linters and builds are green** — `./scripts/lint.sh` and `./mvnw verify` on the backend,
-  `npm run lint && npm run build` on the frontend. No CI runs these for you yet; the author does.
+  `npm run lint && npm run build` on the frontend. CI (`.github/workflows/ci.yml`) runs these
+  steps plus the gitleaks secret scan on every push, so the PR check will tell you the same
+  thing — running them first just learns it before the reviewer does.
 - **No unresolved review comments.**
 - **Squash-merged** with a conventional-commit title, then the branch is deleted.
 
@@ -190,7 +193,8 @@ already enforce what they can, so anything they let through is either correct or
 If it is taste, say so and approve. If it is wrong or dangerous, say exactly what breaks and block.
 
 The module-owner rule is a rule, not yet a machine: `.github/CODEOWNERS` would enforce it, but
-`.github/` does not exist yet (Epic 0 CI/tooling). Until it does, nothing stops you merging your own
+it does not exist yet — the CI story landed (`.github/workflows/ci.yml`) without it. Until
+CODEOWNERS and branch protection do, nothing stops you merging your own
 PR — which is precisely why the rule has to be taken seriously by hand.
 
 ---
@@ -373,7 +377,8 @@ Then confirm, before you push:
 - [ ] `./scripts/lint.sh` exits 0.
 - [ ] Branch is named `<type>/<module>-<description>` and branched from `main`.
 - [ ] Nothing of mine is outside my module, except via `contracts`.
-- [ ] No `.env`, no credentials, no API keys in the diff.
+- [ ] No `.env`, no credentials, no API keys in the diff. (gitleaks scans every push and fails
+      the run if one reaches a commit — but by then it is in history, so catch it here.)
 - [ ] No new environment variable is missing from `.env.example`.
 - [ ] No commented-out code left behind.
 - [ ] New endpoints are documented in the module section of `README.md`.

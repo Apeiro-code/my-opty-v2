@@ -1,0 +1,135 @@
+# The CI check for every push and every pull request — Epic 0's "broken code is
+# caught early" story, and the secret-scanning half of the "credentials are never
+# committed" story.
+#
+# Three jobs, deliberately separate so one failure names itself in the PR checks
+# instead of hiding inside a single long log:
+#
+#   secrets   gitleaks over the COMMITTED history. Untracked files (a local
+#             .env, .next/ build output) cannot fail this job because they are
+#             not in any commit — only what reaches the remote is scanned.
+#   backend   ./mvnw verify: Spotless format check, compilation, unit tests and
+#             the Testcontainers suite (MySQL + Mailpit). GitHub's ubuntu
+#             runners ship Docker, which is all Testcontainers needs; the tests
+#             inject their own database via @DynamicPropertySource, so no .env
+#             exists or is required here.
+#   frontend  npm ci, ESLint, Prettier --check, next build. No env vars needed:
+#             the one NEXT_PUBLIC_ variable falls back to a default in
+#             lib/api/client.ts.
+#
+# Local equivalents, before you push (see CONTRIBUTING.md):
+#
+#   ./scripts/lint.sh
+#   cd backend && ./mvnw verify
+#   cd frontend && npm run lint && npm run build
+
+name: CI
+
+# push on every branch: a broken commit is caught even before a PR exists.
+# pull_request: the same checks run against the PR's merge commit, which is
+# what branch protection can require.
+#
+# Two events means a same-repo PR branch runs both. That duplication is
+# accepted on purpose: dropping `push` would leave un-PR'd work unchecked, and
+# dropping `pull_request` would leave fork PRs (where no push event fires
+# here) unchecked. concurrency cancels superseded runs of the same ref, so
+# rapid pushes do not pile up.
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Every job only reads the repository. No token in this workflow should be able
+# to write anything — least privilege costs nothing and limits what a leaked
+# Actions credential can do.
+permissions:
+  contents: read
+
+jobs:
+  secrets:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The scan covers history, not just the tip: a credential committed
+          # and later deleted is still a leaked credential.
+          fetch-depth: 0
+
+      # Installed from the release tarball rather than gitleaks-action: that
+      # action requires a licence for organisation accounts, the CLI does not.
+      # The version is pinned so an upstream rule change cannot flip this job
+      # from green to red without a commit here — bump it deliberately.
+      - name: Install gitleaks 8.28.0
+        run: |
+          curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.28.0/gitleaks_8.28.0_linux_x64.tar.gz \
+            | tar -xz -C "$RUNNER_TEMP" gitleaks
+
+      # `git` mode scans committed history only (working-tree mode would pick
+      # up untracked files that never leave a developer's machine). --redact
+      # keeps a finding's filename and rule in the log but prints no secret, so
+      # the log itself cannot become the leak.
+      - name: Scan committed history
+        run: '"$RUNNER_TEMP/gitleaks" git . --redact --no-banner --exit-code 1'
+
+  backend:
+    name: Backend build & test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      # Temurin 25, the same distribution check-env.sh asks developers for, so
+      # a CI-only failure means a real bug rather than a JDK vendor difference.
+      # `cache: maven` keys on the wrapper's pom hashes — only dependency
+      # changes pay for a full download.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+
+      # verify (not just test) so the Spotless format check runs too: it is
+      # bound to the verify phase in the pom, which is also why CONTRIBUTING
+      # can say "the build remembers the linter".
+      - name: ./mvnw verify
+        working-directory: backend
+        run: ./mvnw -B verify
+
+  frontend:
+    name: Frontend lint & build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      # .node-version is the single source of truth for the Node major (24),
+      # the same file fnm reads locally — CI and developer machines cannot
+      # drift apart on the version.
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: npm ci
+        working-directory: frontend
+        run: npm ci
+
+      # format:check before build: a formatting failure should report in
+      # seconds, not after a two-minute Next.js build.
+      - name: ESLint
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Prettier
+        working-directory: frontend
+        run: npm run format:check
+
+      - name: next build
+        working-directory: frontend
+        run: npm run build

@@ -20,6 +20,7 @@ What is built and working:
 | Frontend | Next.js 16 App Router, TypeScript, Tailwind v4; `npm run lint` and `npm run build` pass |
 | Mail | Mailpit catches outgoing mail at <http://localhost:8025> |
 | Coding standard | Spotless (Palantir format) bound to `./mvnw verify`, ESLint + Prettier on the frontend; `./scripts/lint.sh` runs all three |
+| CI | `.github/workflows/ci.yml` on every push and PR: gitleaks secret scan, `./mvnw verify` (Spotless + Testcontainers), ESLint + Prettier + `next build` |
 | Authentication | Session login/logout with `CUSTOMER` vs `CLIENT` roles (Spring Security, deny-by-default on `/api/**`); `AuthFlowTest` proves the whole flow |
 | Staging preview | `compose.prod.yaml` builds API + web images behind one nginx proxy on **:8088** |
 | Payment config | PayHere sandbox runbook in `docs/DEPLOYMENT.md`; bad `PAYMENT_GATEWAY_*` config fails startup naming the variable |
@@ -347,7 +348,7 @@ GET    /api/questions/faq                # Public FAQ — planned
 - **Never** commit directly to `main`.
 - All work happens on short-lived **feature branches** created from `main`.
 - Each branch fixes `main` back to a single Pull Request; release happens from `main`.
-- **Branch lifecycle:** create from `main` → work + commit → open PR → review (≥1 approval, and the module owner must approve changes to their module) → lint + build green locally → squash-merge → **delete the branch**. There is no CI runner yet (Epic 0 story); today the author runs `./scripts/lint.sh` and the builds themselves.
+- **Branch lifecycle:** create from `main` → work + commit → open PR → review (≥1 approval, and the module owner must approve changes to their module) → lint + build green locally → squash-merge → **delete the branch**. CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs the gitleaks secret scan, `./mvnw verify` and the frontend lint/build on every push and on the PR's merge commit; run `./scripts/lint.sh` locally first anyway, because a red check discovered after review costs a round trip a local run would have saved.
 - Full review rules, ownership boundaries, and migration conventions: see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ### Branch Naming
@@ -460,7 +461,7 @@ rule below stops being a review comment and becomes a build error.
 ### Frontend layout
 
 Ownership maps 1:1 onto `features/<module>/`, enforced the same way as the backend: by review,
-until `.github/CODEOWNERS` exists (Epic 0 CI story). Pages live in `app/` and stay thin — a route
+until `.github/CODEOWNERS` exists (still open — the CI story landed without it). Pages live in `app/` and stay thin — a route
 handler or a server component that fetches data and delegates to `features/<module>/` is the shape
 to aim for.
 
@@ -573,7 +574,9 @@ The proxy sends `/api`, `/actuator`, `/swagger` and `/v3/api-docs` to the API an
 everything else to Next.js, all on **one origin** — so the preview needs no CORS and
 the web image is built with an empty `NEXT_PUBLIC_API_BASE_URL`. Nothing is published
 on a routable address, and until staging has real accounts and TLS behind it, nothing
-should be (see `docs/DEPLOYMENT.md`).
+should be. The deployment plan proper — hosting provider (a small VPS running this same
+Compose stack), domain + TLS, and the staging → live rollout checklist — lives in
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 Re-running the command rebuilds only what changed. To stop the preview while keeping
 the databases:
