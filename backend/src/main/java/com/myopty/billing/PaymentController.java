@@ -2,6 +2,7 @@ package com.myopty.billing;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
@@ -12,14 +13,20 @@ public class PaymentController {
     private PaymentService paymentService;
 
 
-    @PostMapping
-    public Payment createPayment(@RequestBody Payment payment) {
-        return paymentService.savePayment(payment);
+    @PostMapping("/process")
+    public Payment processPayment(@RequestBody Payment payment) {
+        return paymentService.processPayment(payment);
     }
 
 
     @GetMapping
     public List<Payment> getAllPayments() {
         return paymentService.getAllPayments();
+    }
+
+
+    @GetMapping("/filter/status")
+    public List<Payment> getPaymentsByStatus(@RequestParam String status) {
+        return paymentService.getPaymentsByStatus(status);
     }
 }
