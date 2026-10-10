@@ -11,6 +11,7 @@ public class TodoTaskResponse {
     private String status;
     private LocalDate dueDate;
     private String priority;
+    private Boolean reminderSent;
     private LocalDateTime createdAt;
 
     // Default constructor
@@ -18,7 +19,7 @@ public class TodoTaskResponse {
 
     // Constructor from Entity
     public TodoTaskResponse(Integer taskId, Integer clientId, String title, String description,
-                            String status, LocalDate dueDate, String priority, LocalDateTime createdAt) {
+                            String status, LocalDate dueDate, String priority, Boolean reminderSent, LocalDateTime createdAt) {
         this.taskId = taskId;
         this.clientId = clientId;
         this.title = title;
@@ -26,6 +27,7 @@ public class TodoTaskResponse {
         this.status = status;
         this.dueDate = dueDate;
         this.priority = priority;
+        this.reminderSent = reminderSent;
         this.createdAt = createdAt;
     }
 
@@ -50,6 +52,9 @@ public class TodoTaskResponse {
 
     public String getPriority() { return priority; }
     public void setPriority(String priority) { this.priority = priority; }
+
+    public Boolean getReminderSent() { return reminderSent; }
+    public void setReminderSent(Boolean reminderSent) { this.reminderSent = reminderSent; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

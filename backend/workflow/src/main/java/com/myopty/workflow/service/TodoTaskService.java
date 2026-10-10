@@ -24,6 +24,7 @@ public class TodoTaskService {
         task.setStatus("PENDING");
         task.setPriority(request.getPriority());
         task.setDueDate(request.getDueDate());
+        task.setReminderSent(false);
         task.setCreatedAt(LocalDateTime.now());
 
         TodoTask saved = repository.save(task);
@@ -34,6 +35,9 @@ public class TodoTaskService {
         TodoTask task = repository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Task not found with id: " + taskId));
         task.setStatus(newStatus);
+        if ("DONE".equals(newStatus)) {
+            task.setReminderSent(true);
+        }
         TodoTask updated = repository.save(task);
         return convertToResponse(updated);
     }
@@ -50,6 +54,12 @@ public class TodoTaskService {
                 .toList();
     }
 
+    public java.util.List<TodoTaskResponse> getOverdueTasks(Integer clientId) {
+        return repository.findOverdueTasksByClientId(clientId).stream()
+                .map(this::convertToResponse)
+                .toList();
+    }
+
     private TodoTaskResponse convertToResponse(TodoTask task) {
         return new TodoTaskResponse(
                 task.getTaskId(),
@@ -59,6 +69,7 @@ public class TodoTaskService {
                 task.getStatus(),
                 task.getDueDate(),
                 task.getPriority(),
+                task.getReminderSent(),
                 task.getCreatedAt()
         );
     }

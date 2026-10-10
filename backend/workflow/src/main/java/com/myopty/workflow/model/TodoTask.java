@@ -24,12 +24,15 @@ public class TodoTask {
 
     private String priority;
 
+    private Boolean reminderSent;
+
     private LocalDateTime createdAt;
 
     // Default constructor
     public TodoTask() {
         this.status = "PENDING";
         this.priority = "MEDIUM";
+        this.reminderSent = false;
         this.createdAt = LocalDateTime.now();
     }
 
@@ -54,6 +57,9 @@ public class TodoTask {
 
     public String getPriority() { return priority; }
     public void setPriority(String priority) { this.priority = priority; }
+
+    public Boolean getReminderSent() { return reminderSent; }
+    public void setReminderSent(Boolean reminderSent) { this.reminderSent = reminderSent; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

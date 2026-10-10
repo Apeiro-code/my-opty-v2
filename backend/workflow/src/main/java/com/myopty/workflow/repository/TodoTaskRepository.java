@@ -40,4 +40,11 @@ public class TodoTaskRepository extends SimpleJdbcRepository<TodoTask, Integer> 
             .setParameter("clientId", clientId)
             .getResultList();
     }
+
+    public java.util.List<TodoTask> findOverdueTasksByClientId(Integer clientId) {
+        return entityManager.createQuery(
+            "SELECT t FROM TodoTask t WHERE t.clientId = :clientId AND t.dueDate < CURRENT_DATE AND t.status != 'DONE'", TodoTask.class)
+            .setParameter("clientId", clientId)
+            .getResultList();
+    }
 }

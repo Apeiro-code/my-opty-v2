@@ -36,4 +36,9 @@ public class TodoTaskController {
     public List<TodoTaskResponse> getTaskQueue(@RequestParam Integer clientId) {
         return service.getPendingQueue(clientId);
     }
+
+    @GetMapping("/overdue")
+    public List<TodoTaskResponse> getOverdueTasks(@RequestParam Integer clientId) {
+        return service.getOverdueTasks(clientId);
+    }
 }
