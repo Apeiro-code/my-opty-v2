@@ -1,0 +1,54 @@
+# Local backing services. Started from this directory:
+#
+#     cd backend && docker compose up -d
+#
+# Compose reads variable substitutions from a `.env` beside this file, and there is
+# no `.env` here — the project's single environment file is one level up at the
+# repository root. `backend/.env` is a symlink to it, created during setup and
+# git-ignored, so the command above works without a `--env-file` flag on every
+# documented invocation. See docs/SETUP.md.
+#
+# MinIO is not here. The prescription object store is needed by the upload story
+# (Epic 3), and shipping an image the stack cannot start would make `up -d` fail
+# for a reason that has nothing to do with the code being written.
+
+name: myopty
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: myopty-mysql
+    restart: unless-stopped
+    # 3307 on the host, not 3306: a native MySQL usually already owns 3306 on a
+    # developer machine, and the clash looks like an unrelated failure.
+    ports:
+      - "127.0.0.1:3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?DB_ROOT_PASSWORD is not set - run cp .env.example .env and fill it in}
+      MYSQL_DATABASE: ${DB_NAME:-myopty}
+      # The application authenticates as itself, never as root, and owns nothing
+      # outside this one schema.
+      MYSQL_USER: ${DB_USERNAME:-myopty}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is not set - run cp .env.example .env and fill it in}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "--password=$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: myopty-mailpit
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:1025:1025"   # SMTP, what the application sends to
+      - "127.0.0.1:8025:8025"   # Web UI, where those messages are read
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+
+volumes:
+  mysql-data:
