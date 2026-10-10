@@ -113,25 +113,27 @@ POST   /api/inventory/report/export   # Export PDF/Excel
 - Customer notifications on status changes
 
 **API Endpoints:**
-`POST /api/prescriptions`, `GET /api/prescriptions` (own list), `POST /api/orders` and
-`GET /api/orders/{id}` are **implemented**. The rest are the planned surface:
-`GET /api/orders`, `PUT /api/orders/{id}/approve` and the rest. Nothing else below is
+`POST /api/prescriptions`, `GET /api/prescriptions` (own list), `POST /api/orders`,
+`GET /api/orders/{id}`, and the shop's `/api/shop/prescriptions` and `/api/shop/orders`
+review/approval endpoints are **implemented**. The rest are the planned surface:
+`GET /api/orders?prescriptionId=`, the workflow endpoints (`/processing`, `/ready`,
+`/dispatched`, `/receive-date`) and the rest. Anything not marked BUILT below is not
 running code.
 
 ```
 POST   /api/prescriptions                  # Submit prescription, multipart (customer) — BUILT
 GET    /api/prescriptions                  # Own prescriptions, newest first (customer) — BUILT
 GET    /api/prescriptions/{id}             # View prescription
-GET    /api/prescriptions/{id}/document    # Download uploaded document (client)
-GET    /api/prescriptions?status=          # Review queue (client), e.g. PENDING_REVIEW
-PUT    /api/prescriptions/{id}/verify      # Client verify
-PUT    /api/prescriptions/{id}/reject      # Client reject, body: { "reason": "..." }
+GET    /api/prescriptions/{id}/document    # Download uploaded document
 POST   /api/orders                         # Create order against a prescription (customer) — BUILT
 GET    /api/orders/{id}                    # Own order detail (customer) — BUILT
+GET    /api/shop/prescriptions?status=      # Review queue (client), defaults to PENDING_REVIEW — BUILT
+PUT    /api/shop/prescriptions/{id}/verify  # Client verify — BUILT
+PUT    /api/shop/prescriptions/{id}/reject  # Client reject, body: { "reason": "..." } — BUILT
+GET    /api/shop/orders?status=             # Approval queue (client), defaults to PENDING — BUILT
+PUT    /api/shop/orders/{id}/approve        # Client approve, only if the prescription is VERIFIED — BUILT
+PUT    /api/shop/orders/{id}/reject         # Client reject, body: { "reason": "..." } — BUILT
 GET    /api/orders?prescriptionId=         # Order built from a prescription
-GET    /api/orders?status=                 # Approval queue (client)
-PUT    /api/orders/{id}/approve            # Client approve
-PUT    /api/orders/{id}/reject             # Client reject, body: { "reason": "..." }
 PUT    /api/orders/{id}/receive-date       # Set or withdraw the estimate, body: { "receiveDate": "YYYY-MM-DD" }
 PUT    /api/orders/{id}/processing         # Client: now in the lab
 PUT    /api/orders/{id}/ready              # Client: ready to collect
@@ -146,8 +148,8 @@ POST   /api/stock/updates                  # Record new stock (client)
 GET    /api/stock/updates                  # History
 ```
 
-Notes on the planned endpoints — decisions to honour when this module is built, not a description of
-existing behaviour:
+Notes on this module's endpoints — some describe built behaviour and some are decisions to
+honour when the remaining endpoints are built:
 
 - `POST /api/prescriptions` is `multipart/form-data`, not JSON: the `prescription`
   part carries the optical values as a JSON object, the `document` part carries the
@@ -176,10 +178,16 @@ existing behaviour:
   that they exist, and a bad id comes back as 400 rather than a 500. `total_amount`
   stays null — pricing is the billing module's job and needs catalog prices this
   module must not read. `GET /api/orders/{id}` reads one order back for its owner.
-- `GET /api/orders` requires at least one of `prescriptionId` or `status`, and
-  always returns an array. Queue endpoints return at most 100 rows, oldest first.
-- An order can only be approved once its prescription is `VERIFIED`, so nothing
-  unreviewed reaches production. Reviewing is one-way: there is no re-review.
+- The shop's queues (`GET /api/shop/prescriptions`, `GET /api/shop/orders`) accept an
+  optional `status` filter and default to the queue the shop works from
+  (`PENDING_REVIEW` and `PENDING`); an unknown value is `INVALID_FILTER`. They always
+  return an array, oldest first, at most 100 rows. The customer-side
+  `GET /api/orders?prescriptionId=` remains planned.
+- **Review and approval are built.** An order can only be approved once its
+  prescription is `VERIFIED`, so nothing unreviewed reaches production (an
+  unverified prescription gives `PRESCRIPTION_NOT_VERIFIED`, 409). Reviewing is
+  one-way: a decided prescription or order cannot be decided again (`INVALID_STATE`,
+  409). A rejection stores its reason, which is what "flag missing details" means.
 - Approving quotes an estimated receive date from the lab lead time configured for
   that order type (`myopty.lab.lead-days`). The client can correct it, since only
   the shop knows its real queue. The `frame` and `lens` tables now exist, so stock
@@ -199,12 +207,12 @@ existing behaviour:
   notifications claim was said.
 - `GET /api/notifications` needs `customerId` or `orderId`, and `orderId` wins if
   both are sent. It returns at most 100 rows, newest first.
-- **These review and approval endpoints do not exist yet; when they do, they need a role
-  rule, not an authentication rule.** Everything under `/api/**` already requires a
-  session — the shared module's filter chain is deny-by-default — but nothing yet says
-  *which* role may approve. Until `SecurityConfig` adds a `hasRole("CLIENT")` rule for
-  them, any logged-in customer could approve production work. Auth belongs to the shared
-  module; see CONTRIBUTING.md.
+- **The review and approval endpoints are the role rule, by where they are mounted.**
+  They live under `/api/shop/**`, which the shared filter chain already restricts to
+  `ROLE_CLIENT`, so `SecurityConfig` needs no per-path rule and a logged-in customer
+  cannot approve production work. Keeping them off `/api/prescriptions` and
+  `/api/orders` is what lets the customer's own endpoints there stay open to any
+  authenticated session. Auth belongs to the shared module; see CONTRIBUTING.md.
 - **`GET /api/notifications` is the sharpest edge of that.** A session now tells the
   server *who* is asking, so the endpoint must take `customerId` from the session, not
   from a query parameter — a parameter still lets one customer read another's history,

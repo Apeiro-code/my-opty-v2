@@ -36,6 +36,7 @@ export type Prescription = {
   hasDocument: boolean;
   documentContentType: string | null;
   verificationStatus: VerificationStatus;
+  rejectionReason: string | null;
 };
 
 /**
@@ -69,4 +70,10 @@ export type Order = {
   quantity: number;
   totalAmount: number | null;
   orderDate: string;
+  rejectionReason: string | null;
+};
+
+/** The body of a rejection: why the shop refused a prescription or an order. */
+export type Reject = {
+  reason: string;
 };

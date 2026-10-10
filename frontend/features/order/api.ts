@@ -1,10 +1,12 @@
-import { apiGet, apiPost, apiPostForm } from "@/lib/api/client";
+import { apiGet, apiPost, apiPostForm, apiPut } from "@/lib/api/client";
 import type { ApiResult } from "@/types/api";
 import type {
   CreateOrder,
   Order,
+  OrderStatus,
   Prescription,
   PrescriptionSubmission,
+  VerificationStatus,
 } from "./types";
 
 /** The values plus the optional document, as one submission. */
@@ -48,4 +50,51 @@ export function listOwnPrescriptions(): Promise<ApiResult<Prescription[]>> {
  */
 export function createOrder(input: CreateOrder): Promise<ApiResult<Order>> {
   return apiPost<Order>("/api/orders", input);
+}
+
+/**
+ * The shop's prescription review queue. The shop owner is a `CLIENT`, so these
+ * calls go to `/api/shop/**`, which the backend restricts to that role.
+ */
+export function listPrescriptionReviewQueue(
+  status?: VerificationStatus,
+): Promise<ApiResult<Prescription[]>> {
+  return apiGet<Prescription[]>("/api/shop/prescriptions", { status });
+}
+
+/** Confirms a pending prescription so an order built on it may be approved. */
+export function verifyPrescription(
+  id: number,
+): Promise<ApiResult<Prescription>> {
+  return apiPut<Prescription>(`/api/shop/prescriptions/${id}/verify`, {});
+}
+
+/** Flags a prescription as incomplete, telling the customer what is missing. */
+export function rejectPrescription(
+  id: number,
+  reason: string,
+): Promise<ApiResult<Prescription>> {
+  return apiPut<Prescription>(`/api/shop/prescriptions/${id}/reject`, {
+    reason,
+  });
+}
+
+/** The shop's order approval queue. */
+export function listOrderApprovalQueue(
+  status?: OrderStatus,
+): Promise<ApiResult<Order[]>> {
+  return apiGet<Order[]>("/api/shop/orders", { status });
+}
+
+/** Lets an order proceed to production; refused until its prescription is verified. */
+export function approveOrder(id: number): Promise<ApiResult<Order>> {
+  return apiPut<Order>(`/api/shop/orders/${id}/approve`, {});
+}
+
+/** Stops an order, telling the customer why. */
+export function rejectOrder(
+  id: number,
+  reason: string,
+): Promise<ApiResult<Order>> {
+  return apiPut<Order>(`/api/shop/orders/${id}/reject`, { reason });
 }

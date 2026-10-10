@@ -131,6 +131,16 @@ class PrescriptionServiceTest {
         public List<Prescription> findAllByCustomerIdOrderByIdDesc(Long customerId) {
             throw new UnsupportedOperationException("not used by the submit story");
         }
+
+        @Override
+        public Optional<Prescription> findById(Long id) {
+            throw new UnsupportedOperationException("not used by the submit story");
+        }
+
+        @Override
+        public List<Prescription> findAllByVerificationStatusOrderByIdAsc(VerificationStatus verificationStatus) {
+            throw new UnsupportedOperationException("not used by the submit story");
+        }
     }
 
     private static final class RecordingObjectStore implements ObjectStore {

@@ -11,6 +11,11 @@ import com.myopty.order.model.VerificationStatus;
  * key is how the server finds the bytes; handing it out would invite a caller to
  * treat it as a URL, and the download endpoint that owns that job (a later story)
  * will not need it either.
+ *
+ * <p>{@code rejectionReason} is null until a rejection writes it; the global
+ * {@code non_null} inclusion drops it from the JSON while it is unset, so the
+ * customer's submit response is unchanged. When set, it is exactly the "what is
+ * missing" the customer needs to fix.
  */
 public record PrescriptionResponse(
         long id,
@@ -25,7 +30,8 @@ public record PrescriptionResponse(
         boolean progressive,
         boolean hasDocument,
         String documentContentType,
-        VerificationStatus verificationStatus) {
+        VerificationStatus verificationStatus,
+        String rejectionReason) {
 
     public static PrescriptionResponse from(Prescription prescription) {
         return new PrescriptionResponse(
@@ -41,6 +47,7 @@ public record PrescriptionResponse(
                 prescription.isProgressive(),
                 prescription.getDocumentObjectKey() != null,
                 prescription.getDocumentContentType(),
-                prescription.getVerificationStatus());
+                prescription.getVerificationStatus(),
+                prescription.getRejectionReason());
     }
 }

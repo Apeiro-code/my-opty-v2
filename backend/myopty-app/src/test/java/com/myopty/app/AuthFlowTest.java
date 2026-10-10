@@ -121,16 +121,17 @@ class AuthFlowTest {
     }
 
     /**
-     * The other half of the role rule: the client passes authorization and
-     * reaches the dispatcher, where the test stops mattering — there is no
-     * controller on the other side yet, so the answer is 404. The status is the
-     * assertion: 403 would mean the rule wrongly held the door.
+     * The other half of the role rule: the client passes authorization and reaches
+     * the approval queue controller, which answers 200. A 403 here would mean the
+     * rule wrongly held the door.
      */
     @Test
     void clientPassesAuthorizationOnClientRoutes() throws Exception {
         MockHttpSession session = login(CLIENT_EMAIL, CLIENT_PASSWORD);
 
-        mvc.perform(get("/api/shop/orders").session(session)).andExpect(status().isNotFound());
+        mvc.perform(get("/api/shop/orders").session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
     }
 
     /**

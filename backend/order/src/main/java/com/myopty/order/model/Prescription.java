@@ -1,5 +1,6 @@
 package com.myopty.order.model;
 
+import java.time.LocalDateTime;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
@@ -10,6 +11,9 @@ import org.springframework.data.relational.core.mapping.Table;
  * <p>One row per submission, never edited: reviewing produces a new value in
  * {@link #verificationStatus} rather than a different prescription, which is why
  * the optical values are ordinary fields and not something the caller updates.
+ * The review decision is stamped with {@link #rejectionReason}, {@link #verifiedBy}
+ * and {@link #verifiedAt}; the columns exist since V100 and are mapped here when
+ * the review story starts writing them.
  *
  * <p>The optical values are {@code String}, not a number type, for the reason the
  * V100 migration gives: the optician writes {@code "+06.25"} and that exact text
@@ -42,6 +46,9 @@ public class Prescription {
     private String documentObjectKey;
     private String documentContentType;
     private VerificationStatus verificationStatus;
+    private String rejectionReason;
+    private Long verifiedBy;
+    private LocalDateTime verifiedAt;
 
     public Long getId() {
         return id;
@@ -153,5 +160,29 @@ public class Prescription {
 
     public void setVerificationStatus(VerificationStatus verificationStatus) {
         this.verificationStatus = verificationStatus;
+    }
+
+    public String getRejectionReason() {
+        return rejectionReason;
+    }
+
+    public void setRejectionReason(String rejectionReason) {
+        this.rejectionReason = rejectionReason;
+    }
+
+    public Long getVerifiedBy() {
+        return verifiedBy;
+    }
+
+    public void setVerifiedBy(Long verifiedBy) {
+        this.verifiedBy = verifiedBy;
+    }
+
+    public LocalDateTime getVerifiedAt() {
+        return verifiedAt;
+    }
+
+    public void setVerifiedAt(LocalDateTime verifiedAt) {
+        this.verifiedAt = verifiedAt;
     }
 }

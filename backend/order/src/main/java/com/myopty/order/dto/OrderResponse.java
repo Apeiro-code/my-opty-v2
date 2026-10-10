@@ -12,7 +12,8 @@ import java.time.LocalDateTime;
  *
  * <p>{@code totalAmount} is null on a freshly created order — pricing belongs to
  * the billing module — so it is reported rather than hidden, to make it obvious
- * that no amount has been fixed yet.
+ * that no amount has been fixed yet {@code rejectionReason} is null until the shop
+ * rejects the order; the global {@code non_null} inclusion drops it while unset.
  */
 public record OrderResponse(
         long id,
@@ -24,7 +25,8 @@ public record OrderResponse(
         long lensId,
         int quantity,
         BigDecimal totalAmount,
-        LocalDateTime orderDate) {
+        LocalDateTime orderDate,
+        String rejectionReason) {
 
     public static OrderResponse from(ProgressiveOrder order) {
         return new OrderResponse(
@@ -37,6 +39,7 @@ public record OrderResponse(
                 order.getLensId(),
                 order.getQuantity(),
                 order.getTotalAmount(),
-                order.getOrderDate());
+                order.getOrderDate(),
+                order.getRejectionReason());
     }
 }

@@ -1,7 +1,9 @@
 package com.myopty.order.controller;
 
 import com.myopty.order.exception.InvalidDocumentException;
+import com.myopty.order.exception.InvalidStateException;
 import com.myopty.order.exception.ObjectStoreException;
+import com.myopty.order.exception.PrescriptionNotVerifiedException;
 import com.myopty.order.exception.PrescriptionRejectedException;
 import com.myopty.order.exception.ResourceNotFoundException;
 import com.myopty.shared.auth.dto.ApiError;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 /**
@@ -82,6 +85,34 @@ public class OrderExceptionHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiError prescriptionRejected(PrescriptionRejectedException exception) {
         return ApiError.of("PRESCRIPTION_REJECTED", exception.getMessage());
+    }
+
+    @ExceptionHandler(PrescriptionNotVerifiedException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiError prescriptionNotVerified(PrescriptionNotVerifiedException exception) {
+        return ApiError.of("PRESCRIPTION_NOT_VERIFIED", exception.getMessage());
+    }
+
+    /**
+     * A review or approval step the workflow no longer allows: a prescription that
+     * has already been decided, or an order that is not {@code PENDING}. A durable
+     * state conflict, so 409 rather than 400.
+     */
+    @ExceptionHandler(InvalidStateException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiError invalidState(InvalidStateException exception) {
+        return ApiError.of("INVALID_STATE", exception.getMessage());
+    }
+
+    /**
+     * A {@code ?status=} value that is not one of the enum's names. Without this it
+     * would reach the default resolver and miss the error envelope, so it is
+     * answered as a bad request in the same shape as the rest.
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError invalidFilter(MethodArgumentTypeMismatchException exception) {
+        return ApiError.of("INVALID_FILTER", "The filter value is not valid.");
     }
 
     /**

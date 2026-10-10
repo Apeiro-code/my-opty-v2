@@ -127,6 +127,19 @@ class OrderServiceTest {
             return Optional.ofNullable(byId.get(id))
                     .filter(order -> order.getCustomerId().equals(customerId));
         }
+
+        @Override
+        public Optional<ProgressiveOrder> findById(Long id) {
+            return Optional.ofNullable(byId.get(id));
+        }
+
+        @Override
+        public List<ProgressiveOrder> findAllByStatusOrderByOrderDateAsc(OrderStatus status) {
+            return byId.values().stream()
+                    .filter(order -> order.getStatus() == status)
+                    .sorted(Comparator.comparing(ProgressiveOrder::getOrderDate))
+                    .toList();
+        }
     }
 
     private static final class FakePrescriptionRepository implements PrescriptionRepository {
@@ -153,6 +166,19 @@ class OrderServiceTest {
             return byId.values().stream()
                     .filter(prescription -> prescription.getCustomerId().equals(customerId))
                     .sorted(Comparator.comparing(Prescription::getId).reversed())
+                    .toList();
+        }
+
+        @Override
+        public Optional<Prescription> findById(Long id) {
+            return Optional.ofNullable(byId.get(id));
+        }
+
+        @Override
+        public List<Prescription> findAllByVerificationStatusOrderByIdAsc(VerificationStatus verificationStatus) {
+            return byId.values().stream()
+                    .filter(prescription -> prescription.getVerificationStatus() == verificationStatus)
+                    .sorted(Comparator.comparing(Prescription::getId))
                     .toList();
         }
     }

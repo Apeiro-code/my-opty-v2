@@ -32,14 +32,33 @@ Implemented:
   one 409, and an unknown frame or lens 400.
 - `GET /api/orders/{id}` — one order, for its owner only.
 
-The customer id comes from the session in every case; no endpoint takes it from the
+The shop owner's review and approval endpoints (role-gated, see below):
+- `GET /api/shop/prescriptions?status=` — the review queue, oldest first, capped at
+  100; `status` defaults to `PENDING_REVIEW`.
+- `PUT /api/shop/prescriptions/{id}/verify` — confirm a pending prescription.
+- `PUT /api/shop/prescriptions/{id}/reject` — reject it, body `{ "reason": "..." }`.
+  This is what "flag missing details" means: the reason is stored and travels back
+  to the customer. Reviewing is one-way — only a `PENDING_REVIEW` row may be decided.
+- `GET /api/shop/orders?status=` — the approval queue, oldest first, capped at 100;
+  `status` defaults to `PENDING`.
+- `PUT /api/shop/orders/{id}/approve` — send a pending order to production. Refused
+  (409) until the linked prescription is `VERIFIED`.
+- `PUT /api/shop/orders/{id}/reject` — stop it, body `{ "reason": "..." }`.
+
+Customer endpoints take the customer id from the session; no endpoint takes it from the
 body or a query parameter. `order_type` arrived in `V107__order_add_order_type.sql`;
 values mirror `lens.type` (`SINGLE_VISION`, `BIFOCAL`, `PROGRESSIVE`).
 
+The shop endpoints are mounted under `/api/shop/**` rather than at the originally
+planned `/api/prescriptions/{id}/verify` and `/api/orders/{id}/approve`, because the
+shared filter chain already restricts `/api/shop/**` to `ROLE_CLIENT` — so the role
+rule lives in one place (`SecurityConfig`) instead of being lettered onto each path.
+The customer's own `/api/prescriptions` and `/api/orders/{id}` are untouched.
+
 Still planned: `GET /api/prescriptions/{id}`, `GET /api/prescriptions/{id}/document`,
-`GET /api/prescriptions?status=`, `PUT /api/prescriptions/{id}/verify` and `/reject`,
-`GET /api/orders?prescriptionId=`, `GET /api/orders?status=`, the order approve/reject
-and workflow endpoints, `/api/notifications`, `/api/discounts`, `/api/stock/updates`.
+`GET /api/prescriptions?status=`, `GET /api/orders?prescriptionId=`, the
+`/processing`, `/ready`, `/dispatched` and `/receive-date` order endpoints,
+`/api/notifications`, `/api/discounts`, `/api/stock/updates`.
 
 Documents are written through `service/ObjectStore`; the only implementation is
 filesystem-backed (`FileSystemObjectStore`, rooted at `myopty.object-storage.root`).
