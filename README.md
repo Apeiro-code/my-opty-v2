@@ -26,10 +26,12 @@ What is built and working:
 | Payment config | PayHere sandbox runbook in `docs/DEPLOYMENT.md`; bad `PAYMENT_GATEWAY_*` config fails startup naming the variable |
 | Email | `spring.mail` wired from `MAIL_*`; `MailSendingTest` proves a real send through Mailpit |
 
-What is **not** built: every feature endpoint listed in this file except prescription
-submission, and a real object store. The API answers `/actuator/health`,
-`POST /api/auth/login`, `GET /api/auth/me`, `POST /api/auth/logout` and
-`POST /api/prescriptions`; every other route returns 401 until the module that owns it builds it.
+What is **not** built: most feature endpoints listed in this file, and a real object
+store. The API answers `/actuator/health`, the auth endpoints, and the order module's
+prescription and progressive-order surface — submission, own-prescription and
+own-order reads, the shop's review and approval queues, the production line
+(`processing`/`ready`/`dispatched`), the receive-date correction, and the customer
+notification list; every other route returns 401 until the module that owns it builds it.
 Prescription documents are written to a filesystem-backed `ObjectStore` (a development stand-in
 for MinIO, which is still not wired).
 
@@ -114,11 +116,11 @@ POST   /api/inventory/report/export   # Export PDF/Excel
 
 **API Endpoints:**
 `POST /api/prescriptions`, `GET /api/prescriptions` (own list), `POST /api/orders`,
-`GET /api/orders/{id}`, and the shop's `/api/shop/prescriptions` and `/api/shop/orders`
-review/approval endpoints are **implemented**. The rest are the planned surface:
-`GET /api/orders?prescriptionId=`, the workflow endpoints (`/processing`, `/ready`,
-`/dispatched`, `/receive-date`) and the rest. Anything not marked BUILT below is not
-running code.
+the customer's own order list and detail, and the shop's `/api/shop/prescriptions`
+and `/api/shop/orders` review, approval and production endpoints are **implemented**,
+along with the notification list. The rest are the planned surface:
+`GET /api/orders?prescriptionId=`, the discount and stock endpoints, and the rest.
+Anything not marked BUILT below is not running code.
 
 ```
 POST   /api/prescriptions                  # Submit prescription, multipart (customer) — BUILT
@@ -126,20 +128,23 @@ GET    /api/prescriptions                  # Own prescriptions, newest first (cu
 GET    /api/prescriptions/{id}             # View prescription
 GET    /api/prescriptions/{id}/document    # Download uploaded document
 POST   /api/orders                         # Create order against a prescription (customer) — BUILT
+GET    /api/orders                         # Own orders, newest first (customer) — BUILT
 GET    /api/orders/{id}                    # Own order detail (customer) — BUILT
 GET    /api/shop/prescriptions?status=      # Review queue (client), defaults to PENDING_REVIEW — BUILT
 PUT    /api/shop/prescriptions/{id}/verify  # Client verify — BUILT
 PUT    /api/shop/prescriptions/{id}/reject  # Client reject, body: { "reason": "..." } — BUILT
 GET    /api/shop/orders?status=             # Approval queue (client), defaults to PENDING — BUILT
+GET    /api/shop/orders/active              # Production line: APPROVED/PROCESSING/READY, oldest first (client) — BUILT
 PUT    /api/shop/orders/{id}/approve        # Client approve, only if the prescription is VERIFIED — BUILT
 PUT    /api/shop/orders/{id}/reject         # Client reject, body: { "reason": "..." } — BUILT
+PUT    /api/shop/orders/{id}/processing     # Client: now in the lab — BUILT
+PUT    /api/shop/orders/{id}/ready          # Client: ready to collect — BUILT
+PUT    /api/shop/orders/{id}/dispatched     # Client: handed over or sent — BUILT
+PUT    /api/shop/orders/{id}/receive-date   # Set or withdraw the estimate, body: { "receiveDate": "YYYY-MM-DD" } — BUILT
+GET    /api/shop/orders/{id}/notifications  # One order's notification history (client) — BUILT
+GET    /api/notifications                   # The session customer's notifications, newest first — BUILT
+GET    /api/notifications?orderId=          # ...narrowed to one order — BUILT
 GET    /api/orders?prescriptionId=         # Order built from a prescription
-PUT    /api/orders/{id}/receive-date       # Set or withdraw the estimate, body: { "receiveDate": "YYYY-MM-DD" }
-PUT    /api/orders/{id}/processing         # Client: now in the lab
-PUT    /api/orders/{id}/ready              # Client: ready to collect
-PUT    /api/orders/{id}/dispatched         # Client: handed over or sent
-GET    /api/notifications?customerId=       # What the shop told a customer, newest first
-GET    /api/notifications?orderId=          # One order's notification history
 POST   /api/discounts                      # Create discount (client)
 GET    /api/discounts                      # List (with active filter)
 PUT    /api/discounts/{id}                 # Update discount
@@ -181,42 +186,51 @@ honour when the remaining endpoints are built:
 - The shop's queues (`GET /api/shop/prescriptions`, `GET /api/shop/orders`) accept an
   optional `status` filter and default to the queue the shop works from
   (`PENDING_REVIEW` and `PENDING`); an unknown value is `INVALID_FILTER`. They always
-  return an array, oldest first, at most 100 rows. The customer-side
-  `GET /api/orders?prescriptionId=` remains planned.
+  return an array, oldest first, at most 100 rows. `GET /api/shop/orders/active` is
+  the production line — the orders whose status is `APPROVED`, `PROCESSING` or
+  `READY`, oldest first — and the customer-side `GET /api/orders?prescriptionId=`
+  remains planned.
 - **Review and approval are built.** An order can only be approved once its
   prescription is `VERIFIED`, so nothing unreviewed reaches production (an
   unverified prescription gives `PRESCRIPTION_NOT_VERIFIED`, 409). Reviewing is
   one-way: a decided prescription or order cannot be decided again (`INVALID_STATE`,
   409). A rejection stores its reason, which is what "flag missing details" means.
-- Approving quotes an estimated receive date from the lab lead time configured for
-  that order type (`myopty.lab.lead-days`). The client can correct it, since only
-  the shop knows its real queue. The `frame` and `lens` tables now exist, so stock
-  can be part of that calculation.
-- The client moves an approved order along with `/processing`, `/ready` and
-  `/dispatched`. The workflow is forward-only and a step may be skipped (a frame
-  already in stock never gets processed); `DISPATCHED` and `REJECTED` are terminal.
-  A generic "set status" endpoint is deliberately absent, so a client cannot name a
-  state the workflow has not reached.
-- Every status change writes a notification recording the move, and the customer
-  is told through a pluggable `NotificationSender`. The only implementation logs it,
-  because nothing yet turns a notification into a sent message — `spring.mail` is
-  configured and a `JavaMailSender` is in the context, but no `NotificationSender`
-  implementation uses them; a real transport replaces the log one by declaring its own
-  bean. The message is stored
-  as it was written, so rewording the templates never changes what past
-  notifications claim was said.
-- `GET /api/notifications` needs `customerId` or `orderId`, and `orderId` wins if
-  both are sent. It returns at most 100 rows, newest first.
-- **The review and approval endpoints are the role rule, by where they are mounted.**
-  They live under `/api/shop/**`, which the shared filter chain already restricts to
-  `ROLE_CLIENT`, so `SecurityConfig` needs no per-path rule and a logged-in customer
-  cannot approve production work. Keeping them off `/api/prescriptions` and
-  `/api/orders` is what lets the customer's own endpoints there stay open to any
-  authenticated session. Auth belongs to the shared module; see CONTRIBUTING.md.
-- **`GET /api/notifications` is the sharpest edge of that.** A session now tells the
-  server *who* is asking, so the endpoint must take `customerId` from the session, not
-  from a query parameter — a parameter still lets one customer read another's history,
-  and the filter that stops the unbounded read is not a substitute for doing that.
+- **Approving quotes an estimated receive date and is built.** The date is
+  `today + myopty.lab.lead-days.<orderType>` (3 days single vision, 5 bifocal, 7
+  progressive by default), and the client can correct or withdraw it afterwards
+  with `PUT /api/shop/orders/{id}/receive-date` (`{"receiveDate": "YYYY-MM-DD"}`,
+  or `null` to withdraw), since only the shop knows its real queue. A correction
+  updates the date without emailing the customer; it is not a status change.
+- **The client moves an approved order along with
+  `PUT /api/shop/orders/{id}/processing`, `/ready` and `/dispatched`.** The workflow
+  is forward-only and a step may be skipped (a frame already in stock never gets
+  processed); `DISPATCHED` and `REJECTED` are terminal, and a backwards or repeated
+  move is `INVALID_STATE` (409). A generic "set status" endpoint is deliberately
+  absent, so a client cannot name a state the workflow has not reached. These live
+  under `/api/shop/**` like the rest of the shop's surface.
+- **Every status change (approve, reject, processing, ready, dispatched) writes a
+  notification and emails the customer.** The row records the message as it was
+  written — so rewording the templates never changes what past notifications claim
+  was said — and its status is `SENT` or `FAILED`. Sending goes through a pluggable
+  `NotificationSender`; the implementation in use builds a message and hands it to
+  the `JavaMailSender` configured from `MAIL_*` (Mailpit in development,
+  `MailSendingTest` proves a real send). The status change is committed *before*
+  the send: a failed send marks the row `FAILED` and never rolls back the move,
+  because the glasses really did move. `myopty.notifications.fail-on-error` (from
+  `MAIL_FAIL_ON_ERROR`) decides whether that failure is also surfaced as `502
+  NOTIFICATION_FAILED` after the commit.
+- **`GET /api/notifications` is built.** It takes the customer from the session,
+  never a `customerId` parameter — a parameter a caller sets on their own request
+  is not a security boundary. An optional `orderId` narrows the list, scoped by the
+  same session id so one customer's order id cannot read another's history. The
+  shop reads one order's history through `GET /api/shop/orders/{id}/notifications`.
+- **The review, approval and production endpoints are the role rule, by where they
+  are mounted.** They live under `/api/shop/**`, which the shared filter chain
+  already restricts to `ROLE_CLIENT`, so `SecurityConfig` needs no per-path rule and
+  a logged-in customer cannot approve or move production work. Keeping them off
+  `/api/prescriptions` and `/api/orders` is what lets the customer's own endpoints
+  there stay open to any authenticated session. Auth belongs to the shared module;
+  see CONTRIBUTING.md.
 
 **Database Tables:** `prescription`, `progressive_order`, `order_notification`, `discount`, `stock_update`
 

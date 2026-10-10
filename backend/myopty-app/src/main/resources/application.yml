@@ -65,6 +65,14 @@ spring:
           auth: ${MAIL_SMTP_AUTH:false}
           starttls:
             enable: ${MAIL_STARTTLS:false}
+          # A dead SMTP host must fail the send in seconds, not hold the request
+          # open until the OS gives up on the TCP connect. Order notifications are
+          # sent inline, so an unreachable provider would otherwise stall the shop's
+          # status update; with these the send is refused quickly and the row is
+          # recorded FAILED instead.
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
 
 server:
   port: 8080
@@ -88,6 +96,23 @@ springdoc:
 myopty:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+
+  # How long the lab takes per lens type, read from the LAB_LEAD_DAYS_* contract in
+  # .env. Approval quotes the receive date from this, so the numbers are the shop's
+  # promise and are configurable without a rebuild. The defaults keep a fresh clone
+  # booting with the documented lead times.
+  lab:
+    lead-days:
+      SINGLE_VISION: ${LAB_LEAD_DAYS_SINGLE_VISION:3}
+      BIFOCAL: ${LAB_LEAD_DAYS_BIFOCAL:5}
+      PROGRESSIVE: ${LAB_LEAD_DAYS_PROGRESSIVE:7}
+
+  # Order notifications reuse the MAIL_* SMTP contract above. `fail-on-error` is the
+  # MAIL_FAIL_ON_ERROR switch from .env: off locally so a feature is not blocked by a
+  # mail server, on in staging so an undelivered "ready for pickup" is loud.
+  notifications:
+    fail-on-error: ${MAIL_FAIL_ON_ERROR:false}
+    from-address: ${MAIL_FROM_ADDRESS:no-reply@myopty.local}
 
   # Payment gateway credentials, read from the PAYMENT_GATEWAY_* contract in .env.
   # `fake` needs no credentials and must never leave a developer's machine;

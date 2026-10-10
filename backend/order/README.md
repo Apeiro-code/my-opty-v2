@@ -30,9 +30,13 @@ Implemented:
   enum field; the customer id comes from the session and the prescription is loaded
   with that id in the query. A non-owner's prescription answers 404, a `REJECTED`
   one 409, and an unknown frame or lens 400.
+- `GET /api/orders` — the caller's own orders, newest first, for the tracking page.
 - `GET /api/orders/{id}` — one order, for its owner only.
+- `GET /api/notifications` — the caller's notifications, newest first; an optional
+  `orderId` narrows them. The customer comes from the session, never a query
+  parameter.
 
-The shop owner's review and approval endpoints (role-gated, see below):
+The shop owner's review, approval and production endpoints (role-gated, see below):
 - `GET /api/shop/prescriptions?status=` — the review queue, oldest first, capped at
   100; `status` defaults to `PENDING_REVIEW`.
 - `PUT /api/shop/prescriptions/{id}/verify` — confirm a pending prescription.
@@ -41,9 +45,28 @@ The shop owner's review and approval endpoints (role-gated, see below):
   to the customer. Reviewing is one-way — only a `PENDING_REVIEW` row may be decided.
 - `GET /api/shop/orders?status=` — the approval queue, oldest first, capped at 100;
   `status` defaults to `PENDING`.
+- `GET /api/shop/orders/active` — the production line: orders whose status is
+  `APPROVED`, `PROCESSING` or `READY`, oldest first.
 - `PUT /api/shop/orders/{id}/approve` — send a pending order to production. Refused
-  (409) until the linked prescription is `VERIFIED`.
+  (409) until the linked prescription is `VERIFIED`, and stamps `receive_date` from
+  the lab lead time configured for the order type.
 - `PUT /api/shop/orders/{id}/reject` — stop it, body `{ "reason": "..." }`.
+- `PUT /api/shop/orders/{id}/processing|ready|dispatched` — move an approved order
+  forward. Forward-only and skippable; a backwards or repeated move is 409
+  (`INVALID_STATE`); `DISPATCHED` and `REJECTED` are terminal.
+- `PUT /api/shop/orders/{id}/receive-date` — correct or withdraw the estimate, body
+  `{ "receiveDate": "YYYY-MM-DD" }` (or `null`). Does not notify: it is a correction,
+  not a status change.
+- `GET /api/shop/orders/{id}/notifications` — one order's notification history,
+  newest first.
+
+Every status change (approve, reject, processing, ready, dispatched) records a row in
+`order_notification` and emails the customer through a `NotificationSender` backed by
+`JavaMailSender`. The status change commits before the send, so a failed send marks
+the row `FAILED` without rolling back the move; `myopty.notifications.fail-on-error`
+(from `MAIL_FAIL_ON_ERROR`) controls whether that failure is also surfaced as `502
+NOTIFICATION_FAILED`. The estimated date is `today + myopty.lab.lead-days.<orderType>`
+(3/5/7 days for single vision / bifocal / progressive by default).
 
 Customer endpoints take the customer id from the session; no endpoint takes it from the
 body or a query parameter. `order_type` arrived in `V107__order_add_order_type.sql`;
@@ -56,9 +79,8 @@ rule lives in one place (`SecurityConfig`) instead of being lettered onto each p
 The customer's own `/api/prescriptions` and `/api/orders/{id}` are untouched.
 
 Still planned: `GET /api/prescriptions/{id}`, `GET /api/prescriptions/{id}/document`,
-`GET /api/prescriptions?status=`, `GET /api/orders?prescriptionId=`, the
-`/processing`, `/ready`, `/dispatched` and `/receive-date` order endpoints,
-`/api/notifications`, `/api/discounts`, `/api/stock/updates`.
+`GET /api/prescriptions?status=`, `GET /api/orders?prescriptionId=`, `/api/discounts`
+and `/api/stock/updates`.
 
 Documents are written through `service/ObjectStore`; the only implementation is
 filesystem-backed (`FileSystemObjectStore`, rooted at `myopty.object-storage.root`).

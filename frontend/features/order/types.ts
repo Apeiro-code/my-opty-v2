@@ -45,7 +45,11 @@ export type Prescription = {
  */
 export type OrderType = "SINGLE_VISION" | "BIFOCAL" | "PROGRESSIVE";
 
-/** Mirrors the order module's `OrderStatus` enum. Only `PENDING` is written today. */
+/**
+ * Mirrors the order module's `OrderStatus` enum. The shop moves an order forward
+ * `PENDING → APPROVED → PROCESSING → READY → DISPATCHED`; `REJECTED` and
+ * `DISPATCHED` are terminal and a step may be skipped but never reversed.
+ */
 export type OrderStatus =
   "PENDING" | "APPROVED" | "PROCESSING" | "READY" | "DISPATCHED" | "REJECTED";
 
@@ -70,10 +74,30 @@ export type Order = {
   quantity: number;
   totalAmount: number | null;
   orderDate: string;
+  /** The estimated date the glasses will be ready; null until the shop approves. */
+  receiveDate: string | null;
   rejectionReason: string | null;
 };
 
 /** The body of a rejection: why the shop refused a prescription or an order. */
 export type Reject = {
   reason: string;
+};
+
+/** Mirrors `NotificationChannel`. Email is the only channel today. */
+export type NotificationChannel = "EMAIL";
+
+/** Mirrors `NotificationStatus`. `FAILED` means the move still happened. */
+export type NotificationStatus = "PENDING" | "SENT" | "FAILED";
+
+/** Mirrors the order module's `NotificationResponse`. */
+export type OrderNotification = {
+  id: number;
+  orderId: number;
+  orderNumber: string;
+  channel: NotificationChannel;
+  message: string;
+  status: NotificationStatus;
+  /** Null while pending or failed; the envelope drops the field until a send succeeds. */
+  sentAt: string | null;
 };

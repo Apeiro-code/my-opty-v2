@@ -2,6 +2,7 @@ package com.myopty.order.repository;
 
 import com.myopty.order.model.OrderStatus;
 import com.myopty.order.model.ProgressiveOrder;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.repository.Repository;
@@ -27,7 +28,12 @@ public interface ProgressiveOrderRepository extends Repository<ProgressiveOrder,
 
     Optional<ProgressiveOrder> findByIdAndCustomerId(Long id, Long customerId);
 
+    List<ProgressiveOrder> findAllByCustomerIdOrderByOrderDateDesc(Long customerId);
+
     Optional<ProgressiveOrder> findById(Long id);
 
     List<ProgressiveOrder> findAllByStatusOrderByOrderDateAsc(OrderStatus status);
+
+    /** The fulfilment pipeline: every order still in the shop, oldest first. */
+    List<ProgressiveOrder> findAllByStatusInOrderByOrderDateAsc(Collection<OrderStatus> statuses);
 }

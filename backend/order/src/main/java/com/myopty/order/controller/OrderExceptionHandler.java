@@ -2,6 +2,7 @@ package com.myopty.order.controller;
 
 import com.myopty.order.exception.InvalidDocumentException;
 import com.myopty.order.exception.InvalidStateException;
+import com.myopty.order.exception.NotificationDeliveryException;
 import com.myopty.order.exception.ObjectStoreException;
 import com.myopty.order.exception.PrescriptionNotVerifiedException;
 import com.myopty.order.exception.PrescriptionRejectedException;
@@ -91,6 +92,17 @@ public class OrderExceptionHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiError prescriptionNotVerified(PrescriptionNotVerifiedException exception) {
         return ApiError.of("PRESCRIPTION_NOT_VERIFIED", exception.getMessage());
+    }
+
+    /**
+     * The order change was saved but the customer could not be told. Raised only
+     * when {@code myopty.notifications.fail-on-error} is on, so it is a downstream
+     * mail failure — 502 — and not a reason to think the change itself failed.
+     */
+    @ExceptionHandler(NotificationDeliveryException.class)
+    @ResponseStatus(HttpStatus.BAD_GATEWAY)
+    public ApiError notificationNotDelivered(NotificationDeliveryException exception) {
+        return ApiError.of("NOTIFICATION_FAILED", exception.getMessage());
     }
 
     /**

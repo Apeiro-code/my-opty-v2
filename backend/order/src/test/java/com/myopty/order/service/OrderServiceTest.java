@@ -108,6 +108,16 @@ class OrderServiceTest {
         assertThatThrownBy(() -> service.readOwn(8L, created.id())).isInstanceOf(ResourceNotFoundException.class);
     }
 
+    @Test
+    void aCustomerListsOnlyTheirOwnOrders() {
+        prescriptions.put(prescription(4L, 7L, VerificationStatus.VERIFIED));
+        prescriptions.put(prescription(5L, 9L, VerificationStatus.VERIFIED));
+        OrderResponse mine = service.create(7L, new CreateOrderRequest(4L, OrderType.PROGRESSIVE, 12L, 3L, null));
+        service.create(9L, new CreateOrderRequest(5L, OrderType.PROGRESSIVE, 12L, 3L, null));
+
+        assertThat(service.listOwn(7L)).extracting(OrderResponse::id).containsExactly(mine.id());
+    }
+
     private static final class FakeOrderRepository implements ProgressiveOrderRepository {
 
         private final AtomicLong ids = new AtomicLong();
@@ -129,6 +139,14 @@ class OrderServiceTest {
         }
 
         @Override
+        public List<ProgressiveOrder> findAllByCustomerIdOrderByOrderDateDesc(Long customerId) {
+            return byId.values().stream()
+                    .filter(order -> order.getCustomerId().equals(customerId))
+                    .sorted(Comparator.comparing(ProgressiveOrder::getOrderDate).reversed())
+                    .toList();
+        }
+
+        @Override
         public Optional<ProgressiveOrder> findById(Long id) {
             return Optional.ofNullable(byId.get(id));
         }
@@ -137,6 +155,14 @@ class OrderServiceTest {
         public List<ProgressiveOrder> findAllByStatusOrderByOrderDateAsc(OrderStatus status) {
             return byId.values().stream()
                     .filter(order -> order.getStatus() == status)
+                    .sorted(Comparator.comparing(ProgressiveOrder::getOrderDate))
+                    .toList();
+        }
+
+        @Override
+        public List<ProgressiveOrder> findAllByStatusInOrderByOrderDateAsc(java.util.Collection<OrderStatus> statuses) {
+            return byId.values().stream()
+                    .filter(order -> statuses.contains(order.getStatus()))
                     .sorted(Comparator.comparing(ProgressiveOrder::getOrderDate))
                     .toList();
         }

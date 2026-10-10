@@ -1,11 +1,12 @@
 import Link from "next/link";
+import CustomerOrderList from "@/features/order/components/CustomerOrderList";
 
 /**
- * The customer's orders landing page.
+ * The customer's orders page: their own orders, newest first, each showing the
+ * status and the estimated receive date, and each linking to its detail page.
  *
- * <p>The order history itself is a later story; today this gives the nav's
- * "Orders" link and the home page's card a real destination and a way into the
- * create flow.
+ * <p>A thin server component: the list is the whole feature and lives in
+ * `features/order`, the order module's ownership boundary.
  */
 export default function OrdersPage() {
   return (
@@ -14,7 +15,8 @@ export default function OrdersPage() {
         <h1 className="text-2xl font-semibold">Your orders</h1>
         <p className="mt-2 max-w-prose text-sm opacity-80">
           An order links one of your prescriptions to the frame and lens it is
-          made with, so everything is processed together.
+          made with, so everything is processed together. Open one to see what
+          the shop has told you about it.
         </p>
       </div>
       <Link
@@ -23,6 +25,7 @@ export default function OrdersPage() {
       >
         Place an order
       </Link>
+      <CustomerOrderList />
     </div>
   );
 }

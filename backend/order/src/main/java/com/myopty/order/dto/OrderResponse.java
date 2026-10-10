@@ -4,6 +4,7 @@ import com.myopty.order.model.OrderStatus;
 import com.myopty.order.model.OrderType;
 import com.myopty.order.model.ProgressiveOrder;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -14,6 +15,10 @@ import java.time.LocalDateTime;
  * the billing module — so it is reported rather than hidden, to make it obvious
  * that no amount has been fixed yet {@code rejectionReason} is null until the shop
  * rejects the order; the global {@code non_null} inclusion drops it while unset.
+ *
+ * <p>{@code receiveDate} is null until approval quotes an estimate from the lab
+ * lead time, and the shop may correct it afterwards; it is the customer's answer
+ * to "when do I get my glasses".
  */
 public record OrderResponse(
         long id,
@@ -26,6 +31,7 @@ public record OrderResponse(
         int quantity,
         BigDecimal totalAmount,
         LocalDateTime orderDate,
+        LocalDate receiveDate,
         String rejectionReason) {
 
     public static OrderResponse from(ProgressiveOrder order) {
@@ -40,6 +46,7 @@ public record OrderResponse(
                 order.getQuantity(),
                 order.getTotalAmount(),
                 order.getOrderDate(),
+                order.getReceiveDate(),
                 order.getRejectionReason());
     }
 }

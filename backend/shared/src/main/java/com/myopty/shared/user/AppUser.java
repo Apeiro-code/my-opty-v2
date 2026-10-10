@@ -2,6 +2,7 @@ package com.myopty.shared.user;
 
 import java.util.Collection;
 import java.util.List;
+import org.springframework.data.annotation.Id;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -29,7 +30,9 @@ import org.springframework.security.core.userdetails.UserDetails;
  */
 public class AppUser implements UserDetails {
 
+    @Id
     private final Long id;
+
     private final String email;
     private final String phone;
     private final String passwordHash;

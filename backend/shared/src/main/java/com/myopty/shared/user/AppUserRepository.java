@@ -12,5 +12,7 @@ import org.springframework.data.repository.Repository;
  */
 public interface AppUserRepository extends Repository<AppUser, Long> {
 
+    Optional<AppUser> findById(Long id);
+
     Optional<AppUser> findByEmail(String email);
 }

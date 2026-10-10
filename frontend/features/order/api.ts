@@ -3,6 +3,7 @@ import type { ApiResult } from "@/types/api";
 import type {
   CreateOrder,
   Order,
+  OrderNotification,
   OrderStatus,
   Prescription,
   PrescriptionSubmission,
@@ -52,6 +53,33 @@ export function createOrder(input: CreateOrder): Promise<ApiResult<Order>> {
   return apiPost<Order>("/api/orders", input);
 }
 
+/** What the customer was told about one order, newest first. Shop-only. */
+export function listOrderNotifications(
+  id: number,
+): Promise<ApiResult<OrderNotification[]>> {
+  return apiGet<OrderNotification[]>(`/api/shop/orders/${id}/notifications`);
+}
+
+/** The caller's own orders, newest first, for tracking. */
+export function listOwnOrders(): Promise<ApiResult<Order[]>> {
+  return apiGet<Order[]>("/api/orders");
+}
+
+/** A single one of the caller's own orders, including its receive date. */
+export function readOrder(id: number): Promise<ApiResult<Order>> {
+  return apiGet<Order>(`/api/orders/${id}`);
+}
+
+/**
+ * The caller's notifications, newest first. The backend scopes them to the
+ * session's customer, so no `customerId` is ever passed.
+ */
+export function listOwnNotifications(
+  orderId?: number,
+): Promise<ApiResult<OrderNotification[]>> {
+  return apiGet<OrderNotification[]>("/api/notifications", { orderId });
+}
+
 /**
  * The shop's prescription review queue. The shop owner is a `CLIENT`, so these
  * calls go to `/api/shop/**`, which the backend restricts to that role.
@@ -97,4 +125,39 @@ export function rejectOrder(
   reason: string,
 ): Promise<ApiResult<Order>> {
   return apiPut<Order>(`/api/shop/orders/${id}/reject`, { reason });
+}
+
+/**
+ * The orders still in the shop — approved, processing or ready, oldest first.
+ * Each move here emails the customer, so this is the production line.
+ */
+export function listOrderFulfilmentQueue(): Promise<ApiResult<Order[]>> {
+  return apiGet<Order[]>("/api/shop/orders/active");
+}
+
+/** Moves an order into the lab after it has been approved. */
+export function markOrderProcessing(id: number): Promise<ApiResult<Order>> {
+  return apiPut<Order>(`/api/shop/orders/${id}/processing`, {});
+}
+
+/** Marks an order ready for the customer to collect. */
+export function markOrderReady(id: number): Promise<ApiResult<Order>> {
+  return apiPut<Order>(`/api/shop/orders/${id}/ready`, {});
+}
+
+/** Marks an order as having left the shop. Terminal. */
+export function markOrderDispatched(id: number): Promise<ApiResult<Order>> {
+  return apiPut<Order>(`/api/shop/orders/${id}/dispatched`, {});
+}
+
+/**
+ * Corrects or withdraws the estimated receive date. A null value withdraws it;
+ * the backend updates the date without emailing the customer, since this is a
+ * correction rather than a status change.
+ */
+export function updateReceiveDate(
+  id: number,
+  receiveDate: string | null,
+): Promise<ApiResult<Order>> {
+  return apiPut<Order>(`/api/shop/orders/${id}/receive-date`, { receiveDate });
 }

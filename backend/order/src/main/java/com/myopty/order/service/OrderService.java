@@ -12,6 +12,7 @@ import com.myopty.order.repository.PrescriptionRepository;
 import com.myopty.order.repository.ProgressiveOrderRepository;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -71,6 +72,17 @@ public class OrderService {
         return orders.findByIdAndCustomerId(orderId, customerId)
                 .map(OrderResponse::from)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found."));
+    }
+
+    /**
+     * The caller's orders, newest first, for the tracking page. Scoped by the
+     * session id in the query, so it cannot list another customer's orders.
+     */
+    @Transactional(readOnly = true)
+    public List<OrderResponse> listOwn(long customerId) {
+        return orders.findAllByCustomerIdOrderByOrderDateDesc(customerId).stream()
+                .map(OrderResponse::from)
+                .toList();
     }
 
     /**

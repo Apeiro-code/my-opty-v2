@@ -6,6 +6,7 @@ import com.myopty.order.dto.OrderResponse;
 import com.myopty.order.service.OrderService;
 import com.myopty.shared.user.AppUser;
 import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,10 +25,10 @@ import org.springframework.web.bind.annotation.RestController;
  * customer order against another's prescription. The service additionally scopes
  * every query by that id.
  *
- * <p>It also has to read its own orders back, so this controller serves a single
- * order by id too. The listing the README describes ({@code GET /api/orders}
- * filtered by status or prescription) is the client's queue story and is not added
- * here.
+ * <p>It also serves the customer's own order history: a list of everything they
+ * have ordered, newest first, and a single order by id. The shop's queue — the
+ * same rows filtered by status — lives on {@code /api/shop/orders} behind the
+ * client role, so this controller never has to decide whose orders to return.
  */
 @RestController
 @RequestMapping("/api/orders")
@@ -44,6 +45,12 @@ public class OrderController {
     public ApiResponse<OrderResponse> create(
             @RequestBody @Valid CreateOrderRequest request, @AuthenticationPrincipal AppUser customer) {
         return ApiResponse.of(service.create(customer.getId(), request));
+    }
+
+    /** The caller's own orders, newest first, for the tracking page. */
+    @GetMapping
+    public ApiResponse<List<OrderResponse>> list(@AuthenticationPrincipal AppUser customer) {
+        return ApiResponse.of(service.listOwn(customer.getId()));
     }
 
     @GetMapping("/{id}")

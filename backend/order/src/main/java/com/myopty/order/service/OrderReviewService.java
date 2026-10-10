@@ -1,5 +1,6 @@
 package com.myopty.order.service;
 
+import com.myopty.order.config.LabProperties;
 import com.myopty.order.dto.OrderResponse;
 import com.myopty.order.exception.InvalidStateException;
 import com.myopty.order.exception.PrescriptionNotVerifiedException;
@@ -10,9 +11,11 @@ import com.myopty.order.model.ProgressiveOrder;
 import com.myopty.order.model.VerificationStatus;
 import com.myopty.order.repository.PrescriptionRepository;
 import com.myopty.order.repository.ProgressiveOrderRepository;
+import java.time.LocalDate;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * The shop's side of an order: the approval queue and the two decisions that let
@@ -27,6 +30,11 @@ import org.springframework.transaction.annotation.Transactional;
  * <p>Like prescription review, the decision is one-way: only a {@code PENDING}
  * order may be approved or rejected. A rejection stores its reason so the customer
  * is told why.
+ *
+ * <p>Approval quotes the receive date from the lab lead time for the order's lens
+ * type. The state change commits through a {@link TransactionTemplate} <em>before</em>
+ * the customer is notified, so a mail failure can never roll back a decision the
+ * shop has made.
  */
 @Service
 public class OrderReviewService {
@@ -36,10 +44,21 @@ public class OrderReviewService {
 
     private final ProgressiveOrderRepository orders;
     private final PrescriptionRepository prescriptions;
+    private final LabProperties lab;
+    private final OrderNotifier notifications;
+    private final TransactionTemplate transactionTemplate;
 
-    public OrderReviewService(ProgressiveOrderRepository orders, PrescriptionRepository prescriptions) {
+    public OrderReviewService(
+            ProgressiveOrderRepository orders,
+            PrescriptionRepository prescriptions,
+            LabProperties lab,
+            OrderNotifier notifications,
+            TransactionTemplate transactionTemplate) {
         this.orders = orders;
         this.prescriptions = prescriptions;
+        this.lab = lab;
+        this.notifications = notifications;
+        this.transactionTemplate = transactionTemplate;
     }
 
     /**
@@ -55,20 +74,27 @@ public class OrderReviewService {
                 .toList();
     }
 
-    @Transactional
     public OrderResponse approve(long orderId) {
-        ProgressiveOrder order = loadPending(orderId);
-        requireVerifiedPrescription(order);
-        order.setStatus(OrderStatus.APPROVED);
-        return OrderResponse.from(orders.save(order));
+        ProgressiveOrder order = transactionTemplate.execute(state -> {
+            ProgressiveOrder pending = loadPending(orderId);
+            requireVerifiedPrescription(pending);
+            pending.setStatus(OrderStatus.APPROVED);
+            pending.setReceiveDate(LocalDate.now().plusDays(lab.leadDaysFor(pending.getOrderType())));
+            return orders.save(pending);
+        });
+        notifications.recordAndSend(order, OrderStatus.APPROVED);
+        return OrderResponse.from(order);
     }
 
-    @Transactional
     public OrderResponse reject(long orderId, String reason) {
-        ProgressiveOrder order = loadPending(orderId);
-        order.setStatus(OrderStatus.REJECTED);
-        order.setRejectionReason(reason.trim());
-        return OrderResponse.from(orders.save(order));
+        ProgressiveOrder order = transactionTemplate.execute(state -> {
+            ProgressiveOrder pending = loadPending(orderId);
+            pending.setStatus(OrderStatus.REJECTED);
+            pending.setRejectionReason(reason.trim());
+            return orders.save(pending);
+        });
+        notifications.recordAndSend(order, OrderStatus.REJECTED);
+        return OrderResponse.from(order);
     }
 
     private ProgressiveOrder loadPending(long orderId) {

@@ -3,38 +3,52 @@ package com.myopty.order.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.myopty.order.config.LabProperties;
 import com.myopty.order.dto.OrderResponse;
 import com.myopty.order.exception.InvalidStateException;
 import com.myopty.order.exception.PrescriptionNotVerifiedException;
 import com.myopty.order.exception.ResourceNotFoundException;
 import com.myopty.order.model.OrderStatus;
+import com.myopty.order.model.OrderType;
 import com.myopty.order.model.Prescription;
 import com.myopty.order.model.ProgressiveOrder;
 import com.myopty.order.model.VerificationStatus;
 import com.myopty.order.repository.PrescriptionRepository;
 import com.myopty.order.repository.ProgressiveOrderRepository;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.SimpleTransactionStatus;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * The shop's order approval rules, without a database: that an order may only be
- * approved against a verified prescription, that a decision is one-way, and what
- * the default queue holds.
+ * approved against a verified prescription, that a decision is one-way, that
+ * approval quotes a receive date, and what the default queue holds.
  *
  * <p>Both repositories are hand-written fakes because the rule under test is the
  * gate between an order and its linked prescription, which a fake makes explicit
- * instead of hiding in a database fixture.
+ * instead of hiding in a database fixture. The transaction template runs each
+ * callback inline — there is nothing to commit to in a unit test — and the notifier
+ * is a recorder, so "the customer was told" is an assertion, not a side effect.
  */
 class OrderReviewServiceTest {
 
     private final FakeOrderRepository orders = new FakeOrderRepository();
     private final FakePrescriptionRepository prescriptions = new FakePrescriptionRepository();
-    private final OrderReviewService service = new OrderReviewService(orders, prescriptions);
+    private final RecordingNotifier notifier = new RecordingNotifier();
+    private final OrderReviewService service =
+            new OrderReviewService(orders, prescriptions, new LabProperties(), notifier, immediateTransactions());
 
     private static ProgressiveOrder order(long id, long prescriptionId, OrderStatus status) {
         ProgressiveOrder order = new ProgressiveOrder();
@@ -43,6 +57,7 @@ class OrderReviewServiceTest {
         order.setCustomerId(7L);
         order.setPrescriptionId(prescriptionId);
         order.setLensId(12L);
+        order.setOrderType(OrderType.PROGRESSIVE);
         order.setQuantity(1);
         order.setStatus(status);
         order.setOrderDate(LocalDateTime.of(2026, 10, 10, 9, 0));
@@ -56,6 +71,21 @@ class OrderReviewServiceTest {
         return prescription;
     }
 
+    private static TransactionTemplate immediateTransactions() {
+        return new TransactionTemplate(new PlatformTransactionManager() {
+            @Override
+            public TransactionStatus getTransaction(TransactionDefinition definition) {
+                return new SimpleTransactionStatus();
+            }
+
+            @Override
+            public void commit(TransactionStatus status) {}
+
+            @Override
+            public void rollback(TransactionStatus status) {}
+        });
+    }
+
     @Test
     void approvingAPendingOrderWithAVerifiedPrescriptionMovesItToApproved() {
         orders.put(order(4L, 30L, OrderStatus.PENDING));
@@ -67,16 +97,28 @@ class OrderReviewServiceTest {
     }
 
     @Test
+    void approvingQuotesAReceiveDateFromTheLabLeadTimeAndTellsTheCustomer() {
+        orders.put(order(4L, 30L, OrderStatus.PENDING));
+        prescriptions.put(prescription(30L, VerificationStatus.VERIFIED));
+
+        OrderResponse response = service.approve(4L);
+
+        assertThat(response.receiveDate()).isEqualTo(LocalDate.now().plusDays(7));
+        assertThat(notifier.statuses).containsExactly(OrderStatus.APPROVED);
+    }
+
+    @Test
     void approvingIsRefusedWhileThePrescriptionIsNotVerified() {
         orders.put(order(4L, 30L, OrderStatus.PENDING));
         prescriptions.put(prescription(30L, VerificationStatus.PENDING_REVIEW));
 
         assertThatThrownBy(() -> service.approve(4L)).isInstanceOf(PrescriptionNotVerifiedException.class);
         assertThat(orders.saved).isNull();
+        assertThat(notifier.statuses).isEmpty();
     }
 
     @Test
-    void rejectingAPendingOrderStoresTheReason() {
+    void rejectingAPendingOrderStoresTheReasonAndTellsTheCustomer() {
         orders.put(order(4L, 30L, OrderStatus.PENDING));
 
         OrderResponse response = service.reject(4L, "  Lens out of stock.  ");
@@ -84,6 +126,7 @@ class OrderReviewServiceTest {
         assertThat(response.status()).isEqualTo(OrderStatus.REJECTED);
         assertThat(response.rejectionReason()).isEqualTo("Lens out of stock.");
         assertThat(orders.saved.getRejectionReason()).isEqualTo("Lens out of stock.");
+        assertThat(notifier.statuses).containsExactly(OrderStatus.REJECTED);
     }
 
     @Test
@@ -115,6 +158,16 @@ class OrderReviewServiceTest {
         assertThat(service.queue(null)).extracting(OrderResponse::id).containsExactly(2L, 3L);
     }
 
+    private static final class RecordingNotifier implements OrderNotifier {
+
+        private final List<OrderStatus> statuses = new ArrayList<>();
+
+        @Override
+        public void recordAndSend(ProgressiveOrder order, OrderStatus status) {
+            statuses.add(status);
+        }
+    }
+
     private static final class FakeOrderRepository implements ProgressiveOrderRepository {
 
         private final Map<Long, ProgressiveOrder> byId = new HashMap<>();
@@ -137,6 +190,11 @@ class OrderReviewServiceTest {
         }
 
         @Override
+        public List<ProgressiveOrder> findAllByCustomerIdOrderByOrderDateDesc(Long customerId) {
+            throw new UnsupportedOperationException("not used by the review story");
+        }
+
+        @Override
         public Optional<ProgressiveOrder> findById(Long id) {
             return Optional.ofNullable(byId.get(id));
         }
@@ -147,6 +205,11 @@ class OrderReviewServiceTest {
                     .filter(order -> order.getStatus() == status)
                     .sorted(Comparator.comparing(ProgressiveOrder::getOrderDate))
                     .toList();
+        }
+
+        @Override
+        public List<ProgressiveOrder> findAllByStatusInOrderByOrderDateAsc(Collection<OrderStatus> statuses) {
+            throw new UnsupportedOperationException("not used by the review story");
         }
     }
 
