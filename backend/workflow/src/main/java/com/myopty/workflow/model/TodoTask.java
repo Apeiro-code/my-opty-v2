@@ -1,5 +1,8 @@
 package com.myopty.workflow.model;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
