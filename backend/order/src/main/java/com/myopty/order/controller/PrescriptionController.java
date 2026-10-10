@@ -6,9 +6,11 @@ import com.myopty.order.dto.PrescriptionSubmission;
 import com.myopty.order.service.PrescriptionService;
 import com.myopty.shared.user.AppUser;
 import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -48,5 +50,14 @@ public class PrescriptionController {
             @RequestPart(value = "document", required = false) MultipartFile document,
             @AuthenticationPrincipal AppUser customer) {
         return ApiResponse.of(service.submit(customer.getId(), submission, document));
+    }
+
+    /**
+     * The caller's own prescriptions, so the order form can offer one to link.
+     * An array even for one or none, matching the README's list-endpoint shape.
+     */
+    @GetMapping
+    public ApiResponse<List<PrescriptionResponse>> list(@AuthenticationPrincipal AppUser customer) {
+        return ApiResponse.of(service.listFor(customer.getId()));
     }
 }

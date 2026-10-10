@@ -14,6 +14,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockMultipartFile;
@@ -119,6 +120,16 @@ class PrescriptionServiceTest {
             prescription.setId(ids.incrementAndGet());
             this.saved = prescription;
             return prescription;
+        }
+
+        @Override
+        public Optional<Prescription> findByIdAndCustomerId(Long id, Long customerId) {
+            throw new UnsupportedOperationException("not used by the submit story");
+        }
+
+        @Override
+        public List<Prescription> findAllByCustomerIdOrderByIdDesc(Long customerId) {
+            throw new UnsupportedOperationException("not used by the submit story");
         }
     }
 

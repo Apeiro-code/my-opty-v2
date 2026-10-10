@@ -113,19 +113,21 @@ POST   /api/inventory/report/export   # Export PDF/Excel
 - Customer notifications on status changes
 
 **API Endpoints:**
-`POST /api/prescriptions` is **implemented** — the customer submission story. The rest are the
-planned surface: `GET /api/orders`, `PUT /api/orders/{id}/approve` and the rest. Nothing else
-below is running code.
+`POST /api/prescriptions`, `GET /api/prescriptions` (own list), `POST /api/orders` and
+`GET /api/orders/{id}` are **implemented**. The rest are the planned surface:
+`GET /api/orders`, `PUT /api/orders/{id}/approve` and the rest. Nothing else below is
+running code.
 
 ```
 POST   /api/prescriptions                  # Submit prescription, multipart (customer) — BUILT
+GET    /api/prescriptions                  # Own prescriptions, newest first (customer) — BUILT
 GET    /api/prescriptions/{id}             # View prescription
 GET    /api/prescriptions/{id}/document    # Download uploaded document (client)
 GET    /api/prescriptions?status=          # Review queue (client), e.g. PENDING_REVIEW
 PUT    /api/prescriptions/{id}/verify      # Client verify
 PUT    /api/prescriptions/{id}/reject      # Client reject, body: { "reason": "..." }
-POST   /api/orders                         # Create order against a prescription
-GET    /api/orders/{id}                    # Order detail
+POST   /api/orders                         # Create order against a prescription (customer) — BUILT
+GET    /api/orders/{id}                    # Own order detail (customer) — BUILT
 GET    /api/orders?prescriptionId=         # Order built from a prescription
 GET    /api/orders?status=                 # Approval queue (client)
 PUT    /api/orders/{id}/approve            # Client approve
@@ -162,6 +164,18 @@ existing behaviour:
 - The order endpoints are mounted at `/api/orders` rather than the originally
   planned `/api/orders/progressive`, because the order type is something the
   customer selects and a path segment would fix the value the URL left open.
+- **`POST /api/orders` is built.** A customer links one of their own prescriptions
+  to a lens (and, optionally, a frame) under a selected order type. The order type
+  is snapshotted onto `progressive_order.order_type` (V107, values mirroring
+  `lens.type`) so the workflow and reports route on it without reading the catalog
+  module's tables. The customer id comes from the session, and the prescription is
+  loaded with that id in the query, so an order can only be built from the caller's
+  own prescription (a non-owner gets 404, not 403, so the response cannot confirm
+  that another customer's id exists). A `REJECTED` prescription is refused with 409.
+  The frame and lens are persisted as given; the V101 foreign keys are the check
+  that they exist, and a bad id comes back as 400 rather than a 500. `total_amount`
+  stays null — pricing is the billing module's job and needs catalog prices this
+  module must not read. `GET /api/orders/{id}` reads one order back for its owner.
 - `GET /api/orders` requires at least one of `prescriptionId` or `status`, and
   always returns an array. Queue endpoints return at most 100 rows, oldest first.
 - An order can only be approved once its prescription is `VERIFIED`, so nothing
@@ -1224,6 +1238,7 @@ erDiagram
         int order_id PK
         int customer_id FK
         int lens_id FK
+        string order_type
         date order_date
         date receive_date
         string status

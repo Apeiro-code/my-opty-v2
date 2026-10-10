@@ -7,7 +7,7 @@ Prescriptions, progressive orders, discounts and stock intake. Owner: Welikubura
 | Table | What it holds |
 |---|---|
 | `prescription` | Optical values, document key, verification status |
-| `progressive_order` | An order built against a prescription |
+| `progressive_order` | An order built against a prescription, linked to a frame and lens under a selected order type |
 | `order_notification` | What the shop told a customer, stored as written |
 | `discount` | Percentage, validity window, bulk targets |
 | `stock_update` | New stock received from a dealer |
@@ -19,13 +19,27 @@ duplicate-version failure that fails the whole build.
 
 ## Endpoints owned here
 
-Implemented: `POST /api/prescriptions` — the customer submission story: optical values
-(per eye) as a JSON `prescription` part and an optional `document` part, both
-`multipart/form-data`. The customer id comes from the session.
+Implemented:
+- `POST /api/prescriptions` — the customer submission story: optical values (per eye)
+  as a JSON `prescription` part and an optional `document` part, both
+  `multipart/form-data`.
+- `GET /api/prescriptions` — the caller's own prescriptions, newest first, so the
+  order form can offer one to link.
+- `POST /api/orders` — the customer links one of their own prescriptions to a lens
+  (and, optionally, a frame) under a selected order type. The order type is a JSON
+  enum field; the customer id comes from the session and the prescription is loaded
+  with that id in the query. A non-owner's prescription answers 404, a `REJECTED`
+  one 409, and an unknown frame or lens 400.
+- `GET /api/orders/{id}` — one order, for its owner only.
+
+The customer id comes from the session in every case; no endpoint takes it from the
+body or a query parameter. `order_type` arrived in `V107__order_add_order_type.sql`;
+values mirror `lens.type` (`SINGLE_VISION`, `BIFOCAL`, `PROGRESSIVE`).
 
 Still planned: `GET /api/prescriptions/{id}`, `GET /api/prescriptions/{id}/document`,
 `GET /api/prescriptions?status=`, `PUT /api/prescriptions/{id}/verify` and `/reject`,
-`/api/orders`, `/api/notifications`, `/api/discounts`, `/api/stock/updates`.
+`GET /api/orders?prescriptionId=`, `GET /api/orders?status=`, the order approve/reject
+and workflow endpoints, `/api/notifications`, `/api/discounts`, `/api/stock/updates`.
 
 Documents are written through `service/ObjectStore`; the only implementation is
 filesystem-backed (`FileSystemObjectStore`, rooted at `myopty.object-storage.root`).

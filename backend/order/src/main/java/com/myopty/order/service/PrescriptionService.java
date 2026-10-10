@@ -10,6 +10,7 @@ import com.myopty.order.model.VerificationStatus;
 import com.myopty.order.repository.PrescriptionRepository;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
@@ -69,6 +70,18 @@ public class PrescriptionService {
             }
             throw exception;
         }
+    }
+
+    /**
+     * The customer's own prescriptions, newest first, so the order form can offer
+     * one to link. The query is scoped by customer id, so it cannot list anyone
+     * else's.
+     */
+    @Transactional(readOnly = true)
+    public List<PrescriptionResponse> listFor(long customerId) {
+        return repository.findAllByCustomerIdOrderByIdDesc(customerId).stream()
+                .map(PrescriptionResponse::from)
+                .toList();
     }
 
     private void validateDocument(MultipartFile document, String contentType) {

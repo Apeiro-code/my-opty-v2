@@ -55,7 +55,7 @@ class SchemaMigrationTest {
         assertThat(versions)
                 .containsExactly(
                         "1", "1.1", "1.2", "1.3", "2", "3", "4", "5", "6", "7", "100", "101", "102", "103", "104",
-                        "105", "106", "200", "201", "202", "203", "300", "301", "302", "303");
+                        "105", "106", "107", "200", "201", "202", "203", "300", "301", "302", "303");
     }
 
     @Test
@@ -154,8 +154,8 @@ class SchemaMigrationTest {
                 jdbc.queryForObject("SELECT id FROM app_user WHERE email = 'schema-test@example.com'", Long.class);
 
         assertThatThrownBy(() -> jdbc.update("""
-                INSERT INTO progressive_order (order_number, customer_id, prescription_id, lens_id)
-                VALUES ('SCHEMA-TEST-1', ?, 999999, 999999)
+                INSERT INTO progressive_order (order_number, customer_id, prescription_id, lens_id, order_type)
+                VALUES ('SCHEMA-TEST-1', ?, 999999, 999999, 'PROGRESSIVE')
                 """, customerId))
                 .hasMessageContaining("fk_progressive_order_prescription");
     }

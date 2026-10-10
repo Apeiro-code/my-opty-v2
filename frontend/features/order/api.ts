@@ -1,6 +1,11 @@
-import { apiPostForm } from "@/lib/api/client";
+import { apiGet, apiPost, apiPostForm } from "@/lib/api/client";
 import type { ApiResult } from "@/types/api";
-import type { Prescription, PrescriptionSubmission } from "./types";
+import type {
+  CreateOrder,
+  Order,
+  Prescription,
+  PrescriptionSubmission,
+} from "./types";
 
 /** The values plus the optional document, as one submission. */
 export type NewPrescription = PrescriptionSubmission & {
@@ -30,4 +35,17 @@ export function submitPrescription(
   }
 
   return apiPostForm<Prescription>("/api/prescriptions", form);
+}
+
+/** The caller's own prescriptions, so the order form can offer one to link. */
+export function listOwnPrescriptions(): Promise<ApiResult<Prescription[]>> {
+  return apiGet<Prescription[]>("/api/prescriptions");
+}
+
+/**
+ * Links a prescription to a frame and lens under a chosen order type. The frame
+ * is optional — a customer may order lenses only.
+ */
+export function createOrder(input: CreateOrder): Promise<ApiResult<Order>> {
+  return apiPost<Order>("/api/orders", input);
 }
