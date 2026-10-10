@@ -25,4 +25,15 @@ public class TodoTaskController {
     public List<TodoTaskResponse> getAllTasks(@RequestParam Integer clientId) {
         return service.getAllTasks(clientId);
     }
+
+    @PutMapping("/{id}/status")
+    public TodoTaskResponse updateTaskStatus(@PathVariable Integer id,
+                                             @RequestParam String newStatus) {
+        return service.updateStatus(id, newStatus);
+    }
+
+    @GetMapping("/queue")
+    public List<TodoTaskResponse> getTaskQueue(@RequestParam Integer clientId) {
+        return service.getPendingQueue(clientId);
+    }
 }

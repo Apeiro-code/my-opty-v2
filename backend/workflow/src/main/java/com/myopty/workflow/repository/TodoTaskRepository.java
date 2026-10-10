@@ -33,4 +33,11 @@ public class TodoTaskRepository extends SimpleJdbcRepository<TodoTask, Integer> 
             .setParameter("clientId", clientId)
             .getResultList();
     }
+
+    public java.util.List<TodoTask> findPendingTasksByClientId(Integer clientId) {
+        return entityManager.createQuery(
+            "SELECT t FROM TodoTask t WHERE t.clientId = :clientId AND t.status = 'PENDING' ORDER BY t.createdAt ASC", TodoTask.class)
+            .setParameter("clientId", clientId)
+            .getResultList();
+    }
 }

@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +22,7 @@ public class TodoTaskService {
         task.setTitle(request.getTitle());
         task.setDescription(request.getDescription());
         task.setStatus("PENDING");
+        task.setPriority(request.getPriority());
         task.setDueDate(request.getDueDate());
         task.setCreatedAt(LocalDateTime.now());
 
@@ -28,8 +30,22 @@ public class TodoTaskService {
         return convertToResponse(saved);
     }
 
+    public TodoTaskResponse updateStatus(Integer taskId, String newStatus) {
+        TodoTask task = repository.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("Task not found with id: " + taskId));
+        task.setStatus(newStatus);
+        TodoTask updated = repository.save(task);
+        return convertToResponse(updated);
+    }
+
     public java.util.List<TodoTaskResponse> getAllTasks(Integer clientId) {
         return repository.findAllByClientId(clientId).stream()
+                .map(this::convertToResponse)
+                .toList();
+    }
+
+    public java.util.List<TodoTaskResponse> getPendingQueue(Integer clientId) {
+        return repository.findPendingTasksByClientId(clientId).stream()
                 .map(this::convertToResponse)
                 .toList();
     }
@@ -42,6 +58,7 @@ public class TodoTaskService {
                 task.getDescription(),
                 task.getStatus(),
                 task.getDueDate(),
+                task.getPriority(),
                 task.getCreatedAt()
         );
     }

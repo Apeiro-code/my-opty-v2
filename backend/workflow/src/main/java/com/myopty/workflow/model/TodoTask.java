@@ -22,11 +22,14 @@ public class TodoTask {
 
     private LocalDate dueDate;
 
+    private String priority;
+
     private LocalDateTime createdAt;
 
     // Default constructor
     public TodoTask() {
         this.status = "PENDING";
+        this.priority = "MEDIUM";
         this.createdAt = LocalDateTime.now();
     }
 
@@ -48,6 +51,9 @@ public class TodoTask {
 
     public LocalDate getDueDate() { return dueDate; }
     public void setDueDate(LocalDate dueDate) { this.dueDate = dueDate; }
+
+    public String getPriority() { return priority; }
+    public void setPriority(String priority) { this.priority = priority; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
