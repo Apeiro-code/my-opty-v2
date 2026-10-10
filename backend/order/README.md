@@ -19,15 +19,23 @@ duplicate-version failure that fails the whole build.
 
 ## Endpoints owned here
 
-Planned: `/api/prescriptions`, `/api/orders`, `/api/notifications`,
-`/api/discounts`, `/api/stock/updates`.
+Implemented: `POST /api/prescriptions` — the customer submission story: optical values
+(per eye) as a JSON `prescription` part and an optional `document` part, both
+`multipart/form-data`. The customer id comes from the session.
 
-Nothing is implemented yet. This module compiles and its tables exist; the endpoints land
-with the features.
+Still planned: `GET /api/prescriptions/{id}`, `GET /api/prescriptions/{id}/document`,
+`GET /api/prescriptions?status=`, `PUT /api/prescriptions/{id}/verify` and `/reject`,
+`/api/orders`, `/api/notifications`, `/api/discounts`, `/api/stock/updates`.
+
+Documents are written through `service/ObjectStore`; the only implementation is
+filesystem-backed (`FileSystemObjectStore`, rooted at `myopty.object-storage.root`).
+MinIO is still to come and replaces that one bean. The per-eye optical columns arrived
+in `V106__order_prescription_per_eye.sql`; V100's shared `cyl`/`axis`/`add_power` were
+dropped by it, having never held a row.
 
 ## Depends on
 
-`contracts`, `shared`.
+`contracts`, `shared` (the session principal `AppUser` and the `ApiError` envelope).
 
 It must not depend on another business module. If you need something from `catalog`, put an
 interface in `backend/contracts/catalog/` and let the reactor enforce it — an `import

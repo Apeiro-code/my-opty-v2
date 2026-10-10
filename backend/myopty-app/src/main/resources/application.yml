@@ -34,6 +34,18 @@ spring:
   jackson:
     default-property-inclusion: non_null
 
+  # The container's ceiling on an uploaded request, set just above order's own
+  # 10MB document cap (myopty.object-storage.max-file-size). A file between the
+  # two gets order's INVALID_DOCUMENT answer in the error envelope; one over this
+  # line is stopped by Tomcat before the controller, which is the behaviour wanted
+  # for a request so large it should never have been read into memory. This is
+  # app-wide because multipart parsing happens before any module sees the request,
+  # and only the runnable module's application.yml is the one on the classpath.
+  servlet:
+    multipart:
+      max-file-size: 15MB
+      max-request-size: 16MB
+
   # Outbound mail, read from the MAIL_* contract in .env. Locally those point at
   # Mailpit (compose service), which accepts any credentials and shows every
   # message at http://localhost:8025 — so auth and STARTTLS are off by default

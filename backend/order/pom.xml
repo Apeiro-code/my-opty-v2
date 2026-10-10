@@ -20,6 +20,15 @@
             <groupId>com.myopty</groupId>
             <artifactId>contracts</artifactId>
         </dependency>
+        <!-- The session principal is shared's AppUser, and the error envelope is
+             shared's ApiError. Reading the caller's id off the security context is
+             the one cross-module use CONTRIBUTING allows outright: shared entities
+             are the exception. The filter chain itself arrives with this jar, so
+             order still writes no security configuration of its own. -->
+        <dependency>
+            <groupId>com.myopty</groupId>
+            <artifactId>shared</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webmvc</artifactId>

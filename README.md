@@ -26,10 +26,12 @@ What is built and working:
 | Payment config | PayHere sandbox runbook in `docs/DEPLOYMENT.md`; bad `PAYMENT_GATEWAY_*` config fails startup naming the variable |
 | Email | `spring.mail` wired from `MAIL_*`; `MailSendingTest` proves a real send through Mailpit |
 
-What is **not** built: every feature endpoint listed in this file, and the object store. The
-API answers `/actuator/health`, `POST /api/auth/login`, `GET /api/auth/me`,
-`POST /api/auth/logout` and nothing else — every other route returns 401 until the module
-that owns it builds it.
+What is **not** built: every feature endpoint listed in this file except prescription
+submission, and a real object store. The API answers `/actuator/health`,
+`POST /api/auth/login`, `GET /api/auth/me`, `POST /api/auth/logout` and
+`POST /api/prescriptions`; every other route returns 401 until the module that owns it builds it.
+Prescription documents are written to a filesystem-backed `ObjectStore` (a development stand-in
+for MinIO, which is still not wired).
 
 Where a section below describes endpoint behaviour in detail, read it as the specification those
 features are built against, not as a description of running software. Two places say as much
@@ -111,11 +113,12 @@ POST   /api/inventory/report/export   # Export PDF/Excel
 - Customer notifications on status changes
 
 **API Endpoints:**
-None implemented yet. These are the planned surface: `POST /api/prescriptions`,
-`GET /api/orders`, `PUT /api/orders/{id}/approve` and the rest. Nothing below is running code.
+`POST /api/prescriptions` is **implemented** — the customer submission story. The rest are the
+planned surface: `GET /api/orders`, `PUT /api/orders/{id}/approve` and the rest. Nothing else
+below is running code.
 
 ```
-POST   /api/prescriptions                  # Submit prescription, multipart (customer)
+POST   /api/prescriptions                  # Submit prescription, multipart (customer) — BUILT
 GET    /api/prescriptions/{id}             # View prescription
 GET    /api/prescriptions/{id}/document    # Download uploaded document (client)
 GET    /api/prescriptions?status=          # Review queue (client), e.g. PENDING_REVIEW
@@ -147,7 +150,15 @@ existing behaviour:
 - `POST /api/prescriptions` is `multipart/form-data`, not JSON: the `prescription`
   part carries the optical values as a JSON object, the `document` part carries the
   scan or photo. Any other `Content-Type` is refused with 415 before the request
-  reaches the controller.
+  reaches the controller. **This endpoint is built.** The document is optional; when
+  present it must be a PDF, JPEG or PNG up to 10 MB
+  (`myopty.object-storage.max-file-size`), and `spring.servlet.multipart` is capped
+  at 15 MB so a file between the two gets the error envelope rather than Tomcat's.
+  The customer id comes from the session, never the body. V106 adds per-eye cylinder,
+  axis and add-power columns (V100 had all three shared across both eyes) and drops
+  the three shared columns, which held no data because no endpoint existed before
+  this one. Documents are written through an `ObjectStore`; the only implementation
+  is filesystem-backed and MinIO is still to come.
 - The order endpoints are mounted at `/api/orders` rather than the originally
   planned `/api/orders/progressive`, because the order type is something the
   customer selects and a path segment would fix the value the URL left open.

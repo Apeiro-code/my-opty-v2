@@ -45,6 +45,10 @@ async function request<T>(
   try {
     response = await fetch(`${BASE_URL}${path}${query}`, {
       ...rest,
+      // The session is a cookie set by :8080 and read by :3000, so every request
+      // has to opt into sending it cross-origin; without this the browser omits
+      // it and an authenticated call arrives anonymous.
+      credentials: "include",
       headers: { Accept: "application/json", ...rest.headers },
     });
   } catch {
@@ -97,6 +101,14 @@ export const apiPost = <T>(path: string, body: unknown) =>
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
+
+/**
+ * A POST carrying `multipart/form-data`. The `Content-Type` header is left off on
+ * purpose: the browser must set it, because only it knows the boundary string it
+ * generated, and a manually-set type makes the server unable to parse the parts.
+ */
+export const apiPostForm = <T>(path: string, form: FormData) =>
+  request<T>(path, { method: "POST", body: form });
 
 export const apiPut = <T>(path: string, body: unknown) =>
   request<T>(path, {

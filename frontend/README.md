@@ -11,21 +11,22 @@ npm run build    # production build + type check
 
 ## What exists
 
-Only enough to make the shape of the app visible and to prove the toolchain works. There are no
-features, no data fetching in any component, and the only route that renders is `/`.
+The skeleton, plus the first feature: the customer prescription submission form. There is no
+other data fetching in any component.
 
-| Path                        | What it is                                             |
-| --------------------------- | ------------------------------------------------------ |
-| `app/layout.tsx`            | Root HTML/body, metadata, `globals.css`                |
-| `app/(customer)/page.tsx`   | Public storefront landing page — the one working route |
-| `app/(customer)/layout.tsx` | Storefront header and nav                              |
-| `app/(client)/layout.tsx`   | Shop-owner nav                                         |
-| `lib/api/client.ts`         | The single `fetch` wrapper                             |
-| `types/api.ts`              | `ApiResult` / `ApiError` / `ApiMeta`                   |
+| Path                                    | What it is                                           |
+| --------------------------------------- | ---------------------------------------------------- |
+| `app/layout.tsx`                        | Root HTML/body, metadata, `globals.css`              |
+| `app/(customer)/page.tsx`               | Public storefront landing page                       |
+| `app/(customer)/prescriptions/page.tsx` | Prescription submission page (thin server component) |
+| `app/(customer)/layout.tsx`             | Storefront header and nav                            |
+| `app/(client)/layout.tsx`               | Shop-owner nav                                       |
+| `features/order/`                       | Prescription form, API call, and types               |
+| `lib/api/client.ts`                     | The single `fetch` wrapper                           |
+| `types/api.ts`                          | `ApiResult` / `ApiError` / `ApiMeta`                 |
 
-Everything else — `app/api/`, `features/`, `components/ui/`, `lib/auth/`, and the `(customer)` and
-`(client)` subdirectories — is an empty directory holding a `.gitkeep`. The shape is agreed; the code is
-not written.
+Everything else — `app/api/`, the other `features/`, `components/ui/`, `lib/auth/`, and the
+remaining `(customer)` and `(client)` subdirectories — is an empty directory holding a `.gitkeep`.
 
 ## Three rules this skeleton exists to enforce
 
@@ -62,7 +63,7 @@ owner sees `/shop/orders`. The `/shop` segment is what separates them.
 | `/shop/billing`   | `app/(client)/shop/billing/`    | Shop owner                      |
 | `/api/*`          | `app/api/`                      | BFF route handlers              |
 
-Only `/` has a page. Every other directory holds a `.gitkeep` and nothing else.
+Only `/` and `/prescriptions` have a page. Every other directory holds a `.gitkeep` and nothing else.
 
 ### Why `/shop` and not `/admin`, and why on every route
 

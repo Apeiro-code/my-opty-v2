@@ -25,6 +25,9 @@ export default function CustomerLayout({ children }: LayoutProps<"/">) {
           <Link href="/lenses" className="text-sm hover:underline">
             Lenses
           </Link>
+          <Link href="/prescriptions" className="text-sm hover:underline">
+            Prescriptions
+          </Link>
           <Link href="/orders" className="text-sm hover:underline">
             Orders
           </Link>
