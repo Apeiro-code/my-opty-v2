@@ -1,50 +1,21 @@
 package com.myopty.workflow.repository;
 
 import com.myopty.workflow.model.TodoTask;
-import org.springframework.data.jdbc.repository.support.SimpleJdbcRepository;
+import org.springframework.data.jdbc.repository.query.Query;
+import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.stereotype.Repository;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import java.util.List;
 import java.util.Optional;
 
 @Repository
-public class TodoTaskRepository extends SimpleJdbcRepository<TodoTask, Integer> {
+public interface TodoTaskRepository extends ListCrudRepository<TodoTask, Integer> {
 
-    @PersistenceContext
-    private EntityManager entityManager;
+    @Query("SELECT * FROM TODO_TASK WHERE client_id = :clientId ORDER BY task_id DESC")
+    List<TodoTask> findAllByClientId(Integer clientId);
 
-    public TodoTaskRepository() {
-        super(TodoTask.class);
-    }
+    @Query("SELECT * FROM TODO_TASK WHERE client_id = :clientId AND status = 'PENDING' ORDER BY created_at ASC")
+    List<TodoTask> findPendingTasksByClientId(Integer clientId);
 
-    public Optional<TodoTask> findByClientId(Integer clientId) {
-        return Optional.ofNullable(
-            entityManager.createQuery(
-                "SELECT t FROM TodoTask t WHERE t.clientId = :clientId", TodoTask.class)
-                .setParameter("clientId", clientId)
-                .getSingleResult()
-        );
-    }
-
-    public java.util.List<TodoTask> findAllByClientId(Integer clientId) {
-        return entityManager.createQuery(
-            "SELECT t FROM TodoTask t WHERE t.clientId = :clientId ORDER BY t.taskId DESC", TodoTask.class)
-            .setParameter("clientId", clientId)
-            .getResultList();
-    }
-
-    public java.util.List<TodoTask> findPendingTasksByClientId(Integer clientId) {
-        return entityManager.createQuery(
-            "SELECT t FROM TodoTask t WHERE t.clientId = :clientId AND t.status = 'PENDING' ORDER BY t.createdAt ASC", TodoTask.class)
-            .setParameter("clientId", clientId)
-            .getResultList();
-    }
-
-    public java.util.List<TodoTask> findOverdueTasksByClientId(Integer clientId) {
-        return entityManager.createQuery(
-            "SELECT t FROM TodoTask t WHERE t.clientId = :clientId AND t.dueDate < CURRENT_DATE AND t.status != 'DONE'", TodoTask.class)
-            .setParameter("clientId", clientId)
-            .getResultList();
-    }
+    @Query("SELECT * FROM TODO_TASK WHERE client_id = :clientId AND due_date < CURRENT_DATE AND status != 'DONE'")
+    List<TodoTask> findOverdueTasksByClientId(Integer clientId);
 }

@@ -1,15 +1,12 @@
 package com.myopty.workflow.model;
 
-import jakarta.persistence.*;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
 
-@Entity
-@Table(name = "TODO_TASK")
+@Table("TODO_TASK")
 public class TodoTask {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer taskId;
 
     private Integer clientId;
@@ -28,15 +25,13 @@ public class TodoTask {
 
     private LocalDateTime createdAt;
 
-    // Default constructor
     public TodoTask() {
         this.status = "PENDING";
         this.priority = "MEDIUM";
         this.reminderSent = false;
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = java.time.LocalDateTime.now();
     }
 
-    // Getters and Setters
     public Integer getTaskId() { return taskId; }
     public void setTaskId(Integer taskId) { this.taskId = taskId; }
 
