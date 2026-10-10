@@ -8,6 +8,7 @@ import com.myopty.catalog.service.FrameService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -52,5 +53,15 @@ public class ShopFrameController {
     @PutMapping("/{id}")
     public ApiResponse<FrameResponse> update(@PathVariable long id, @RequestBody @Valid UpdateFrameRequest request) {
         return ApiResponse.of(service.update(id, request));
+    }
+
+    /**
+     * Takes a frame off the shop wall. It is a discontinue, not a row delete: the
+     * record stays so old orders still resolve, and the edit endpoint is how it is
+     * put back.
+     */
+    @DeleteMapping("/{id}")
+    public ApiResponse<FrameResponse> discontinue(@PathVariable long id) {
+        return ApiResponse.of(service.discontinue(id));
     }
 }

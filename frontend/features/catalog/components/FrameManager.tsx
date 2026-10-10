@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
-import { createFrame, listShopFrames, updateFrame } from "../api";
+import {
+  createFrame,
+  discontinueFrame,
+  listShopFrames,
+  updateFrame,
+} from "../api";
 import type { Frame, FrameInput } from "../types";
 
 const PRICE_FORMAT = new Intl.NumberFormat("en-LK", {
@@ -20,6 +25,7 @@ const PRICE_FORMAT = new Intl.NumberFormat("en-LK", {
 export default function FrameManager() {
   const [frames, setFrames] = useState<Frame[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
 
@@ -68,6 +74,20 @@ export default function FrameManager() {
     return null;
   }
 
+  async function onDiscontinue(id: number): Promise<void> {
+    const result = await discontinueFrame(id);
+    if (!result.ok) {
+      setActionError(messageFor(result.error));
+      return;
+    }
+    setActionError(null);
+    setFrames(
+      (current) =>
+        current?.map((frame) => (frame.id === id ? result.data : frame)) ??
+        null,
+    );
+  }
+
   if (loadError) {
     return (
       <p role="alert" className="text-sm text-red-600 dark:text-red-400">
@@ -82,6 +102,12 @@ export default function FrameManager() {
 
   return (
     <div className="flex flex-col gap-4">
+      {actionError ? (
+        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          {actionError}
+        </p>
+      ) : null}
+
       {editingId === null && !adding ? (
         <button
           type="button"
@@ -149,7 +175,7 @@ export default function FrameManager() {
                 <Detail label="In stock" value={String(frame.stockQty)} />
                 <Detail label="Visible" value={frame.active ? "Yes" : "No"} />
               </dl>
-              <div className="mt-4">
+              <div className="mt-4 flex gap-2">
                 <button
                   type="button"
                   onClick={() => {
@@ -160,6 +186,23 @@ export default function FrameManager() {
                 >
                   Edit
                 </button>
+                {frame.active ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          `Discontinue "${frame.model}"? It comes off the site but stays for old orders.`,
+                        )
+                      ) {
+                        void onDiscontinue(frame.id);
+                      }
+                    }}
+                    className="rounded-md border border-black/15 px-3 py-1.5 text-sm dark:border-white/20"
+                  >
+                    Discontinue
+                  </button>
+                ) : null}
               </div>
             </li>
           ),

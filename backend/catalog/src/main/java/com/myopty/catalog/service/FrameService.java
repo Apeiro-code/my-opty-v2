@@ -48,6 +48,20 @@ public class FrameService {
         return FrameResponse.from(frames.save(frame));
     }
 
+    /**
+     * Removes a frame from the shop wall by deactivating it, not by deleting the
+     * row: an order or a stock entry may still reference it, and V3's
+     * {@code ON DELETE RESTRICT} is the database saying so. An already-inactive
+     * frame is left inactive, so calling this twice is harmless. Reactivating is
+     * an ordinary {@link #update}.
+     */
+    @Transactional
+    public FrameResponse discontinue(long id) {
+        Frame frame = frames.findById(id).orElseThrow(() -> new ResourceNotFoundException("Frame not found."));
+        frame.setActive(false);
+        return FrameResponse.from(frames.save(frame));
+    }
+
     @Transactional(readOnly = true)
     public FrameResponse read(long id) {
         return frames.findById(id)

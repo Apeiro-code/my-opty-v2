@@ -2,6 +2,7 @@ package com.myopty.app;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -114,6 +115,42 @@ class FrameManagementFlowTest {
                         .content(frameJson("Ghost", null, "Acetate", "1000.00", 1, true)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error.code").value("NOT_FOUND"));
+    }
+
+    @Test
+    void aClientCanDiscontinueAFrameAndItStaysResolvable() throws Exception {
+        MockHttpSession client = loginAs(CLIENT_EMAIL, CLIENT_PASSWORD);
+        long frameId = createFrame(client, "Meridian 77", "Champagne", "Titanium", "9200.00", 6, true);
+
+        mvc.perform(delete("/api/shop/frames/{id}", frameId).session(client))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.active").value(false));
+
+        Boolean active = jdbc.queryForObject("SELECT is_active FROM frame WHERE id = ?", Boolean.class, frameId);
+        assertThat(active).isFalse();
+
+        // Still listed, because the row is hidden rather than deleted.
+        mvc.perform(get("/api/shop/frames").session(client))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[*].model", hasItem("Meridian 77")));
+    }
+
+    @Test
+    void discontinuingAFrameThatDoesNotExistIsNotFound() throws Exception {
+        MockHttpSession client = loginAs(CLIENT_EMAIL, CLIENT_PASSWORD);
+
+        mvc.perform(delete("/api/shop/frames/{id}", 9_999_999L).session(client))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value("NOT_FOUND"));
+    }
+
+    @Test
+    void aCustomerCannotDiscontinueAFrame() throws Exception {
+        MockHttpSession client = loginAs(CLIENT_EMAIL, CLIENT_PASSWORD);
+        long frameId = createFrame(client, "Willow 99", "Plum", "TR-90", "3800.00", 15, true);
+        MockHttpSession customer = loginAs(CUSTOMER_EMAIL, CUSTOMER_PASSWORD);
+
+        mvc.perform(delete("/api/shop/frames/{id}", frameId).session(customer)).andExpect(status().isForbidden());
     }
 
     @Test

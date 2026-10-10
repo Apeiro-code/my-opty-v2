@@ -87,6 +87,41 @@ class FrameServiceTest {
     }
 
     @Test
+    void discontinuingAFrameHidesItWithoutRemovingIt() {
+        FrameResponse created = service.create(request("Astra 2100", "Matte Black", "Acetate", "4500.00", 12, null));
+
+        FrameResponse discontinued = service.discontinue(created.id());
+
+        assertThat(discontinued.active()).isFalse();
+        assertThat(frames.findById(created.id())).isPresent();
+        assertThat(service.list()).extracting(FrameResponse::id).containsExactly(created.id());
+    }
+
+    @Test
+    void discontinuingAnAlreadyHiddenFrameStaysHidden() {
+        FrameResponse created = service.create(request("Falcon 330", "Clear", "Acetate", "5400.00", 0, false));
+
+        assertThat(service.discontinue(created.id()).active()).isFalse();
+    }
+
+    @Test
+    void aDiscontinuedFrameCanBeEditedBackOntoTheShopWall() {
+        FrameResponse created = service.create(request("Astra 2100", "Matte Black", "Acetate", "4500.00", 12, null));
+        service.discontinue(created.id());
+
+        FrameResponse reactivated = service.update(
+                created.id(),
+                new UpdateFrameRequest("Astra 2100", "Matte Black", "Acetate", new BigDecimal("4500.00"), 12, true));
+
+        assertThat(reactivated.active()).isTrue();
+    }
+
+    @Test
+    void discontinuingAFrameThatDoesNotExistIsNotFound() {
+        assertThatThrownBy(() -> service.discontinue(99L)).isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
     void listingReturnsEveryFrameOldestFirst() {
         service.create(request("Astra 2100", "Matte Black", "Acetate", "4500.00", 12, null));
         service.create(request("Willow 08", "Plum", "TR-90", "3800.00", 15, null));

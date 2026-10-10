@@ -47,13 +47,14 @@ public class CatalogExceptionHandler {
     }
 
     /**
-     * The category foreign key is the only check that a chosen category exists.
-     * A bad id is a client mistake, not a server one, so it answers 400 rather
-     * than the default 500.
+     * A foreign key or {@code CHECK} constraint refused the write. A category id
+     * that does not exist is the case this is here for; it is a client mistake,
+     * not a server one, so it answers 400 rather than the default 500.
      */
     @ExceptionHandler(DataIntegrityViolationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError constraintViolated(DataIntegrityViolationException exception) {
-        return ApiError.of("INVALID_FRAME", "The frame could not be saved: a referenced value is not valid.");
+        return ApiError.of(
+                "INVALID_RECORD", "The record could not be saved: a referenced or constrained value is not valid.");
     }
 }
