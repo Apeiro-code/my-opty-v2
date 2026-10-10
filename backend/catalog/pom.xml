@@ -20,6 +20,14 @@
             <groupId>com.myopty</groupId>
             <artifactId>contracts</artifactId>
         </dependency>
+        <!-- The error envelope for a refused write is shared's ApiError, so this
+             module speaks the same { success, error } shape the filter chain and
+             the auth endpoints already do. shared is the one module every other
+             module may depend on; it carries no domain of its own. -->
+        <dependency>
+            <groupId>com.myopty</groupId>
+            <artifactId>shared</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webmvc</artifactId>

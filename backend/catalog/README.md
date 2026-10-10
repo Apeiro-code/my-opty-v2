@@ -22,8 +22,14 @@ duplicate-version failure that fails the whole build.
 Planned: `/api/frames`, `/api/lenses`, `/api/categories`,
 `/api/inventory/report`, `/api/inventory/alerts`, `/api/inventory/report/export`.
 
-Nothing is implemented yet. This module compiles and its tables exist; the endpoints land
-with the features.
+**Built:** the shop owner's frame add and edit stories —
+`GET /api/shop/frames` (inventory list), `POST /api/shop/frames` (add) and
+`PUT /api/shop/frames/{id}` (edit). They sit under `/api/shop/**`, so the
+filter chain's `ROLE_CLIENT` rule is the only place the role is checked, and
+they never touch the storefront's public read surface.
+
+Nothing else is implemented yet. This module compiles and its tables exist; the
+remaining endpoints land with the features.
 
 ## Depends on
 

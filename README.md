@@ -92,6 +92,12 @@ GET    /api/inventory/alerts          # Low-stock alerts
 POST   /api/inventory/report/export   # Export PDF/Excel
 ```
 
+The shop owner's add and edit stories are **implemented** at `/api/shop/frames` —
+`GET` (the inventory list), `POST` (add) and `PUT /{id}` (edit) — behind the
+existing `ROLE_CLIENT` rule that every `/api/shop/**` endpoint already carries.
+The customer-facing `/api/frames` browse endpoints are not built yet, because
+nothing serves the storefront's `/frames` page.
+
 **Database Tables:** `category`, `frame`, `lens`, `stock_entry`, `availability_report`
 
 ---
