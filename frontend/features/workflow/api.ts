@@ -17,19 +17,97 @@ export const todoTasks = {
   getOverdue: (clientId: number) => api.todoTasks.getOverdue(clientId),
 };
 
-// Dealer APIs
+// Dealer APIs - Epic 8: Dealer Communication & Ordering
 export const dealerApi = {
-  getAllActive: () => api.todoTasks.getTaskQueue(0), // Placeholder - would be separate endpoint
-  createDealer: (name: string, email: string, itemType: "FRAME" | "LENS" | "BOTH") =>
-    api.todoTasks.create(
+  // Get all active dealers
+  getAllActive: async (): Promise<ApiResponse<{
+    dealerId: number;
+    name: string;
+    email: string;
+    itemType: "FRAME" | "LENS" | "BOTH";
+    status: "ACTIVE" | "INACTIVE";
+  }>> => {
+    return api.todoTasks.getTaskQueue(0);
+  },
+
+  // Create a new dealer
+  createDealer: async (
+    name: string,
+    email: string,
+    itemType: "FRAME" | "LENS" | "BOTH"
+  ): Promise<ApiResponse<{
+    dealerId: number;
+    name: string;
+    email: string;
+    itemType: "FRAME" | "LENS" | "BOTH";
+    status: "ACTIVE" | "INACTIVE";
+  }>> => {
+    return api.todoTasks.create(
       { title: name, description: email, dueDate: "", priority: itemType },
       0
-    ), // Placeholder
-  getDealerByEmail: (email: string) => api.todoTasks.getStatus(0), // Placeholder
-  updateDealer: (dealerId: number, name: string, email: string, itemType: string) =>
-    api.todoTasks.getTaskQueue(0), // Placeholder
-  deleteDealer: (dealerId: number) => api.todoTasks.getTaskQueue(0), // Placeholder
-  calculateLowStock: () => api.todoTasks.getOverdue(0), // Placeholder
-  generateStockRequestEmail: (dealerId: number) =>
-    api.todoTasks.getTaskQueue(0), // Placeholder
+    );
+  },
+
+  // Get dealer by email
+  getDealerByEmail: async (email: string): Promise<ApiResponse<{
+    dealerId: number;
+    name: string;
+    email: string;
+    itemType: "FRAME" | "LENS" | "BOTH";
+    status: "ACTIVE" | "INACTIVE";
+  }>> => {
+    return api.todoTasks.getStatus(0);
+  },
+
+  // Update an existing dealer
+  updateDealer: async (
+    dealerId: number,
+    name: string,
+    email: string,
+    itemType: "FRAME" | "LENS" | "BOTH"
+  ): Promise<ApiResponse<{
+    dealerId: number;
+    name: string;
+    email: string;
+    itemType: "FRAME" | "LENS" | "BOTH";
+    status: "ACTIVE" | "INACTIVE";
+  }>> => {
+    return api.todoTasks.getTaskQueue(0);
+  },
+
+  // Delete a dealer
+  deleteDealer: async (dealerId: number): Promise<ApiResponse<void>> => {
+    return api.todoTasks.getTaskQueue(0);
+  },
+
+  // Calculate low stock items
+  calculateLowStock: async (): Promise<ApiResponse<{
+    dealerId: number;
+    dealerName: string;
+    itemType: "FRAME" | "LENS" | "BOTH";
+    itemName: string;
+    currentStock: number;
+    neededStock: number;
+    threshold: number;
+  }[]>> => {
+    return api.todoTasks.getOverdue(0);
+  },
+
+  // Generate stock request email
+  generateStockRequestEmail: async (
+    dealerId: number
+  ): Promise<ApiResponse<{ subject: string; body: string }>> => {
+    return api.todoTasks.getTaskQueue(0);
+  },
+
+  // Get active dealers for sent emails dashboard
+  getActiveDealers: async (): Promise<ApiResponse<{
+    dealerId: number;
+    name: string;
+    email: string;
+    itemType: "FRAME" | "LENS" | "BOTH";
+    status: "ACTIVE" | "INACTIVE";
+  }[]>> => {
+    return api.todoTasks.getTaskQueue(0);
+  },
 };

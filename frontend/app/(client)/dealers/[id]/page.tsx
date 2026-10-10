@@ -1,4 +1,7 @@
+"use client";
+
 import { useState, useEffect, useParams } from "react";
+import { useRouter } from "next/navigation";
 import { dealerApi } from "@/features/workflow/api";
 import { dealerTypes } from "@/types/workflow";
 
@@ -17,7 +20,7 @@ interface DealerFormValues {
 }
 
 export default function DealerEditPage() {
-  const { id } = useParams<{ id: string }>();
+  const router = useRouter();
   const [form, setForm] = useState<DealerFormValues>({
     name: "",
     email: "",
@@ -73,7 +76,7 @@ export default function DealerEditPage() {
           email: "",
           itemType: "FRAME",
         });
-        navigate("/client/dealers", { replace: true });
+        router.push("/client/dealers", { replace: true });
       } else {
         setError(result.error?.message || "Failed to update dealer");
       }

@@ -1,5 +1,7 @@
+"use client";
+
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { dealerApi } from "@/features/workflow/api";
 import { dealerTypes } from "@/types/workflow";
 
@@ -18,7 +20,7 @@ interface DealerFormValues {
 }
 
 export default function DealerContactsPage() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [dealers, setDealers] = useState<DealerContact[]>([]);
   const [form, setForm] = useState<DealerFormValues>({
     name: "",
@@ -67,7 +69,7 @@ export default function DealerContactsPage() {
           email: "",
           itemType: "FRAME",
         });
-        navigate("/client/dealers", { replace: true });
+        router.push("/client/dealers", { replace: true });
       } else {
         setError(result.error?.message || "Failed to create dealer");
       }
@@ -99,7 +101,7 @@ export default function DealerContactsPage() {
           email: "",
           itemType: "FRAME",
         });
-        navigate("/client/dealers", { replace: true });
+        router.push("/client/dealers", { replace: true });
       } else {
         setError(result.error?.message || "Failed to update dealer");
       }
@@ -210,7 +212,7 @@ export default function DealerContactsPage() {
                 <td className="p-3">
                   <div className="flex space-x-2">
                     <button
-                      onClick={() => navigate(`/client/dealers/${dealer.dealerId}/edit`, { replace: true })}
+                      onClick={() => router.push(`/client/dealers/${dealer.dealerId}/edit`, { replace: true })}
                       className="text-sm text-blue-600 hover:text-blue-800"
                     >
                       Edit
