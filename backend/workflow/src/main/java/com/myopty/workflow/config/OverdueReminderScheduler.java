@@ -4,14 +4,16 @@ import com.myopty.workflow.service.TodoTaskService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
 import java.util.List;
 
 @Component
-@RequiredArgsConstructor
 public class OverdueReminderScheduler {
 
     private final TodoTaskService todoTaskService;
+
+    public OverdueReminderScheduler(TodoTaskService todoTaskService) {
+        this.todoTaskService = todoTaskService;
+    }
 
     @PostConstruct
     public void init() {

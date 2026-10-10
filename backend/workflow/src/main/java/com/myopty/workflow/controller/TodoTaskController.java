@@ -3,17 +3,19 @@ package com.myopty.workflow.controller;
 import com.myopty.workflow.dto.TodoTaskRequest;
 import com.myopty.workflow.dto.TodoTaskResponse;
 import com.myopty.workflow.service.TodoTaskService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/tasks")
-@RequiredArgsConstructor
 public class TodoTaskController {
 
     private final TodoTaskService service;
+
+    public TodoTaskController(TodoTaskService service) {
+        this.service = service;
+    }
 
     @PostMapping
     public TodoTaskResponse createTask(@RequestBody TodoTaskRequest request,

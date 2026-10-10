@@ -4,17 +4,19 @@ import com.myopty.workflow.dto.TodoTaskRequest;
 import com.myopty.workflow.dto.TodoTaskResponse;
 import com.myopty.workflow.model.TodoTask;
 import com.myopty.workflow.repository.TodoTaskRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class TodoTaskService {
 
     private final TodoTaskRepository repository;
+
+    public TodoTaskService(TodoTaskRepository repository) {
+        this.repository = repository;
+    }
 
     public TodoTaskResponse createTask(Integer clientId, TodoTaskRequest request) {
         TodoTask task = new TodoTask();
