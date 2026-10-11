@@ -1,8 +1,10 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import { TaskBoard } from "@/features/workflow/components/TaskBoard";
 import { TaskForm } from "@/features/workflow/components/TaskForm";
 import { TaskQueue } from "@/features/workflow/components/TaskQueue";
-import { getTasks, getTaskQueue, getOverdueTasks } from "@/features/workflow/api";
+import { todoTasks } from "../../../../features/workflow/api";
 import { ApiResponse } from "@/types/workflow";
 
 export default function ClientWorkflowPage() {
