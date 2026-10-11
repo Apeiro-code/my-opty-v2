@@ -1,14 +1,28 @@
+import AvailabilityReport from "@/features/catalog/components/AvailabilityReport";
 import FrameManager from "@/features/catalog/components/FrameManager";
 import LensManager from "@/features/catalog/components/LensManager";
 
 /**
- * The shop owner's inventory page: the frame catalogue and the lens collection.
- * A thin server component; both catalogues live in `features/catalog`, the
- * catalog module's ownership boundary.
+ * The shop owner's inventory page: a live availability report over the frame
+ * catalogue and the lens collection. A thin server component; everything lives
+ * in `features/catalog`, the catalog module's ownership boundary.
  */
 export default function ShopInventoryPage() {
   return (
     <div className="flex flex-col gap-10 py-4">
+      <section className="flex flex-col gap-6">
+        <div>
+          <h1 className="text-2xl font-semibold">Availability</h1>
+          <p className="mt-2 max-w-prose text-sm opacity-80">
+            Every active frame and lens with what is on the shelf right now,
+            banded as in stock, low stock or out of stock. Stock falls as orders
+            are placed and comes back when an order is rejected, so this view
+            tracks the shelf live — use it to plan what to reorder.
+          </p>
+        </div>
+        <AvailabilityReport />
+      </section>
+
       <section className="flex flex-col gap-6">
         <div>
           <h1 className="text-2xl font-semibold">Frames</h1>

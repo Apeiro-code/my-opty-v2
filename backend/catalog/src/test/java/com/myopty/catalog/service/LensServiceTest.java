@@ -170,6 +170,26 @@ class LensServiceTest {
                     .sorted(Comparator.comparing(Lens::getId))
                     .toList();
         }
+
+        @Override
+        public int decrementStock(long id, int quantity) {
+            Lens lens = byId.get(id);
+            if (lens == null || lens.getStockQty() < quantity) {
+                return 0;
+            }
+            lens.setStockQty(lens.getStockQty() - quantity);
+            return 1;
+        }
+
+        @Override
+        public int incrementStock(long id, int quantity) {
+            Lens lens = byId.get(id);
+            if (lens == null) {
+                return 0;
+            }
+            lens.setStockQty(lens.getStockQty() + quantity);
+            return 1;
+        }
     }
 
     private static final class FakeCategoryRepository implements CategoryRepository {

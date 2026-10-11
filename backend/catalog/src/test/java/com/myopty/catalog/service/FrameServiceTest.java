@@ -199,6 +199,26 @@ class FrameServiceTest {
                     .sorted(Comparator.comparing(Frame::getId))
                     .toList();
         }
+
+        @Override
+        public int decrementStock(long id, int quantity) {
+            Frame frame = byId.get(id);
+            if (frame == null || frame.getStockQty() < quantity) {
+                return 0;
+            }
+            frame.setStockQty(frame.getStockQty() - quantity);
+            return 1;
+        }
+
+        @Override
+        public int incrementStock(long id, int quantity) {
+            Frame frame = byId.get(id);
+            if (frame == null) {
+                return 0;
+            }
+            frame.setStockQty(frame.getStockQty() + quantity);
+            return 1;
+        }
     }
 
     private static final class FakeCategoryRepository implements CategoryRepository {

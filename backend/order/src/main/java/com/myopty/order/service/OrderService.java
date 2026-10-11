@@ -1,5 +1,7 @@
 package com.myopty.order.service;
 
+import com.myopty.contracts.catalog.StockManager;
+import com.myopty.contracts.catalog.StockReservation;
 import com.myopty.order.dto.CreateOrderRequest;
 import com.myopty.order.dto.OrderResponse;
 import com.myopty.order.exception.PrescriptionRejectedException;
@@ -29,6 +31,11 @@ import org.springframework.transaction.annotation.Transactional;
  * database's foreign keys (V101) are the check that they exist — see
  * {@code OrderExceptionHandler}, which turns that constraint failure into a 400
  * rather than a 500.
+ *
+ * <p>Placing the order also books its frame and lens out of stock. The booking
+ * runs through {@link StockManager}, the catalog's contract interface, inside the
+ * same transaction that saves the order, so an order that cannot be filled never
+ * exists. A stock-short order answers {@code OUT_OF_STOCK} and changes nothing.
  */
 @Service
 public class OrderService {
@@ -37,10 +44,12 @@ public class OrderService {
 
     private final ProgressiveOrderRepository orders;
     private final PrescriptionRepository prescriptions;
+    private final StockManager stock;
 
-    public OrderService(ProgressiveOrderRepository orders, PrescriptionRepository prescriptions) {
+    public OrderService(ProgressiveOrderRepository orders, PrescriptionRepository prescriptions, StockManager stock) {
         this.orders = orders;
         this.prescriptions = prescriptions;
+        this.stock = stock;
     }
 
     @Transactional
@@ -64,7 +73,10 @@ public class OrderService {
         order.setOrderDate(LocalDateTime.now());
         order.setStatus(OrderStatus.PENDING);
 
-        return OrderResponse.from(orders.save(order));
+        ProgressiveOrder saved = orders.save(order);
+        stock.reserve(new StockReservation(
+                saved.getId(), saved.getOrderNumber(), saved.getFrameId(), saved.getLensId(), saved.getQuantity()));
+        return OrderResponse.from(saved);
     }
 
     @Transactional(readOnly = true)

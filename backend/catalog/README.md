@@ -32,6 +32,21 @@ assigned to). They sit under `/api/shop/**`, so the filter chain's `ROLE_CLIENT`
 rule is the only place the role is checked, and they never touch the storefront's
 public read surface.
 
+Also **built:** `GET /api/shop/inventory/report` — the live availability report.
+It reads every active frame and lens and bands each as `IN_STOCK`, `LOW_STOCK`
+(`0 < stock_qty <= low_stock_threshold`) or `OUT_OF_STOCK` (`stock_qty = 0`),
+returning the three counts and the per-item rows. It is computed on read and does
+not write the `availability_report` snapshot table, which belongs to the separate
+export story.
+
+This module provides the `contracts.catalog.StockManager` seam. `StockService`
+implements it: `reserve` decrements a frame/lens with a conditional update
+(`... WHERE id = ? AND stock_qty >= ?`, so a concurrent order cannot oversell),
+throws `InsufficientStockException` when the shelf cannot cover the order, and
+writes a `SALE` row to `stock_entry`; `release` restores the units and writes a
+`RETURN` row. `order` calls these on order placement and rejection, so stock moves
+without either module reading the other's tables.
+
 A frame or lens carries an optional `categoryId`. When one is supplied, the
 service checks the category exists and that its `item_type` accepts the record
 (`FRAME`, `LENS`, or `BOTH`); filing under the wrong product is a 400

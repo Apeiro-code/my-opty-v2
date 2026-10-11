@@ -3,6 +3,8 @@ package com.myopty.order.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.myopty.contracts.catalog.StockManager;
+import com.myopty.contracts.catalog.StockReservation;
 import com.myopty.order.config.LabProperties;
 import com.myopty.order.dto.OrderResponse;
 import com.myopty.order.exception.InvalidStateException;
@@ -47,8 +49,9 @@ class OrderReviewServiceTest {
     private final FakeOrderRepository orders = new FakeOrderRepository();
     private final FakePrescriptionRepository prescriptions = new FakePrescriptionRepository();
     private final RecordingNotifier notifier = new RecordingNotifier();
-    private final OrderReviewService service =
-            new OrderReviewService(orders, prescriptions, new LabProperties(), notifier, immediateTransactions());
+    private final RecordingStock stock = new RecordingStock();
+    private final OrderReviewService service = new OrderReviewService(
+            orders, prescriptions, new LabProperties(), notifier, stock, immediateTransactions());
 
     private static ProgressiveOrder order(long id, long prescriptionId, OrderStatus status) {
         ProgressiveOrder order = new ProgressiveOrder();
@@ -130,6 +133,20 @@ class OrderReviewServiceTest {
     }
 
     @Test
+    void rejectingAPendingOrderReturnsItsBookedStock() {
+        orders.put(order(4L, 30L, OrderStatus.PENDING));
+
+        service.reject(4L, "wrong prescription");
+
+        StockReservation returned = stock.released;
+        assertThat(returned.orderId()).isEqualTo(4L);
+        assertThat(returned.orderNumber()).isEqualTo("ORD-TEST-4");
+        assertThat(returned.frameId()).isNull();
+        assertThat(returned.lensId()).isEqualTo(12L);
+        assertThat(returned.quantity()).isEqualTo(1);
+    }
+
+    @Test
     void aRejectedOrderCannotBeApprovedAfterwards() {
         orders.put(order(4L, 30L, OrderStatus.REJECTED));
         prescriptions.put(prescription(30L, VerificationStatus.VERIFIED));
@@ -165,6 +182,21 @@ class OrderReviewServiceTest {
         @Override
         public void recordAndSend(ProgressiveOrder order, OrderStatus status) {
             statuses.add(status);
+        }
+    }
+
+    private static final class RecordingStock implements StockManager {
+
+        private StockReservation released;
+
+        @Override
+        public void reserve(StockReservation reservation) {
+            throw new UnsupportedOperationException("not used by the review story");
+        }
+
+        @Override
+        public void release(StockReservation reservation) {
+            this.released = reservation;
         }
     }
 

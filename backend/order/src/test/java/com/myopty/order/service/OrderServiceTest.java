@@ -3,6 +3,9 @@ package com.myopty.order.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.myopty.contracts.catalog.InsufficientStockException;
+import com.myopty.contracts.catalog.StockManager;
+import com.myopty.contracts.catalog.StockReservation;
 import com.myopty.order.dto.CreateOrderRequest;
 import com.myopty.order.dto.OrderResponse;
 import com.myopty.order.exception.PrescriptionRejectedException;
@@ -14,6 +17,7 @@ import com.myopty.order.model.ProgressiveOrder;
 import com.myopty.order.model.VerificationStatus;
 import com.myopty.order.repository.PrescriptionRepository;
 import com.myopty.order.repository.ProgressiveOrderRepository;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -24,8 +28,8 @@ import org.junit.jupiter.api.Test;
 
 /**
  * The order creation rules, without a database: which prescription may be linked,
- * what the created order carries, and that an order cannot be read by anyone but
- * its owner.
+ * what the created order carries, that an order cannot be read by anyone but
+ * its owner, and that placing it books its frame and lens out of stock.
  *
  * <p>The repositories are hand-written fakes because what is under test is the
  * shape of the row the service builds and the checks it makes before building it,
@@ -35,7 +39,8 @@ class OrderServiceTest {
 
     private final FakeOrderRepository orders = new FakeOrderRepository();
     private final FakePrescriptionRepository prescriptions = new FakePrescriptionRepository();
-    private final OrderService service = new OrderService(orders, prescriptions);
+    private final FakeStockManager stock = new FakeStockManager();
+    private final OrderService service = new OrderService(orders, prescriptions, stock);
 
     private static Prescription prescription(long id, long customerId, VerificationStatus status) {
         Prescription prescription = new Prescription();
@@ -82,6 +87,40 @@ class OrderServiceTest {
     }
 
     @Test
+    void placingAnOrderBooksItsFrameAndLensOutOfStock() {
+        prescriptions.put(prescription(4L, 7L, VerificationStatus.VERIFIED));
+
+        OrderResponse response = service.create(7L, new CreateOrderRequest(4L, OrderType.PROGRESSIVE, 12L, 3L, 2));
+
+        StockReservation booked = stock.reservations.get(0);
+        assertThat(booked.orderId()).isEqualTo(response.id());
+        assertThat(booked.orderNumber()).isEqualTo(response.orderNumber());
+        assertThat(booked.frameId()).isEqualTo(3L);
+        assertThat(booked.lensId()).isEqualTo(12L);
+        assertThat(booked.quantity()).isEqualTo(2);
+    }
+
+    @Test
+    void aLensesOnlyOrderBooksOnlyTheLens() {
+        prescriptions.put(prescription(4L, 7L, VerificationStatus.PENDING_REVIEW));
+
+        service.create(7L, new CreateOrderRequest(4L, OrderType.SINGLE_VISION, 12L, null, null));
+
+        assertThat(stock.reservations).hasSize(1);
+        assertThat(stock.reservations.get(0).frameId()).isNull();
+        assertThat(stock.reservations.get(0).lensId()).isEqualTo(12L);
+    }
+
+    @Test
+    void anOrderThatCannotBeFilledIsRefused() {
+        prescriptions.put(prescription(4L, 7L, VerificationStatus.VERIFIED));
+        stock.failWith = true;
+
+        assertThatThrownBy(() -> service.create(7L, new CreateOrderRequest(4L, OrderType.PROGRESSIVE, 12L, 3L, null)))
+                .isInstanceOf(InsufficientStockException.class);
+    }
+
+    @Test
     void anotherCustomersPrescriptionIsNotFound() {
         prescriptions.put(prescription(4L, 99L, VerificationStatus.VERIFIED));
 
@@ -116,6 +155,25 @@ class OrderServiceTest {
         service.create(9L, new CreateOrderRequest(5L, OrderType.PROGRESSIVE, 12L, 3L, null));
 
         assertThat(service.listOwn(7L)).extracting(OrderResponse::id).containsExactly(mine.id());
+    }
+
+    private static final class FakeStockManager implements StockManager {
+
+        private final List<StockReservation> reservations = new ArrayList<>();
+        private boolean failWith;
+
+        @Override
+        public void reserve(StockReservation reservation) {
+            if (failWith) {
+                throw new InsufficientStockException("LENS", reservation.lensId());
+            }
+            reservations.add(reservation);
+        }
+
+        @Override
+        public void release(StockReservation reservation) {
+            throw new UnsupportedOperationException("not used by the order creation story");
+        }
     }
 
     private static final class FakeOrderRepository implements ProgressiveOrderRepository {

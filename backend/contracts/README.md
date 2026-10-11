@@ -21,5 +21,13 @@ Concretely:
 
 The feature modules `catalog`, `order`, `workflow` and `billing` are deliberately absent from
 this module's dependencies. `contracts/<provider>/` directories exist for the interfaces each
-of them will provide, but no interfaces are written yet — they arrive with the features that
-need them.
+of them will provide.
+
+Written so far:
+
+- `catalog/StockManager` — `reserve(StockReservation)` / `release(StockReservation)`. `order`
+  calls it when a progressive order is placed and again when one is rejected, so stock moves
+  without `order` reading catalog's tables. The implementation (`catalog`'s `StockService`)
+  decrements/restores the shelf and writes a `stock_entry` audit row; `reserve` throws
+  `InsufficientStockException` when the shelf cannot cover the order, which `order` maps to a
+  `409 OUT_OF_STOCK`. `StockReservation` is a record of ids and a quantity.

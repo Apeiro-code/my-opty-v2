@@ -1,7 +1,8 @@
 /**
- * Mirrors the catalog module's frame, lens and category DTOs. Keep in step with
- * `backend/catalog` (`CreateFrameRequest`, `UpdateFrameRequest`, `FrameResponse`,
- * `CreateLensRequest`, `UpdateLensRequest`, `LensResponse`, `CategoryResponse`).
+ * Mirrors the catalog module's frame, lens, category and availability DTOs. Keep
+ * in step with `backend/catalog` (`CreateFrameRequest`, `UpdateFrameRequest`,
+ * `FrameResponse`, `CreateLensRequest`, `UpdateLensRequest`, `LensResponse`,
+ * `CategoryResponse`, `AvailabilityReportResponse`, `AvailabilityItemResponse`).
  */
 
 /** Mirrors the catalog module's `CategoryResponse`. */
@@ -85,4 +86,36 @@ export type LensInput = {
   stockQty: number;
   active: boolean;
   categoryId: number | null;
+};
+
+/**
+ * Which product a stock row counts. Mirrors the catalog module's `StockItemType`
+ * and `stock_entry`'s `chk_stock_entry_item_type` constraint (V5).
+ */
+export type StockItemType = "FRAME" | "LENS";
+
+/**
+ * The health band an item's stock falls into, mirroring the catalog module's
+ * `StockStatus` and V6's report bands: `0` is out, anything at or below the item's
+ * low-stock threshold is low, everything above is in stock.
+ */
+export type StockStatus = "IN_STOCK" | "LOW_STOCK" | "OUT_OF_STOCK";
+
+/** Mirrors the catalog module's `AvailabilityItemResponse`. */
+export type AvailabilityItem = {
+  itemType: StockItemType;
+  itemId: number;
+  name: string;
+  stockQty: number;
+  lowStockThreshold: number;
+  status: StockStatus;
+};
+
+/** Mirrors the catalog module's `AvailabilityReportResponse`. */
+export type AvailabilityReport = {
+  totalItems: number;
+  inStockCount: number;
+  lowStockCount: number;
+  outOfStockCount: number;
+  items: AvailabilityItem[];
 };

@@ -1,6 +1,13 @@
 import { apiDelete, apiGet, apiPost, apiPut } from "@/lib/api/client";
 import type { ApiResult } from "@/types/api";
-import type { Category, Frame, FrameInput, Lens, LensInput } from "./types";
+import type {
+  AvailabilityReport,
+  Category,
+  Frame,
+  FrameInput,
+  Lens,
+  LensInput,
+} from "./types";
 
 /**
  * The shop owner's frame, lens and category catalogue. The shop owner is a
@@ -55,4 +62,15 @@ export function updateLens(
   input: LensInput,
 ): Promise<ApiResult<Lens>> {
   return apiPut<Lens>(`/api/shop/lenses/${id}`, input);
+}
+
+/**
+ * The live availability report: every active frame and lens with its current
+ * stock and health band, for planning reorders. Computed on read, so calling it
+ * again is what makes it real-time.
+ */
+export function getAvailabilityReport(): Promise<
+  ApiResult<AvailabilityReport>
+> {
+  return apiGet<AvailabilityReport>("/api/shop/inventory/report");
 }

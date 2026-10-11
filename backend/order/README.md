@@ -29,7 +29,10 @@ Implemented:
   (and, optionally, a frame) under a selected order type. The order type is a JSON
   enum field; the customer id comes from the session and the prescription is loaded
   with that id in the query. A non-owner's prescription answers 404, a `REJECTED`
-  one 409, and an unknown frame or lens 400.
+  one 409, and an unknown frame or lens 400. Placing the order also reserves stock:
+  the frame (when there is one) and the lens are taken off the shelf through
+  `contracts.catalog.StockManager` inside the same transaction, so an order the
+  shelf cannot fill is refused (`409 OUT_OF_STOCK`) and rolls back whole.
 - `GET /api/orders` — the caller's own orders, newest first, for the tracking page.
 - `GET /api/orders/{id}` — one order, for its owner only.
 - `GET /api/notifications` — the caller's notifications, newest first; an optional
@@ -50,7 +53,9 @@ The shop owner's review, approval and production endpoints (role-gated, see belo
 - `PUT /api/shop/orders/{id}/approve` — send a pending order to production. Refused
   (409) until the linked prescription is `VERIFIED`, and stamps `receive_date` from
   the lab lead time configured for the order type.
-- `PUT /api/shop/orders/{id}/reject` — stop it, body `{ "reason": "..." }`.
+- `PUT /api/shop/orders/{id}/reject` — stop it, body `{ "reason": "..." }`. Rejecting
+  returns the order's booked stock to the shelf through `StockManager.release`, in
+  the same transaction, and writes a `RETURN` row in catalog's `stock_entry`.
 - `PUT /api/shop/orders/{id}/processing|ready|dispatched` — move an approved order
   forward. Forward-only and skippable; a backwards or repeated move is 409
   (`INVALID_STATE`); `DISPATCHED` and `REJECTED` are terminal.

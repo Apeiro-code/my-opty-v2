@@ -1,5 +1,7 @@
 package com.myopty.order.service;
 
+import com.myopty.contracts.catalog.StockManager;
+import com.myopty.contracts.catalog.StockReservation;
 import com.myopty.order.config.LabProperties;
 import com.myopty.order.dto.OrderResponse;
 import com.myopty.order.exception.InvalidStateException;
@@ -29,7 +31,9 @@ import org.springframework.transaction.support.TransactionTemplate;
  *
  * <p>Like prescription review, the decision is one-way: only a {@code PENDING}
  * order may be approved or rejected. A rejection stores its reason so the customer
- * is told why.
+ * is told why, and returns the order's stock through {@link StockManager}: the
+ * units were booked when the order was placed, so an order the shop refuses must
+ * put them back.
  *
  * <p>Approval quotes the receive date from the lab lead time for the order's lens
  * type. The state change commits through a {@link TransactionTemplate} <em>before</em>
@@ -46,6 +50,7 @@ public class OrderReviewService {
     private final PrescriptionRepository prescriptions;
     private final LabProperties lab;
     private final OrderNotifier notifications;
+    private final StockManager stock;
     private final TransactionTemplate transactionTemplate;
 
     public OrderReviewService(
@@ -53,11 +58,13 @@ public class OrderReviewService {
             PrescriptionRepository prescriptions,
             LabProperties lab,
             OrderNotifier notifications,
+            StockManager stock,
             TransactionTemplate transactionTemplate) {
         this.orders = orders;
         this.prescriptions = prescriptions;
         this.lab = lab;
         this.notifications = notifications;
+        this.stock = stock;
         this.transactionTemplate = transactionTemplate;
     }
 
@@ -91,7 +98,10 @@ public class OrderReviewService {
             ProgressiveOrder pending = loadPending(orderId);
             pending.setStatus(OrderStatus.REJECTED);
             pending.setRejectionReason(reason.trim());
-            return orders.save(pending);
+            ProgressiveOrder saved = orders.save(pending);
+            stock.release(new StockReservation(
+                    saved.getId(), saved.getOrderNumber(), saved.getFrameId(), saved.getLensId(), saved.getQuantity()));
+            return saved;
         });
         notifications.recordAndSend(order, OrderStatus.REJECTED);
         return OrderResponse.from(order);

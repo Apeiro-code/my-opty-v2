@@ -1,5 +1,6 @@
 package com.myopty.order.controller;
 
+import com.myopty.contracts.catalog.InsufficientStockException;
 import com.myopty.order.exception.InvalidDocumentException;
 import com.myopty.order.exception.InvalidStateException;
 import com.myopty.order.exception.NotificationDeliveryException;
@@ -114,6 +115,18 @@ public class OrderExceptionHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiError invalidState(InvalidStateException exception) {
         return ApiError.of("INVALID_STATE", exception.getMessage());
+    }
+
+    /**
+     * The order asked for more of a frame or lens than the catalog has on the
+     * shelf. Raised by the stock reservation inside the order's transaction, so
+     * the order itself never exists; answering 409 keeps "could not fill it as
+     * requested" distinct from "you sent a bad shape" (400).
+     */
+    @ExceptionHandler(InsufficientStockException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiError outOfStock(InsufficientStockException exception) {
+        return ApiError.of("OUT_OF_STOCK", exception.getMessage());
     }
 
     /**

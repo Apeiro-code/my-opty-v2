@@ -104,6 +104,16 @@ optional). They all sit behind the existing `ROLE_CLIENT` rule that every
 endpoints are not built yet, because nothing serves the storefront's `/frames`
 page.
 
+The inventory stories are **implemented** too: stock auto-decrements when an order
+is placed and comes back when one is rejected, and the shop reads a real-time
+availability report at `GET /api/shop/inventory/report` (in-stock / low-stock /
+out-of-stock counts plus the per-item rows). Stock moves across the module
+boundary through the `contracts.catalog.StockManager` interface, so `order` books
+stock on placement and releases it on rejection without reading catalog's tables;
+an order the shelf cannot fill is refused with `409 OUT_OF_STOCK`. `catalog`'s
+report is computed live and does not write the `availability_report` snapshot
+table — that, and the export, belong to the separate export story.
+
 **Database Tables:** `category`, `frame`, `lens`, `stock_entry`, `availability_report`
 
 ---
@@ -395,6 +405,12 @@ GET    /api/questions/faq                # Public FAQ — planned
 - Shared kernel: only `shared` module entities (AppUser, enums)
 - Events for async: `OrderPlacedEvent`, `StockChangedEvent`, `PaymentCompletedEvent`
 - No circular dependencies between feature modules
+
+The Order → Catalog row is the first one built: `order` books and releases stock
+through the synchronous `contracts.catalog.StockManager` interface, implemented by
+catalog's `StockService`, so the decrement is part of the order's transaction
+(and rolls back with it) rather than an eventual event. See
+[`backend/contracts/README.md`](backend/contracts/README.md).
 
 ---
 
