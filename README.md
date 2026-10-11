@@ -139,8 +139,9 @@ table. Also built are the two inventory additions: `GET /api/shop/inventory/aler
 `POST /api/prescriptions`, `GET /api/prescriptions` (own list), `POST /api/orders`,
 the customer's own order list and detail, and the shop's `/api/shop/prescriptions`
 and `/api/shop/orders` review, approval and production endpoints are **implemented**,
-along with the notification list. The rest are the planned surface:
-`GET /api/orders?prescriptionId=`, the discount and stock endpoints, and the rest.
+along with the notification list and the discount management and storefront-read
+endpoints. The rest are the planned surface: `GET /api/orders?prescriptionId=`,
+the stock endpoints, and the rest.
 Anything not marked BUILT below is not running code.
 
 ```
@@ -167,9 +168,10 @@ GET    /api/notifications                   # The session customer's notificatio
 GET    /api/notifications?orderId=          # ...narrowed to one order — BUILT
 GET    /api/orders?prescriptionId=          # Order built from a prescription
 POST   /api/shop/discounts                  # Create discount: percentage, targets, window (client) — BUILT
-GET    /api/shop/discounts?active=          # History, newest first; ?active=true the running ones (client) — BUILT
+GET    /api/shop/discounts?active=&state=   # History, newest first; ?state= narrows it to one state (client) — BUILT
 PUT    /api/shop/discounts/{id}             # Edit ('ended' discounts are frozen) (client) — BUILT
 DELETE /api/shop/discounts/{id}             # End early, a soft end that keeps the record (client) — BUILT
+GET    /api/discounts/active                # Storefront's read of the running promotions (public) — BUILT
 POST   /api/stock/updates                   # Record new stock (client)
 GET    /api/stock/updates                   # History
 ```
@@ -259,8 +261,15 @@ honour when the remaining endpoints are built:
   ended promotion is frozen and cannot be edited back to life. The target frame and
   lens ids are stored, not validated against the catalog (the JSON column has no
   foreign key and this module cannot read catalog's tables), and each returned
-  discount carries a derived state (`ACTIVE`/`SCHEDULED`/`EXPIRED`/`ENDED`). The
-  customer-facing "discounted price next to the original" story is still to come.
+  discount carries a derived state (`ACTIVE`/`SCHEDULED`/`EXPIRED`/`ENDED`), its
+  `createdAt`, and `endedAt`. Multi-item promotions are picked in bulk in the UI
+  (select all, or pull in a category); the page fetches the list once and splits
+  it into a Running and a History tab, while `?active=` and `?state=` are there for
+  a caller that wants the server to narrow it.
+  `GET /api/discounts/active` is the public storefront read, and the
+  `contracts.order.DiscountQuery` seam (`bestDiscountFor`) lets catalog price an
+  item — the "discounted price next to the original" figure is drawn on catalog's
+  storefront page, against that seam and its own `/api/frames` and `/api/lenses`.
 
 **Database Tables:** `prescription`, `progressive_order`, `order_notification`, `discount`, `stock_update`
 

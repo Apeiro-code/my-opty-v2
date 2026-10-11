@@ -106,8 +106,11 @@ export type Discount = {
   /** The shop's flag; false once the promotion has been ended. */
   active: boolean;
   state: DiscountState;
+  /** When the shop ended it early, or null while it still runs. */
   endedAt: string | null;
   createdBy: number | null;
+  /** When the promotion was set up; the history view shows it. */
+  createdAt: string | null;
 };
 
 /**

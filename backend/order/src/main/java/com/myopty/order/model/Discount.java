@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
@@ -20,8 +21,9 @@ import org.springframework.data.relational.core.mapping.Table;
  *
  * <p>{@code active} is the mapping of the table's {@code is_active}: the shop's
  * flag for whether the promotion runs at all, kept separate from the dates so
- * "end it early" is a decision rather than a date edit. {@code created_at} and
- * {@code updated_at} are left unmapped so their column defaults survive a save.
+ * "end it early" is a decision rather than a date edit. {@code updated_at} stays
+ * unmapped so its column default survives a save; {@code created_at} is mapped
+ * read-only for the history (see below).
  */
 @Table("discount")
 public class Discount {
@@ -40,6 +42,16 @@ public class Discount {
 
     private LocalDateTime endedAt;
     private Long createdBy;
+
+    /**
+     * When the row was written, read back for the promotion history. Marked
+     * read-only so it is never sent on an INSERT or UPDATE: the value is the
+     * column's own {@code DEFAULT CURRENT_TIMESTAMP}, which a save must not
+     * overwrite with null. {@code updated_at} stays unmapped for the same reason.
+     */
+    @ReadOnlyProperty
+    @Column("created_at")
+    private LocalDateTime createdAt;
 
     public Long getId() {
         return id;
@@ -111,5 +123,13 @@ public class Discount {
 
     public void setCreatedBy(Long createdBy) {
         this.createdBy = createdBy;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }

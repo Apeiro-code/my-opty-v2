@@ -1,8 +1,12 @@
 "use client";
 
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
-import { listShopFrames, listShopLenses } from "@/features/catalog/api";
-import type { Frame, Lens } from "@/features/catalog/types";
+import {
+  listShopCategories,
+  listShopFrames,
+  listShopLenses,
+} from "@/features/catalog/api";
+import type { Category, Frame, Lens } from "@/features/catalog/types";
 import {
   createDiscount,
   endDiscount,
@@ -23,24 +27,33 @@ const STATE_LABEL: Record<DiscountState, string> = {
   ENDED: "Ended",
 };
 
+/** A promotion that has not finished yet: running now or still to start. */
+const RUNNING_STATES: DiscountState[] = ["ACTIVE", "SCHEDULED"];
+
+/** A promotion that is over: called off early or run out of time. */
+const HISTORY_STATES: DiscountState[] = ["ENDED", "EXPIRED"];
+
 /**
- * The shop owner's promotions: create a discount so a promotion can run, edit one
- * to adjust it, and end one early when the offer stops.
+ * The shop owner's promotions, split into what is running and the history, so a
+ * promotion can be created for many items at once, edited, or ended early, and
+ * the past ones reviewed afterwards.
  *
  * <p>A client component because the whole thing is state and handlers. The
  * backend is the authority on validation and on the role boundary; this only
- * reports what it says. Target items are picked from the live catalogue, which
- * this reads through the catalog feature's own API — a deliberate read of another
- * feature's endpoints for a dropdown, not a shared write.
+ * reports what it says. The catalogue is read through the catalog feature's own
+ * API — a deliberate read of another feature's endpoints, for the frame, lens and
+ * category pickers, not a shared write.
  */
 export default function DiscountManager() {
   const [discounts, setDiscounts] = useState<Discount[] | null>(null);
   const [frames, setFrames] = useState<Frame[]>([]);
   const [lenses, setLenses] = useState<Lens[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [tab, setTab] = useState<"running" | "history">("running");
 
   useEffect(() => {
     let active = true;
@@ -62,23 +75,36 @@ export default function DiscountManager() {
 
   useEffect(() => {
     let active = true;
-    Promise.all([listShopFrames(), listShopLenses()]).then(
-      ([framesResult, lensesResult]) => {
-        if (!active) {
-          return;
-        }
-        if (framesResult.ok) {
-          setFrames(framesResult.data);
-        }
-        if (lensesResult.ok) {
-          setLenses(lensesResult.data);
-        }
-      },
-    );
+    Promise.all([
+      listShopFrames(),
+      listShopLenses(),
+      listShopCategories(),
+    ]).then(([framesResult, lensesResult, categoriesResult]) => {
+      if (!active) {
+        return;
+      }
+      if (framesResult.ok) {
+        setFrames(framesResult.data);
+      }
+      if (lensesResult.ok) {
+        setLenses(lensesResult.data);
+      }
+      if (categoriesResult.ok) {
+        setCategories(categoriesResult.data);
+      }
+    });
     return () => {
       active = false;
     };
   }, []);
+
+  const running = (discounts ?? []).filter((discount) =>
+    RUNNING_STATES.includes(discount.state),
+  );
+  const history = (discounts ?? []).filter((discount) =>
+    HISTORY_STATES.includes(discount.state),
+  );
+  const visible = tab === "running" ? running : history;
 
   async function onCreate(input: DiscountInput): Promise<string | null> {
     const result = await createDiscount(input);
@@ -87,6 +113,7 @@ export default function DiscountManager() {
     }
     setDiscounts((current) => [...(current ?? []), result.data]);
     setAdding(false);
+    setTab(HISTORY_STATES.includes(result.data.state) ? "history" : "running");
     return null;
   }
 
@@ -143,7 +170,24 @@ export default function DiscountManager() {
         </p>
       ) : null}
 
-      {editingId === null && !adding ? (
+      <div className="flex gap-2" role="tablist">
+        <Tab
+          selected={tab === "running"}
+          onClick={() => setTab("running")}
+          label={`Running (${running.length})`}
+        />
+        <Tab
+          selected={tab === "history"}
+          onClick={() => {
+            setAdding(false);
+            setEditingId(null);
+            setTab("history");
+          }}
+          label={`History (${history.length})`}
+        />
+      </div>
+
+      {editingId === null && !adding && tab === "running" ? (
         <button
           type="button"
           onClick={() => setAdding(true)}
@@ -159,6 +203,7 @@ export default function DiscountManager() {
           <DiscountForm
             frames={frames}
             lenses={lenses}
+            categories={categories}
             submitLabel="Add discount"
             onSubmit={onCreate}
             onCancel={() => setAdding(false)}
@@ -166,14 +211,16 @@ export default function DiscountManager() {
         </div>
       ) : null}
 
-      {discounts.length === 0 && !adding ? (
+      {visible.length === 0 && !adding ? (
         <p className="text-sm opacity-70">
-          No promotions yet. Add the first one to put it on the shop.
+          {tab === "running"
+            ? "No promotions running. Add one to put it on the shop."
+            : "No past promotions yet. Ended and expired ones are kept here."}
         </p>
       ) : null}
 
       <ul className="flex flex-col gap-4">
-        {discounts.map((discount) =>
+        {visible.map((discount) =>
           editingId === discount.id ? (
             <li
               key={discount.id}
@@ -184,6 +231,7 @@ export default function DiscountManager() {
                 initial={discount}
                 frames={frames}
                 lenses={lenses}
+                categories={categories}
                 submitLabel="Save changes"
                 onSubmit={(input) => onUpdate(discount.id, input)}
                 onCancel={() => setEditingId(null)}
@@ -200,11 +248,12 @@ export default function DiscountManager() {
                   {STATE_LABEL[discount.state]}
                 </span>
               </div>
-              <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-4">
+              <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-5">
                 <Detail
                   label="Discount"
                   value={`${PERCENT_FORMAT.format(discount.percentage)}%`}
                 />
+                <Detail label="Added" value={dateOnly(discount.createdAt)} />
                 <Detail label="From" value={discount.validFrom} />
                 <Detail label="To" value={discount.validTo} />
                 <Detail label="Applies to" value={targetSummary(discount)} />
@@ -240,7 +289,7 @@ export default function DiscountManager() {
                   </>
                 ) : (
                   <span className="text-xs opacity-70">
-                    Ended {discount.endedAt?.slice(0, 10)}
+                    Ended {dateOnly(discount.endedAt)}
                   </span>
                 )}
               </div>
@@ -252,16 +301,48 @@ export default function DiscountManager() {
   );
 }
 
+function Tab({
+  selected,
+  onClick,
+  label,
+}: {
+  selected: boolean;
+  onClick: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={selected}
+      onClick={onClick}
+      className={`rounded-md px-3 py-1.5 text-sm ${
+        selected
+          ? "bg-foreground font-medium text-background"
+          : "border border-black/15 dark:border-white/20"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
 /**
  * The add and edit form. It validates the fields the backend marks required so a
  * wrong value is caught before a round trip, then reports whatever the backend
  * refuses in the same place. It hands the parsed input to its parent, which owns
  * the network call and the list update.
+ *
+ * <p>For a targeted promotion it offers bulk selection on top of the per-item
+ * checkboxes: select everything, clear, or pull in a whole category's frames and
+ * lenses at once. The selection is still flat — a frame id and a lens id that
+ * collide are indistinguishable, which is the shape `target_item_ids` has.
  */
 function DiscountForm({
   initial,
   frames,
   lenses,
+  categories,
   submitLabel,
   onSubmit,
   onCancel,
@@ -269,6 +350,7 @@ function DiscountForm({
   initial?: Discount;
   frames: Frame[];
   lenses: Lens[];
+  categories: Category[];
   submitLabel: string;
   onSubmit: (input: DiscountInput) => Promise<string | null>;
   onCancel: () => void;
@@ -281,13 +363,20 @@ function DiscountForm({
   const [validTo, setValidTo] = useState(initial?.validTo ?? "");
   const [sitewide, setSitewide] = useState(initial?.sitewide ?? true);
   const [frameIds, setFrameIds] = useState<number[]>(
-    initial?.targetItemIds ?? [],
+    (initial?.targetItemIds ?? []).filter((id) =>
+      frames.some((frame) => frame.id === id),
+    ),
   );
   const [lensIds, setLensIds] = useState<number[]>(
-    initial?.targetItemIds ?? [],
+    (initial?.targetItemIds ?? []).filter((id) =>
+      lenses.some((lens) => lens.id === id),
+    ),
   );
+  const [categoryChoice, setCategoryChoice] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const selectedCount = frameIds.length + lensIds.length;
 
   function toggle(
     list: number[],
@@ -297,6 +386,34 @@ function DiscountForm({
     setter(
       list.includes(id) ? list.filter((value) => value !== id) : [...list, id],
     );
+  }
+
+  function selectEverything() {
+    setFrameIds(frames.map((frame) => frame.id));
+    setLensIds(lenses.map((lens) => lens.id));
+  }
+
+  function clearSelection() {
+    setFrameIds([]);
+    setLensIds([]);
+  }
+
+  function addCategory() {
+    const category = categories.find(
+      (candidate) => String(candidate.id) === categoryChoice,
+    );
+    if (!category) {
+      return;
+    }
+    const memberFrames = frames
+      .filter((frame) => frame.categoryId === category.id)
+      .map((frame) => frame.id);
+    const memberLenses = lenses
+      .filter((lens) => lens.categoryId === category.id)
+      .map((lens) => lens.id);
+    setFrameIds((current) => union(current, memberFrames));
+    setLensIds((current) => union(current, memberLenses));
+    setCategoryChoice("");
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -401,35 +518,81 @@ function DiscountForm({
       </label>
 
       {!sitewide ? (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Fieldset label="Frames">
-            {frames.length === 0 ? (
-              <p className="text-xs opacity-70">No frames in the catalogue.</p>
-            ) : (
-              frames.map((frame) => (
-                <Checkbox
-                  key={`frame-${frame.id}`}
-                  checked={frameIds.includes(frame.id)}
-                  label={`${frame.model} (#${frame.id})`}
-                  onChange={() => toggle(frameIds, frame.id, setFrameIds)}
-                />
-              ))
-            )}
-          </Fieldset>
-          <Fieldset label="Lenses">
-            {lenses.length === 0 ? (
-              <p className="text-xs opacity-70">No lenses in the collection.</p>
-            ) : (
-              lenses.map((lens) => (
-                <Checkbox
-                  key={`lens-${lens.id}`}
-                  checked={lensIds.includes(lens.id)}
-                  label={`${lens.name} (#${lens.id})`}
-                  onChange={() => toggle(lensIds, lens.id, setLensIds)}
-                />
-              ))
-            )}
-          </Fieldset>
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <button
+              type="button"
+              onClick={selectEverything}
+              className="rounded-md border border-black/15 px-3 py-1.5 dark:border-white/20"
+            >
+              Select everything
+            </button>
+            <button
+              type="button"
+              onClick={clearSelection}
+              className="rounded-md border border-black/15 px-3 py-1.5 dark:border-white/20"
+            >
+              Clear
+            </button>
+            <span className="opacity-70">{selectedCount} selected</span>
+            <span className="flex items-center gap-1 opacity-70">
+              <select
+                value={categoryChoice}
+                onChange={(event) => setCategoryChoice(event.target.value)}
+                className="rounded-md border border-black/15 bg-transparent px-2 py-1.5 dark:border-white/20"
+              >
+                <option value="">Add a category…</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={String(category.id)}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={addCategory}
+                disabled={!categoryChoice}
+                className="rounded-md border border-black/15 px-3 py-1.5 disabled:opacity-50 dark:border-white/20"
+              >
+                Add
+              </button>
+            </span>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Fieldset label={`Frames (${frameIds.length}/${frames.length})`}>
+              {frames.length === 0 ? (
+                <p className="text-xs opacity-70">
+                  No frames in the catalogue.
+                </p>
+              ) : (
+                frames.map((frame) => (
+                  <Checkbox
+                    key={`frame-${frame.id}`}
+                    checked={frameIds.includes(frame.id)}
+                    label={`${frame.model} (#${frame.id})`}
+                    onChange={() => toggle(frameIds, frame.id, setFrameIds)}
+                  />
+                ))
+              )}
+            </Fieldset>
+            <Fieldset label={`Lenses (${lensIds.length}/${lenses.length})`}>
+              {lenses.length === 0 ? (
+                <p className="text-xs opacity-70">
+                  No lenses in the collection.
+                </p>
+              ) : (
+                lenses.map((lens) => (
+                  <Checkbox
+                    key={`lens-${lens.id}`}
+                    checked={lensIds.includes(lens.id)}
+                    label={`${lens.name} (#${lens.id})`}
+                    onChange={() => toggle(lensIds, lens.id, setLensIds)}
+                  />
+                ))
+              )}
+            </Fieldset>
+          </div>
         </div>
       ) : null}
 
@@ -486,6 +649,14 @@ function targetSummary(discount: Discount): string {
     return "Everything";
   }
   return `${discount.targetItemIds?.length ?? 0} item(s)`;
+}
+
+function union(current: number[], additions: number[]): number[] {
+  return Array.from(new Set([...current, ...additions]));
+}
+
+function dateOnly(value: string | null): string {
+  return value ? value.slice(0, 10) : "—";
 }
 
 function Field({ label, children }: { label: string; children: ReactNode }) {

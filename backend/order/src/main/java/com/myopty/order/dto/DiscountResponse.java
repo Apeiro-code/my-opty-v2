@@ -16,6 +16,9 @@ import java.util.List;
  * does not have to treat null and empty as the same case. {@code state} is
  * computed at read time from the flag and the dates, so a list call always
  * reports the truth as of now without a scheduled job to sweep rows.
+ *
+ * <p>{@code createdAt} and {@code endedAt} are what the history view reads: when
+ * the promotion was set up and, if it was called off, when it stopped.
  */
 public record DiscountResponse(
         long id,
@@ -28,7 +31,8 @@ public record DiscountResponse(
         boolean active,
         DiscountState state,
         LocalDateTime endedAt,
-        Long createdBy) {
+        Long createdBy,
+        LocalDateTime createdAt) {
 
     public static DiscountResponse from(Discount discount, List<Long> targetItemIds, DiscountState state) {
         return new DiscountResponse(
@@ -42,6 +46,7 @@ public record DiscountResponse(
                 discount.isActive(),
                 state,
                 discount.getEndedAt(),
-                discount.getCreatedBy());
+                discount.getCreatedBy(),
+                discount.getCreatedAt());
     }
 }

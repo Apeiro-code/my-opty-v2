@@ -22,4 +22,12 @@ public interface DiscountRepository extends Repository<Discount, Long> {
 
     /** Every promotion, newest first, which is also the promotion history. */
     List<Discount> findAllByOrderByIdDesc();
+
+    /**
+     * The promotions the shop has not ended, for pricing an item: the storefront
+     * asks once per product, so this keeps ended rows out of the scan. The dates
+     * are not part of the query because "running now" is a reading of today
+     * against the window, which the caller applies.
+     */
+    List<Discount> findAllByActiveTrue();
 }

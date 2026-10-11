@@ -3,6 +3,8 @@ package com.myopty.order.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.myopty.contracts.order.AppliedDiscount;
+import com.myopty.contracts.order.ItemKind;
 import com.myopty.order.dto.DiscountRequest;
 import com.myopty.order.dto.DiscountResponse;
 import com.myopty.order.exception.InvalidDiscountException;
@@ -156,7 +158,7 @@ class DiscountServiceTest {
         ended.setEndedAt(LocalDateTime.now());
         discounts.put(ended);
 
-        assertThat(service.list(null)).extracting(DiscountResponse::id).containsExactly(2L, 1L);
+        assertThat(service.list(null, null)).extracting(DiscountResponse::id).containsExactly(2L, 1L);
     }
 
     @Test
@@ -167,8 +169,40 @@ class DiscountServiceTest {
         ended.setEndedAt(LocalDateTime.now());
         discounts.put(ended);
 
-        assertThat(service.list(true)).extracting(DiscountResponse::id).containsExactly(1L);
-        assertThat(service.list(false)).extracting(DiscountResponse::id).containsExactly(2L);
+        assertThat(service.list(true, null)).extracting(DiscountResponse::id).containsExactly(1L);
+        assertThat(service.list(false, null)).extracting(DiscountResponse::id).containsExactly(2L);
+    }
+
+    @Test
+    void listingByStateNarrowsToJustThatState() {
+        Discount ended = activeDiscount(1L);
+        ended.setActive(false);
+        ended.setEndedAt(LocalDateTime.now());
+        discounts.put(ended);
+
+        Discount expired = activeDiscount(2L);
+        expired.setValidFrom(LocalDate.now().minusDays(10));
+        expired.setValidTo(LocalDate.now().minusDays(5));
+        discounts.put(expired);
+
+        discounts.put(activeDiscount(3L));
+
+        assertThat(service.list(null, DiscountState.ENDED))
+                .extracting(DiscountResponse::id)
+                .containsExactly(1L);
+        assertThat(service.list(null, DiscountState.EXPIRED))
+                .extracting(DiscountResponse::id)
+                .containsExactly(2L);
+        assertThat(service.list(null, DiscountState.ACTIVE))
+                .extracting(DiscountResponse::id)
+                .containsExactly(3L);
+    }
+
+    @Test
+    void creatingReadsBackTheDatabaseStampedCreationTime() {
+        DiscountResponse response = service.create(7L, openEndedWindow());
+
+        assertThat(response.createdAt()).isNotNull();
     }
 
     @Test
@@ -184,10 +218,81 @@ class DiscountServiceTest {
         discounts.put(expired);
 
         Map<Long, DiscountState> byId = new HashMap<>();
-        service.list(null).forEach(response -> byId.put(response.id(), response.state()));
+        service.list(null, null).forEach(response -> byId.put(response.id(), response.state()));
 
         assertThat(byId.get(1L)).isEqualTo(DiscountState.SCHEDULED);
         assertThat(byId.get(2L)).isEqualTo(DiscountState.EXPIRED);
+    }
+
+    @Test
+    void bestDiscountForPrefersAnItemSpecificPromotionOverASitewideOne() {
+        discounts.put(promotion(1L, "20.00", null));
+        discounts.put(promotion(2L, "5.00", List.of(3L)));
+
+        assertThat(service.bestDiscountFor(ItemKind.FRAME, 3L))
+                .map(AppliedDiscount::percentage)
+                .hasValueSatisfying(percentage -> assertThat(percentage).isEqualByComparingTo("5.00"));
+        assertThat(service.bestDiscountFor(ItemKind.FRAME, 99L))
+                .map(AppliedDiscount::percentage)
+                .hasValueSatisfying(percentage -> assertThat(percentage).isEqualByComparingTo("20.00"));
+    }
+
+    @Test
+    void bestDiscountForTakesTheHighestPercentageWhenTwoTargetTheSameItem() {
+        discounts.put(promotion(1L, "5.00", List.of(3L)));
+        discounts.put(promotion(2L, "12.50", List.of(3L)));
+
+        assertThat(service.bestDiscountFor(ItemKind.LENS, 3L))
+                .map(AppliedDiscount::description)
+                .contains("Promotion 2");
+    }
+
+    @Test
+    void bestDiscountForIgnoresPromotionsThatAreNotRunning() {
+        Discount scheduled = promotion(1L, "50.00", List.of(3L));
+        scheduled.setValidFrom(LocalDate.now().plusDays(5));
+        scheduled.setValidTo(LocalDate.now().plusDays(10));
+        discounts.put(scheduled);
+
+        Discount expired = promotion(2L, "40.00", List.of(3L));
+        expired.setValidFrom(LocalDate.now().minusDays(10));
+        expired.setValidTo(LocalDate.now().minusDays(5));
+        discounts.put(expired);
+
+        Discount ended = promotion(3L, "30.00", List.of(3L));
+        ended.setActive(false);
+        ended.setEndedAt(LocalDateTime.now());
+        discounts.put(ended);
+
+        discounts.put(promotion(4L, "10.00", List.of(3L)));
+
+        assertThat(service.bestDiscountFor(ItemKind.FRAME, 3L))
+                .map(AppliedDiscount::percentage)
+                .hasValueSatisfying(percentage -> assertThat(percentage).isEqualByComparingTo("10.00"));
+    }
+
+    @Test
+    void bestDiscountForIsEmptyWhenNothingCoversTheItem() {
+        discounts.put(promotion(1L, "20.00", List.of(9L)));
+
+        assertThat(service.bestDiscountFor(ItemKind.FRAME, 3L)).isEmpty();
+    }
+
+    private static Discount promotion(long id, String percentage, List<Long> targetItemIds) {
+        Discount discount = activeDiscount(id);
+        discount.setDescription("Promotion " + id);
+        discount.setPercentage(new BigDecimal(percentage));
+        discount.setTargetItemIds(
+                targetItemIds == null || targetItemIds.isEmpty()
+                        ? null
+                        : "["
+                                + String.join(
+                                        ",",
+                                        targetItemIds.stream()
+                                                .map(String::valueOf)
+                                                .toList())
+                                + "]");
+        return discount;
     }
 
     private static Discount activeDiscount(long id) {
@@ -218,6 +323,9 @@ class DiscountServiceTest {
                         byId.keySet().stream().mapToLong(Long::longValue).max().orElse(0L) + 1;
                 discount.setId(next);
             }
+            if (discount.getCreatedAt() == null) {
+                discount.setCreatedAt(LocalDateTime.now());
+            }
             this.saved = discount;
             byId.put(discount.getId(), discount);
             return discount;
@@ -234,6 +342,11 @@ class DiscountServiceTest {
                     .stream()
                             .sorted(Comparator.comparing(Discount::getId, Comparator.reverseOrder()))
                             .toList();
+        }
+
+        @Override
+        public List<Discount> findAllByActiveTrue() {
+            return byId.values().stream().filter(Discount::isActive).toList();
         }
     }
 }

@@ -10,6 +10,7 @@ import type {
   CreateOrder,
   Discount,
   DiscountInput,
+  DiscountState,
   Order,
   OrderNotification,
   OrderStatus,
@@ -171,13 +172,17 @@ export function updateReceiveDate(
 }
 
 /**
- * The shop's promotions, newest first. No `active` argument returns the whole
- * history; `true` narrows to what is running now and `false` to the rest.
+ * The shop's promotions, newest first. No filter returns the whole history;
+ * `active` narrows to what is running now (or the rest) and `state` to one
+ * derived state, for a caller that wants the server to do the filtering. The
+ * promotions page fetches the whole list once and splits it into running and
+ * history itself, so it needs the counts from both halves.
  */
-export function listShopDiscounts(
-  active?: boolean,
-): Promise<ApiResult<Discount[]>> {
-  return apiGet<Discount[]>("/api/shop/discounts", { active });
+export function listShopDiscounts(filter?: {
+  active?: boolean;
+  state?: DiscountState;
+}): Promise<ApiResult<Discount[]>> {
+  return apiGet<Discount[]>("/api/shop/discounts", filter);
 }
 
 /** Creates a promotion: a percentage off a set of items for a window of dates. */

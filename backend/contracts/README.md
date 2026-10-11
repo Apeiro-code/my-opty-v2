@@ -31,3 +31,11 @@ Written so far:
   decrements/restores the shelf and writes a `stock_entry` audit row; `reserve` throws
   `InsufficientStockException` when the shelf cannot cover the order, which `order` maps to a
   `409 OUT_OF_STOCK`. `StockReservation` is a record of ids and a quantity.
+
+- `order/DiscountQuery` — `bestDiscountFor(ItemKind, long)`, returning an
+  `Optional<AppliedDiscount>` of the percentage and description. `catalog` calls it when it
+  prices an item for the storefront, so a customer sees the discounted figure beside the
+  original without catalog reading the `discount` table. The implementation is `order`'s
+  `DiscountQueryImpl`, which applies the "item-specific beats sitewide, then the larger
+  percentage" rule and returns empty for full price. `AppliedDiscount` carries no price — the
+  consumer holds the price and does the rounding.

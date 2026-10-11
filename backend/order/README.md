@@ -70,10 +70,13 @@ The shop owner's promotions (also under `/api/shop/**`):
   (greater than 0 and at most 100), an optional set of target frame/lens ids, and
   a validity window. A missing or empty target list means the promotion is
   sitewide. The client comes from the session and is stamped as `created_by`.
-- `GET /api/shop/discounts?active=` — every promotion, newest first, which is also
-  the history; `active=true` narrows to what is running now and `active=false` to
-  the rest. Each row carries a derived `state` (`ACTIVE`, `SCHEDULED`, `EXPIRED`
-  or `ENDED`), computed from the flag and the dates at read time.
+- `GET /api/shop/discounts?active=&state=` — every promotion, newest first, which
+  is also the history; `active=true` narrows to what is running now and
+  `active=false` to the rest, while `state` narrows to one derived state for a
+  caller that wants the server to filter. Each row
+  carries a derived `state` (`ACTIVE`, `SCHEDULED`, `EXPIRED` or `ENDED`), computed
+  from the flag and the dates at read time, plus `createdAt` (the database-stamped
+  creation time, read back for the history) and `endedAt`.
 - `PUT /api/shop/discounts/{id}` — replace a promotion's details. Refused (409
   `INVALID_STATE`) once it has been ended, so an ended promotion is frozen and a
   new one is the way to run the offer again.
@@ -86,6 +89,19 @@ foreign key and this module cannot read catalog's tables, which is the trade V10
 documents. A window that ends before it starts is answered `INVALID_DISCOUNT`
 (400); the percentage bound is enforced by Bean Validation, so a bad value never
 reaches the table's check constraint.
+
+The promotions' customer-facing read is `GET /api/discounts/active` — the
+promotions running now, newest first, on the public path so the storefront can
+show a discounted price beside the original while browsing anonymously. It
+reuses `DiscountResponse`; the creating client and the ended timestamp ride along
+without carrying a secret. The rule for which single promotion an item gets —
+item-specific beats sitewide, then the larger percentage, and only a running
+promotion counts — lives in `DiscountService.bestDiscountFor` and is exposed to
+`catalog` as the `contracts.order.DiscountQuery` seam (`ItemKind` +
+`AppliedDiscount`). Catalog holds the price and does its own rounding; this
+module only says what percentage applies. The stored targets are a flat id list
+with no type, so an id matches a frame or a lens alike until a typed target model
+lands.
 
 Every status change (approve, reject, processing, ready, dispatched) records a row in
 `order_notification` and emails the customer through a `NotificationSender` backed by
@@ -107,9 +123,10 @@ The customer's own `/api/prescriptions` and `/api/orders/{id}` are untouched.
 
 Still planned: `GET /api/prescriptions/{id}`, `GET /api/prescriptions/{id}/document`,
 `GET /api/prescriptions?status=`, `GET /api/orders?prescriptionId=`, and
-`/api/stock/updates`. The customer-facing reading of discounts — showing a
-discounted price next to the original — is the remaining Epic 6 story and is not
-built here; the management surface above is what the shop works from.
+`/api/stock/updates`. The customer-facing reading of discounts is provided here
+as data (`GET /api/discounts/active` and the `DiscountQuery` seam); the storefront
+that draws the discounted price next to the original is catalog's page, built
+against catalog's own `/api/frames` and `/api/lenses`.
 
 Documents are written through `service/ObjectStore`; the only implementation is
 filesystem-backed (`FileSystemObjectStore`, rooted at `myopty.object-storage.root`).
@@ -124,3 +141,8 @@ dropped by it, having never held a row.
 It must not depend on another business module. If you need something from `catalog`, put an
 interface in `backend/contracts/catalog/` and let the reactor enforce it — an `import
 com.myopty.catalog.model.*` does not compile here, which is the point.
+
+It provides the `contracts.order.DiscountQuery` seam: catalog calls
+`bestDiscountFor(ItemKind, long)` when it prices an item, and `DiscountQueryImpl`
+adapts that to `DiscountService`. So catalog reads discounts without touching the
+`discount` table, the same way order reads stock through `StockManager`.

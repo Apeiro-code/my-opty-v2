@@ -1,5 +1,7 @@
 package com.myopty.order.service;
 
+import com.myopty.contracts.order.AppliedDiscount;
+import com.myopty.contracts.order.ItemKind;
 import com.myopty.order.dto.DiscountRequest;
 import com.myopty.order.dto.DiscountResponse;
 import com.myopty.order.exception.InvalidDiscountException;
@@ -10,7 +12,9 @@ import com.myopty.order.model.DiscountState;
 import com.myopty.order.repository.DiscountRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.core.type.TypeReference;
@@ -56,7 +60,11 @@ public class DiscountService {
         apply(discount, request);
         discount.setActive(true);
         discount.setCreatedBy(clientId);
-        return toResponse(discounts.save(discount));
+        Discount saved = discounts.save(discount);
+        // created_at is the column's default, not a value this code set, so the
+        // saved row is read back to report it; the insert itself stays in the same
+        // transaction, so the read sees what was just written.
+        return toResponse(discounts.findById(saved.getId()).orElse(saved));
     }
 
     /**
@@ -94,15 +102,45 @@ public class DiscountService {
     /**
      * Every promotion, newest first. A null {@code active} returns the whole
      * history; {@code true} narrows to what is running now and {@code false} to
-     * everything that is not, which is what the shop's history view asks for.
+     * everything that is not. {@code state} narrows to one derived state, for a
+     * caller that would rather the server did the filtering.
      */
     @Transactional(readOnly = true)
-    public List<DiscountResponse> list(Boolean active) {
+    public List<DiscountResponse> list(Boolean active, DiscountState state) {
         LocalDate today = LocalDate.now();
         return discounts.findAllByOrderByIdDesc().stream()
                 .map(discount -> toResponse(discount, today))
                 .filter(response -> active == null || active == (response.state() == DiscountState.ACTIVE))
+                .filter(response -> state == null || state == response.state())
                 .toList();
+    }
+
+    /**
+     * The single promotion a customer's item would get, for the storefront to
+     * price against: item-specific beats sitewide, then the larger percentage
+     * wins. An empty result means the item is full price.
+     *
+     * <p>Only {@code ACTIVE} promotions count — a scheduled one has not started
+     * and an expired or ended one has stopped. {@code kind} is not consulted: the
+     * stored targets are a flat list with no type, so an id matches a frame or a
+     * lens alike (the trade V103 documents). It is in the signature because a
+     * typed target model will need it.
+     */
+    @Transactional(readOnly = true)
+    public Optional<AppliedDiscount> bestDiscountFor(ItemKind kind, long itemId) {
+        LocalDate today = LocalDate.now();
+        List<Discount> running = discounts.findAllByActiveTrue().stream()
+                .filter(discount -> stateOf(discount, today) == DiscountState.ACTIVE)
+                .toList();
+
+        Optional<Discount> itemSpecific = running.stream()
+                .filter(discount -> targets(discount).contains(itemId))
+                .max(Comparator.comparing(Discount::getPercentage));
+        Optional<Discount> sitewide = running.stream()
+                .filter(discount -> targets(discount).isEmpty())
+                .max(Comparator.comparing(Discount::getPercentage));
+
+        return itemSpecific.or(() -> sitewide).map(DiscountService::toApplied);
     }
 
     private void apply(Discount discount, DiscountRequest request) {
@@ -133,6 +171,15 @@ public class DiscountService {
             return null;
         }
         return objectMapper.readValue(targetItemIds, LONG_LIST);
+    }
+
+    private List<Long> targets(Discount discount) {
+        List<Long> decoded = decodeTargets(discount.getTargetItemIds());
+        return decoded == null ? List.of() : decoded;
+    }
+
+    private static AppliedDiscount toApplied(Discount discount) {
+        return new AppliedDiscount(discount.getPercentage(), discount.getDescription());
     }
 
     private static DiscountState stateOf(Discount discount, LocalDate today) {

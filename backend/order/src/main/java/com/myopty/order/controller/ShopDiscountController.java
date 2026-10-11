@@ -3,6 +3,7 @@ package com.myopty.order.controller;
 import com.myopty.order.dto.ApiResponse;
 import com.myopty.order.dto.DiscountRequest;
 import com.myopty.order.dto.DiscountResponse;
+import com.myopty.order.model.DiscountState;
 import com.myopty.order.service.DiscountService;
 import com.myopty.shared.user.AppUser;
 import jakarta.validation.Valid;
@@ -52,10 +53,16 @@ public class ShopDiscountController {
         return ApiResponse.of(service.create(client.getId(), request));
     }
 
-    /** The history, newest first; {@code active} narrows it to what is running now. */
+    /**
+     * The history, newest first. {@code active} narrows it to what is running now
+     * (or the rest); {@code state} narrows it to one derived state, for a caller
+     * that would rather the server did the filtering. Both are optional and may be
+     * combined.
+     */
     @GetMapping
-    public ApiResponse<List<DiscountResponse>> list(@RequestParam(required = false) Boolean active) {
-        return ApiResponse.of(service.list(active));
+    public ApiResponse<List<DiscountResponse>> list(
+            @RequestParam(required = false) Boolean active, @RequestParam(required = false) DiscountState state) {
+        return ApiResponse.of(service.list(active, state));
     }
 
     @PutMapping("/{id}")

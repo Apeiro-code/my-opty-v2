@@ -52,13 +52,23 @@ import tools.jackson.databind.ObjectMapper;
  * {@code (client)/shop} group), so it needs {@code ROLE_CLIENT}; everything
  * else under {@code /api/**} needs a session but makes no distinction between
  * the two roles — finer-grained rules arrive with the endpoints that need them.
+ *
+ * <p>{@code PUBLIC_PATHS} is the short list that skips a session altogether. The
+ * storefront's read of running promotions is on it because browsing is anonymous
+ * and the promotions are what the customer is being shown; each entry there is a
+ * deliberate opening, not a default.
  */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
     private static final String[] PUBLIC_PATHS = {
-        "/actuator/health", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/api/auth/login"
+        "/actuator/health",
+        "/swagger-ui.html",
+        "/swagger-ui/**",
+        "/v3/api-docs/**",
+        "/api/auth/login",
+        "/api/discounts/active"
     };
 
     private final List<String> allowedOrigins;
