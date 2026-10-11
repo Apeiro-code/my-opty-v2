@@ -30,8 +30,9 @@ What is **not** built: most feature endpoints listed in this file, and a real ob
 store. The API answers `/actuator/health`, the auth endpoints, and the order module's
 prescription and progressive-order surface — submission, own-prescription and
 own-order reads, the shop's review and approval queues, the production line
-(`processing`/`ready`/`dispatched`), the receive-date correction, and the customer
-notification list; every other route returns 401 until the module that owns it builds it.
+(`processing`/`ready`/`dispatched`), the receive-date correction, the customer
+notification list, and the shop's discount management endpoints; every other route
+returns 401 until the module that owns it builds it.
 Prescription documents are written to a filesystem-backed `ObjectStore` (a development stand-in
 for MinIO, which is still not wired).
 
@@ -164,13 +165,13 @@ PUT    /api/shop/orders/{id}/receive-date   # Set or withdraw the estimate, body
 GET    /api/shop/orders/{id}/notifications  # One order's notification history (client) — BUILT
 GET    /api/notifications                   # The session customer's notifications, newest first — BUILT
 GET    /api/notifications?orderId=          # ...narrowed to one order — BUILT
-GET    /api/orders?prescriptionId=         # Order built from a prescription
-POST   /api/discounts                      # Create discount (client)
-GET    /api/discounts                      # List (with active filter)
-PUT    /api/discounts/{id}                 # Update discount
-DELETE /api/discounts/{id}                 # End early
-POST   /api/stock/updates                  # Record new stock (client)
-GET    /api/stock/updates                  # History
+GET    /api/orders?prescriptionId=          # Order built from a prescription
+POST   /api/shop/discounts                  # Create discount: percentage, targets, window (client) — BUILT
+GET    /api/shop/discounts?active=          # History, newest first; ?active=true the running ones (client) — BUILT
+PUT    /api/shop/discounts/{id}             # Edit ('ended' discounts are frozen) (client) — BUILT
+DELETE /api/shop/discounts/{id}             # End early, a soft end that keeps the record (client) — BUILT
+POST   /api/stock/updates                   # Record new stock (client)
+GET    /api/stock/updates                   # History
 ```
 
 Notes on this module's endpoints — some describe built behaviour and some are decisions to
@@ -251,6 +252,15 @@ honour when the remaining endpoints are built:
   `/api/prescriptions` and `/api/orders` is what lets the customer's own endpoints
   there stay open to any authenticated session. Auth belongs to the shared module;
   see CONTRIBUTING.md.
+- **The discount management endpoints are built, and follow the same mount rule.**
+  `POST`/`GET`/`PUT`/`DELETE /api/shop/discounts` create, list, edit and end a
+  promotion; all four sit behind the `/api/shop/**` `ROLE_CLIENT` rule. `delete` is
+  a soft end — the row is kept with `is_active` false and an `ended_at`, so an
+  ended promotion is frozen and cannot be edited back to life. The target frame and
+  lens ids are stored, not validated against the catalog (the JSON column has no
+  foreign key and this module cannot read catalog's tables), and each returned
+  discount carries a derived state (`ACTIVE`/`SCHEDULED`/`EXPIRED`/`ENDED`). The
+  customer-facing "discounted price next to the original" story is still to come.
 
 **Database Tables:** `prescription`, `progressive_order`, `order_notification`, `discount`, `stock_update`
 

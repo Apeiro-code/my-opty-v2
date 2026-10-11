@@ -1,7 +1,15 @@
-import { apiGet, apiPost, apiPostForm, apiPut } from "@/lib/api/client";
+import {
+  apiDelete,
+  apiGet,
+  apiPost,
+  apiPostForm,
+  apiPut,
+} from "@/lib/api/client";
 import type { ApiResult } from "@/types/api";
 import type {
   CreateOrder,
+  Discount,
+  DiscountInput,
   Order,
   OrderNotification,
   OrderStatus,
@@ -160,4 +168,37 @@ export function updateReceiveDate(
   receiveDate: string | null,
 ): Promise<ApiResult<Order>> {
   return apiPut<Order>(`/api/shop/orders/${id}/receive-date`, { receiveDate });
+}
+
+/**
+ * The shop's promotions, newest first. No `active` argument returns the whole
+ * history; `true` narrows to what is running now and `false` to the rest.
+ */
+export function listShopDiscounts(
+  active?: boolean,
+): Promise<ApiResult<Discount[]>> {
+  return apiGet<Discount[]>("/api/shop/discounts", { active });
+}
+
+/** Creates a promotion: a percentage off a set of items for a window of dates. */
+export function createDiscount(
+  input: DiscountInput,
+): Promise<ApiResult<Discount>> {
+  return apiPost<Discount>("/api/shop/discounts", input);
+}
+
+/** Replaces a promotion's details. Refused once it has been ended. */
+export function updateDiscount(
+  id: number,
+  input: DiscountInput,
+): Promise<ApiResult<Discount>> {
+  return apiPut<Discount>(`/api/shop/discounts/${id}`, input);
+}
+
+/**
+ * Ends a promotion early. It is a soft end — the row is kept and flagged ended,
+ * so the history still shows what it was scheduled to do.
+ */
+export function endDiscount(id: number): Promise<ApiResult<Discount>> {
+  return apiDelete<Discount>(`/api/shop/discounts/${id}`);
 }

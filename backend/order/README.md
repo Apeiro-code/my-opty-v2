@@ -65,6 +65,28 @@ The shop owner's review, approval and production endpoints (role-gated, see belo
 - `GET /api/shop/orders/{id}/notifications` — one order's notification history,
   newest first.
 
+The shop owner's promotions (also under `/api/shop/**`):
+- `POST /api/shop/discounts` — create a discount: a description, a percentage
+  (greater than 0 and at most 100), an optional set of target frame/lens ids, and
+  a validity window. A missing or empty target list means the promotion is
+  sitewide. The client comes from the session and is stamped as `created_by`.
+- `GET /api/shop/discounts?active=` — every promotion, newest first, which is also
+  the history; `active=true` narrows to what is running now and `active=false` to
+  the rest. Each row carries a derived `state` (`ACTIVE`, `SCHEDULED`, `EXPIRED`
+  or `ENDED`), computed from the flag and the dates at read time.
+- `PUT /api/shop/discounts/{id}` — replace a promotion's details. Refused (409
+  `INVALID_STATE`) once it has been ended, so an ended promotion is frozen and a
+  new one is the way to run the offer again.
+- `DELETE /api/shop/discounts/{id}` — end a promotion early: a soft end that flags
+  `is_active` false and stamps `ended_at`, keeping the original `valid_to` so the
+  history still shows what was scheduled. Idempotent.
+
+The target ids are stored, not checked against the catalog: the JSON column has no
+foreign key and this module cannot read catalog's tables, which is the trade V103
+documents. A window that ends before it starts is answered `INVALID_DISCOUNT`
+(400); the percentage bound is enforced by Bean Validation, so a bad value never
+reaches the table's check constraint.
+
 Every status change (approve, reject, processing, ready, dispatched) records a row in
 `order_notification` and emails the customer through a `NotificationSender` backed by
 `JavaMailSender`. The status change commits before the send, so a failed send marks
@@ -84,8 +106,10 @@ rule lives in one place (`SecurityConfig`) instead of being lettered onto each p
 The customer's own `/api/prescriptions` and `/api/orders/{id}` are untouched.
 
 Still planned: `GET /api/prescriptions/{id}`, `GET /api/prescriptions/{id}/document`,
-`GET /api/prescriptions?status=`, `GET /api/orders?prescriptionId=`, `/api/discounts`
-and `/api/stock/updates`.
+`GET /api/prescriptions?status=`, `GET /api/orders?prescriptionId=`, and
+`/api/stock/updates`. The customer-facing reading of discounts — showing a
+discounted price next to the original — is the remaining Epic 6 story and is not
+built here; the management surface above is what the shop works from.
 
 Documents are written through `service/ObjectStore`; the only implementation is
 filesystem-backed (`FileSystemObjectStore`, rooted at `myopty.object-storage.root`).

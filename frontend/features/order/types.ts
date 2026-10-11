@@ -84,6 +84,45 @@ export type Reject = {
   reason: string;
 };
 
+/**
+ * Where a promotion sits in its life. Mirrors the order module's
+ * `DiscountState`, derived from the active flag and the validity window rather
+ * than stored: `SCHEDULED` has not started, `ACTIVE` is running now, `EXPIRED`
+ * ran out, and `ENDED` was called off early.
+ */
+export type DiscountState = "ACTIVE" | "SCHEDULED" | "EXPIRED" | "ENDED";
+
+/** Mirrors the order module's `DiscountResponse`. */
+export type Discount = {
+  id: number;
+  description: string;
+  percentage: number;
+  /** The frame and lens ids the promotion targets; null when it is sitewide. */
+  targetItemIds: number[] | null;
+  /** The same thing as an empty `targetItemIds`, spelled out for the form. */
+  sitewide: boolean;
+  validFrom: string;
+  validTo: string;
+  /** The shop's flag; false once the promotion has been ended. */
+  active: boolean;
+  state: DiscountState;
+  endedAt: string | null;
+  createdBy: number | null;
+};
+
+/**
+ * The body of `POST /api/shop/discounts` and `PUT /api/shop/discounts/{id}`.
+ * The two requests carry the same fields, so one type serves both; an empty or
+ * null `targetItemIds` means the promotion is sitewide.
+ */
+export type DiscountInput = {
+  description: string;
+  percentage: number;
+  targetItemIds: number[] | null;
+  validFrom: string;
+  validTo: string;
+};
+
 /** Mirrors `NotificationChannel`. Email is the only channel today. */
 export type NotificationChannel = "EMAIL";
 

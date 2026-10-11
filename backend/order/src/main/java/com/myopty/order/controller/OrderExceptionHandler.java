@@ -1,6 +1,7 @@
 package com.myopty.order.controller;
 
 import com.myopty.contracts.catalog.InsufficientStockException;
+import com.myopty.order.exception.InvalidDiscountException;
 import com.myopty.order.exception.InvalidDocumentException;
 import com.myopty.order.exception.InvalidStateException;
 import com.myopty.order.exception.NotificationDeliveryException;
@@ -75,6 +76,17 @@ public class OrderExceptionHandler {
     @ResponseStatus(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
     public ApiError unsupportedMediaType(HttpMediaTypeNotSupportedException exception) {
         return ApiError.of("UNSUPPORTED_MEDIA_TYPE", "Submit prescriptions as multipart/form-data.");
+    }
+
+    /**
+     * A promotion whose validity window ends before it starts. A client mistake
+     * in the shape of the request, so 400, distinct from the 409 an already-ended
+     * discount answers.
+     */
+    @ExceptionHandler(InvalidDiscountException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError invalidDiscount(InvalidDiscountException exception) {
+        return ApiError.of("INVALID_DISCOUNT", exception.getMessage());
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
