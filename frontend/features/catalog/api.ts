@@ -1,11 +1,17 @@
 import { apiDelete, apiGet, apiPost, apiPut } from "@/lib/api/client";
 import type { ApiResult } from "@/types/api";
-import type { Frame, FrameInput, Lens, LensInput } from "./types";
+import type { Category, Frame, FrameInput, Lens, LensInput } from "./types";
 
 /**
- * The shop owner's frame and lens catalogue. The shop owner is a `CLIENT`, so
- * these calls go to `/api/shop/**`, which the backend restricts to that role.
+ * The shop owner's frame, lens and category catalogue. The shop owner is a
+ * `CLIENT`, so these calls go to `/api/shop/**`, which the backend restricts to
+ * that role.
  */
+
+/** Every filing category, oldest first, for the frame and lens forms. */
+export function listShopCategories(): Promise<ApiResult<Category[]>> {
+  return apiGet<Category[]>("/api/shop/categories");
+}
 
 /** Every frame, oldest first, for the inventory list. */
 export function listShopFrames(): Promise<ApiResult<Frame[]>> {
@@ -41,4 +47,12 @@ export function listShopLenses(): Promise<ApiResult<Lens[]>> {
 /** Adds a lens so it appears in the collection. */
 export function createLens(input: LensInput): Promise<ApiResult<Lens>> {
   return apiPost<Lens>("/api/shop/lenses", input);
+}
+
+/** Replaces an existing lens's details so they stay accurate. */
+export function updateLens(
+  id: number,
+  input: LensInput,
+): Promise<ApiResult<Lens>> {
+  return apiPut<Lens>(`/api/shop/lenses/${id}`, input);
 }

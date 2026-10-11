@@ -4,6 +4,7 @@ import com.myopty.catalog.dto.CreateFrameRequest;
 import com.myopty.catalog.dto.FrameResponse;
 import com.myopty.catalog.dto.UpdateFrameRequest;
 import com.myopty.catalog.exception.ResourceNotFoundException;
+import com.myopty.catalog.model.CategoryItemType;
 import com.myopty.catalog.model.Frame;
 import com.myopty.catalog.repository.FrameRepository;
 import java.math.BigDecimal;
@@ -14,10 +15,11 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Adds a frame to the shop's catalogue and keeps an existing one accurate.
  *
- * <p>A new frame is saved with no category: this story's form does not choose one,
- * and V3 leaves {@code category_id} nullable so a frame can be filed later. The
- * price and stock rules are enforced by Bean Validation before the service is
- * entered, so the service only has to apply the defaults and persist.
+ * <p>A frame may be filed under a category or left unfiled: the V3 column is
+ * nullable, so a null {@code categoryId} is a valid choice and only a non-null
+ * one is checked against the category's {@code item_type}. The price and stock
+ * rules are enforced by Bean Validation before the service is entered, so the
+ * service only has to apply the defaults and persist.
  *
  * <p>An edit loads the row first so a missing id is a 404 rather than a silent
  * insert, then writes back the whole record: the endpoint is a PUT, so an omitted
@@ -27,23 +29,41 @@ import org.springframework.transaction.annotation.Transactional;
 public class FrameService {
 
     private final FrameRepository frames;
+    private final CategoryService categories;
 
-    public FrameService(FrameRepository frames) {
+    public FrameService(FrameRepository frames, CategoryService categories) {
         this.frames = frames;
+        this.categories = categories;
     }
 
     @Transactional
     public FrameResponse create(CreateFrameRequest request) {
+        categories.requireCompatible(request.categoryId(), CategoryItemType.FRAME);
         Frame frame = new Frame();
-        apply(frame, request.model(), request.color(), request.material(), request.price(), request.stockQty());
+        apply(
+                frame,
+                request.model(),
+                request.color(),
+                request.material(),
+                request.price(),
+                request.stockQty(),
+                request.categoryId());
         frame.setActive(request.active() == null || request.active());
         return FrameResponse.from(frames.save(frame));
     }
 
     @Transactional
     public FrameResponse update(long id, UpdateFrameRequest request) {
+        categories.requireCompatible(request.categoryId(), CategoryItemType.FRAME);
         Frame frame = frames.findById(id).orElseThrow(() -> new ResourceNotFoundException("Frame not found."));
-        apply(frame, request.model(), request.color(), request.material(), request.price(), request.stockQty());
+        apply(
+                frame,
+                request.model(),
+                request.color(),
+                request.material(),
+                request.price(),
+                request.stockQty(),
+                request.categoryId());
         frame.setActive(request.active() == null || request.active());
         return FrameResponse.from(frames.save(frame));
     }
@@ -76,11 +96,12 @@ public class FrameService {
     }
 
     private static void apply(
-            Frame frame, String model, String color, String material, BigDecimal price, int stockQty) {
+            Frame frame, String model, String color, String material, BigDecimal price, int stockQty, Long categoryId) {
         frame.setModel(model);
         frame.setColor(color);
         frame.setMaterial(material);
         frame.setPrice(price);
         frame.setStockQty(stockQty);
+        frame.setCategoryId(categoryId);
     }
 }

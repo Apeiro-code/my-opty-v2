@@ -6,8 +6,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.myopty.catalog.dto.CreateFrameRequest;
 import com.myopty.catalog.dto.FrameResponse;
 import com.myopty.catalog.dto.UpdateFrameRequest;
+import com.myopty.catalog.exception.InvalidCategoryException;
 import com.myopty.catalog.exception.ResourceNotFoundException;
+import com.myopty.catalog.model.Category;
+import com.myopty.catalog.model.CategoryItemType;
 import com.myopty.catalog.model.Frame;
+import com.myopty.catalog.repository.CategoryRepository;
 import com.myopty.catalog.repository.FrameRepository;
 import java.math.BigDecimal;
 import java.util.Comparator;
@@ -20,17 +24,20 @@ import org.junit.jupiter.api.Test;
 
 /**
  * The add and edit rules, without a database: what a new frame carries, that an
- * omitted {@code active} means on sale, and that editing an id nobody stored is a
- * not-found rather than a silent insert.
+ * omitted {@code active} means on sale, that editing an id nobody stored is a
+ * not-found rather than a silent insert, and that a frame may only be filed
+ * under a category that accepts frames.
  *
- * <p>The repository is a hand-written fake because what is under test is the shape
- * of the row the service builds and the check it makes before updating, which a
- * fake keeps readable without verification plumbing.
+ * <p>The repositories are hand-written fakes because what is under test is the
+ * shape of the row the service builds and the checks it makes before writing,
+ * which a fake keeps readable without verification plumbing.
  */
 class FrameServiceTest {
 
     private final FakeFrameRepository frames = new FakeFrameRepository();
-    private final FrameService service = new FrameService(frames);
+    private final FakeCategoryRepository categoryRepository = new FakeCategoryRepository();
+    private final CategoryService categories = new CategoryService(categoryRepository);
+    private final FrameService service = new FrameService(frames, categories);
 
     @Test
     void creatingAFrameStoresTheDetailsAndDefaultsToActive() {
@@ -53,12 +60,38 @@ class FrameServiceTest {
     }
 
     @Test
+    void creatingAFrameFilesItUnderTheChosenCategory() {
+        long categoryId = categoryRepository.store("Men", CategoryItemType.FRAME);
+
+        FrameResponse response =
+                service.create(request("Astra 2100", "Matte Black", "Acetate", "4500.00", 12, null, categoryId));
+
+        assertThat(response.categoryId()).isEqualTo(categoryId);
+    }
+
+    @Test
+    void aFrameCannotBeFiledUnderALensCategory() {
+        long lensCategory = categoryRepository.store("Progressive", CategoryItemType.LENS);
+
+        assertThatThrownBy(() -> service.create(
+                        request("Astra 2100", "Matte Black", "Acetate", "4500.00", 12, null, lensCategory)))
+                .isInstanceOf(InvalidCategoryException.class);
+    }
+
+    @Test
+    void filingUnderACategoryThatDoesNotExistIsRefused() {
+        assertThatThrownBy(
+                        () -> service.create(request("Astra 2100", "Matte Black", "Acetate", "4500.00", 12, null, 99L)))
+                .isInstanceOf(InvalidCategoryException.class);
+    }
+
+    @Test
     void editingAFrameReplacesEveryField() {
         FrameResponse created = service.create(request("Astra 2100", "Matte Black", "Acetate", "4500.00", 12, null));
 
         FrameResponse updated = service.update(
                 created.id(),
-                new UpdateFrameRequest("Astra 2100", "Tortoise", "Acetate", new BigDecimal("4700.00"), 4, true));
+                new UpdateFrameRequest("Astra 2100", "Tortoise", "Acetate", new BigDecimal("4700.00"), 4, true, null));
 
         assertThat(updated.id()).isEqualTo(created.id());
         assertThat(updated.color()).isEqualTo("Tortoise");
@@ -73,7 +106,7 @@ class FrameServiceTest {
 
         service.update(
                 second.id(),
-                new UpdateFrameRequest("Willow 08", "Plum", "TR-90", new BigDecimal("3800.00"), 15, false));
+                new UpdateFrameRequest("Willow 08", "Plum", "TR-90", new BigDecimal("3800.00"), 15, false, null));
 
         assertThat(frames.findById(second.id()).orElseThrow().isActive()).isFalse();
         assertThat(frames.findById(first.id()).orElseThrow().isActive()).isTrue();
@@ -82,7 +115,8 @@ class FrameServiceTest {
     @Test
     void editingAFrameThatDoesNotExistIsNotFound() {
         assertThatThrownBy(() -> service.update(
-                        99L, new UpdateFrameRequest("Ghost", null, "Acetate", new BigDecimal("1000.00"), 1, true)))
+                        99L,
+                        new UpdateFrameRequest("Ghost", null, "Acetate", new BigDecimal("1000.00"), 1, true, null)))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
@@ -111,7 +145,8 @@ class FrameServiceTest {
 
         FrameResponse reactivated = service.update(
                 created.id(),
-                new UpdateFrameRequest("Astra 2100", "Matte Black", "Acetate", new BigDecimal("4500.00"), 12, true));
+                new UpdateFrameRequest(
+                        "Astra 2100", "Matte Black", "Acetate", new BigDecimal("4500.00"), 12, true, null));
 
         assertThat(reactivated.active()).isTrue();
     }
@@ -131,7 +166,12 @@ class FrameServiceTest {
 
     private static CreateFrameRequest request(
             String model, String color, String material, String price, int stockQty, Boolean active) {
-        return new CreateFrameRequest(model, color, material, new BigDecimal(price), stockQty, active);
+        return request(model, color, material, price, stockQty, active, null);
+    }
+
+    private static CreateFrameRequest request(
+            String model, String color, String material, String price, int stockQty, Boolean active, Long categoryId) {
+        return new CreateFrameRequest(model, color, material, new BigDecimal(price), stockQty, active, categoryId);
     }
 
     private static final class FakeFrameRepository implements FrameRepository {
@@ -157,6 +197,34 @@ class FrameServiceTest {
         public List<Frame> findAllByOrderByIdAsc() {
             return byId.values().stream()
                     .sorted(Comparator.comparing(Frame::getId))
+                    .toList();
+        }
+    }
+
+    private static final class FakeCategoryRepository implements CategoryRepository {
+
+        private final AtomicLong ids = new AtomicLong();
+        private final Map<Long, Category> byId = new HashMap<>();
+
+        long store(String name, CategoryItemType itemType) {
+            Category category = new Category();
+            category.setId(ids.incrementAndGet());
+            category.setName(name);
+            category.setSlug(name.toLowerCase());
+            category.setItemType(itemType);
+            byId.put(category.getId(), category);
+            return category.getId();
+        }
+
+        @Override
+        public Optional<Category> findById(Long id) {
+            return Optional.ofNullable(byId.get(id));
+        }
+
+        @Override
+        public List<Category> findAllByOrderByIdAsc() {
+            return byId.values().stream()
+                    .sorted(Comparator.comparing(Category::getId))
                     .toList();
         }
     }

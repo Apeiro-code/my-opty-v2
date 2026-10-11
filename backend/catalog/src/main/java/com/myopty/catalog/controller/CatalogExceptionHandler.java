@@ -1,5 +1,6 @@
 package com.myopty.catalog.controller;
 
+import com.myopty.catalog.exception.InvalidCategoryException;
 import com.myopty.catalog.exception.ResourceNotFoundException;
 import com.myopty.shared.auth.dto.ApiError;
 import java.util.stream.Collectors;
@@ -44,6 +45,17 @@ public class CatalogExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiError notFound(ResourceNotFoundException exception) {
         return ApiError.of("NOT_FOUND", exception.getMessage());
+    }
+
+    /**
+     * A frame or lens was filed under a category it cannot belong to. The id is a
+     * client mistake, so it answers 400 rather than 404 — the address that was
+     * wrong is the request body, not the path.
+     */
+    @ExceptionHandler(InvalidCategoryException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError invalidCategory(InvalidCategoryException exception) {
+        return ApiError.of("INVALID_CATEGORY", exception.getMessage());
     }
 
     /**

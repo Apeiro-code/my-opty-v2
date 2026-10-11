@@ -1,8 +1,14 @@
 "use client";
 
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
-import { createLens, listShopLenses } from "../api";
-import type { Lens, LensInput, LensType } from "../types";
+import {
+  createLens,
+  listShopCategories,
+  listShopLenses,
+  updateLens,
+} from "../api";
+import type { Category, Lens, LensInput, LensType } from "../types";
+import CategoryPicker from "./CategoryPicker";
 
 const PRICE_FORMAT = new Intl.NumberFormat("en-LK", {
   minimumFractionDigits: 2,
@@ -16,7 +22,8 @@ const TYPE_LABELS: Record<LensType, string> = {
 };
 
 /**
- * The shop owner's lens collection: add a lens so it appears in the collection.
+ * The shop owner's lens collection: add a lens so it appears in the collection,
+ * and edit one so its details stay accurate.
  *
  * <p>A client component because the whole thing is state and handlers. The
  * backend is the authority on validation and on the role boundary; this only
@@ -24,8 +31,10 @@ const TYPE_LABELS: Record<LensType, string> = {
  */
 export default function LensManager() {
   const [lenses, setLenses] = useState<Lens[] | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -45,6 +54,23 @@ export default function LensManager() {
     };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    listShopCategories().then((result) => {
+      if (!active) {
+        return;
+      }
+      if (!result.ok) {
+        setLoadError(messageFor(result.error));
+        return;
+      }
+      setCategories(result.data);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   async function onCreate(input: LensInput): Promise<string | null> {
     const result = await createLens(input);
     if (!result.ok) {
@@ -52,6 +78,22 @@ export default function LensManager() {
     }
     setLenses((current) => [...(current ?? []), result.data]);
     setAdding(false);
+    return null;
+  }
+
+  async function onUpdate(
+    id: number,
+    input: LensInput,
+  ): Promise<string | null> {
+    const result = await updateLens(id, input);
+    if (!result.ok) {
+      return messageFor(result.error);
+    }
+    setLenses(
+      (current) =>
+        current?.map((lens) => (lens.id === id ? result.data : lens)) ?? null,
+    );
+    setEditingId(null);
     return null;
   }
 
@@ -69,7 +111,7 @@ export default function LensManager() {
 
   return (
     <div className="flex flex-col gap-4">
-      {!adding ? (
+      {editingId === null && !adding ? (
         <button
           type="button"
           onClick={() => setAdding(true)}
@@ -83,6 +125,7 @@ export default function LensManager() {
         <div className="rounded-lg border border-black/10 p-4 dark:border-white/15">
           <h2 className="text-base font-medium">New lens</h2>
           <LensForm
+            categories={categories}
             submitLabel="Add lens"
             onSubmit={onCreate}
             onCancel={() => setAdding(false)}
@@ -97,54 +140,95 @@ export default function LensManager() {
       ) : null}
 
       <ul className="flex flex-col gap-4">
-        {lenses.map((lens) => (
-          <li
-            key={lens.id}
-            className="rounded-lg border border-black/10 p-4 dark:border-white/15"
-          >
-            <div className="flex flex-wrap items-center gap-2 text-sm">
-              <span className="font-medium">{lens.name}</span>
-              <span className="opacity-70">{TYPE_LABELS[lens.type]}</span>
-              {!lens.active ? (
-                <span className="rounded bg-black/10 px-2 py-0.5 text-xs dark:bg-white/10">
-                  Hidden from the site
-                </span>
-              ) : null}
-            </div>
-            <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-4">
-              <Detail label="Coating" value={lens.coating ?? "—"} />
-              <Detail label="Price" value={PRICE_FORMAT.format(lens.price)} />
-              <Detail label="In stock" value={String(lens.stockQty)} />
-              <Detail label="Visible" value={lens.active ? "Yes" : "No"} />
-            </dl>
-          </li>
-        ))}
+        {lenses.map((lens) =>
+          editingId === lens.id ? (
+            <li
+              key={lens.id}
+              className="rounded-lg border border-black/10 p-4 dark:border-white/15"
+            >
+              <h2 className="text-base font-medium">Edit lens</h2>
+              <LensForm
+                initial={lens}
+                categories={categories}
+                submitLabel="Save changes"
+                onSubmit={(input) => onUpdate(lens.id, input)}
+                onCancel={() => setEditingId(null)}
+              />
+            </li>
+          ) : (
+            <li
+              key={lens.id}
+              className="rounded-lg border border-black/10 p-4 dark:border-white/15"
+            >
+              <div className="flex flex-wrap items-center gap-2 text-sm">
+                <span className="font-medium">{lens.name}</span>
+                <span className="opacity-70">{TYPE_LABELS[lens.type]}</span>
+                {!lens.active ? (
+                  <span className="rounded bg-black/10 px-2 py-0.5 text-xs dark:bg-white/10">
+                    Hidden from the site
+                  </span>
+                ) : null}
+              </div>
+              <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-4">
+                <Detail label="Coating" value={lens.coating ?? "—"} />
+                <Detail
+                  label="Category"
+                  value={categoryName(categories, lens.categoryId)}
+                />
+                <Detail label="Price" value={PRICE_FORMAT.format(lens.price)} />
+                <Detail label="In stock" value={String(lens.stockQty)} />
+                <Detail label="Visible" value={lens.active ? "Yes" : "No"} />
+              </dl>
+              <div className="mt-4 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAdding(false);
+                    setEditingId(lens.id);
+                  }}
+                  className="rounded-md border border-black/15 px-3 py-1.5 text-sm dark:border-white/20"
+                >
+                  Edit
+                </button>
+              </div>
+            </li>
+          ),
+        )}
       </ul>
     </div>
   );
 }
 
 /**
- * The add form. It validates the fields the backend marks required so a wrong
- * value is caught before a round trip, then reports whatever the backend refuses
- * in the same place. It hands the parsed input to its parent, which owns the
- * network call and the list update, and displays the returned error, if any.
+ * The add and edit form. It validates the fields the backend marks required so a
+ * wrong value is caught before a round trip, then reports whatever the backend
+ * refuses in the same place. It hands the parsed input to its parent, which owns
+ * the network call and the list update, and displays the returned error, if any.
  */
 function LensForm({
+  initial,
+  categories,
   submitLabel,
   onSubmit,
   onCancel,
 }: {
+  initial?: Lens;
+  categories: Category[];
   submitLabel: string;
   onSubmit: (input: LensInput) => Promise<string | null>;
   onCancel: () => void;
 }) {
-  const [name, setName] = useState("");
-  const [type, setType] = useState<LensType>("SINGLE_VISION");
-  const [coating, setCoating] = useState("");
-  const [price, setPrice] = useState("");
-  const [stockQty, setStockQty] = useState("");
-  const [active, setActive] = useState(true);
+  const [name, setName] = useState(initial?.name ?? "");
+  const [type, setType] = useState<LensType>(initial?.type ?? "SINGLE_VISION");
+  const [coating, setCoating] = useState(initial?.coating ?? "");
+  const [price, setPrice] = useState(initial ? String(initial.price) : "");
+  const [stockQty, setStockQty] = useState(
+    initial ? String(initial.stockQty) : "",
+  );
+  const [categoryId, setCategoryId] = useState(
+    initial?.categoryId ? String(initial.categoryId) : "",
+  );
+  const [active, setActive] = useState(initial?.active ?? true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -180,6 +264,7 @@ function LensForm({
       price: priceNumber,
       stockQty: stockNumber,
       active,
+      categoryId: categoryId ? Number(categoryId) : null,
     });
     setBusy(false);
     if (message) {
@@ -240,6 +325,14 @@ function LensForm({
             className="rounded-md border border-black/15 bg-transparent px-2 py-1.5 text-sm dark:border-white/20"
           />
         </Field>
+        <Field label="Category">
+          <CategoryPicker
+            categories={categories}
+            itemType="LENS"
+            value={categoryId}
+            onChange={setCategoryId}
+          />
+        </Field>
       </div>
 
       <label className="flex items-center gap-2 text-sm">
@@ -294,6 +387,13 @@ function Detail({ label, value }: { label: string; value: string }) {
       <dd>{value}</dd>
     </div>
   );
+}
+
+function categoryName(categories: Category[], id: number | null): string {
+  if (id === null) {
+    return "Unfiled";
+  }
+  return categories.find((category) => category.id === id)?.name ?? "—";
 }
 
 function messageFor(error: { code: string; message: string }): string {

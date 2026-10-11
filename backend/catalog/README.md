@@ -26,9 +26,17 @@ Planned: `/api/frames`, `/api/lenses`, `/api/categories`,
 `GET /api/shop/frames` (inventory list), `POST /api/shop/frames` (add),
 `PUT /api/shop/frames/{id}` (edit), `DELETE /api/shop/frames/{id}` (discontinue —
 a soft hide that sets `is_active` false and keeps the row so old orders resolve),
-and `GET`/`POST /api/shop/lenses` (list and add). They sit under `/api/shop/**`,
-so the filter chain's `ROLE_CLIENT` rule is the only place the role is checked,
-and they never touch the storefront's public read surface.
+`GET`/`POST /api/shop/lenses` (list and add), `PUT /api/shop/lenses/{id}` (edit),
+and `GET /api/shop/categories` (the filing categories a frame or lens may be
+assigned to). They sit under `/api/shop/**`, so the filter chain's `ROLE_CLIENT`
+rule is the only place the role is checked, and they never touch the storefront's
+public read surface.
+
+A frame or lens carries an optional `categoryId`. When one is supplied, the
+service checks the category exists and that its `item_type` accepts the record
+(`FRAME`, `LENS`, or `BOTH`); filing under the wrong product is a 400
+`INVALID_CATEGORY`. The categories themselves are the seeded rows from V7 — this
+story files records into existing categories, it does not create them.
 
 Nothing else is implemented yet. This module compiles and its tables exist; the
 remaining endpoints land with the features.

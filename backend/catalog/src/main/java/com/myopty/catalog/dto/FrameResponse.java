@@ -9,10 +9,18 @@ import java.math.BigDecimal;
  *
  * <p>{@code active} is the shop's control over whether the frame is on the wall;
  * an inactive frame is kept so old orders still resolve, which is why it is
- * reported here rather than filtered out.
+ * reported here rather than filtered out. {@code categoryId} is the category it
+ * is filed under, or null while unfiled.
  */
 public record FrameResponse(
-        long id, String model, String color, String material, BigDecimal price, int stockQty, boolean active) {
+        long id,
+        String model,
+        String color,
+        String material,
+        BigDecimal price,
+        int stockQty,
+        boolean active,
+        Long categoryId) {
 
     public static FrameResponse from(Frame frame) {
         return new FrameResponse(
@@ -22,6 +30,7 @@ public record FrameResponse(
                 frame.getMaterial(),
                 frame.getPrice(),
                 frame.getStockQty(),
-                frame.isActive());
+                frame.isActive(),
+                frame.getCategoryId());
     }
 }

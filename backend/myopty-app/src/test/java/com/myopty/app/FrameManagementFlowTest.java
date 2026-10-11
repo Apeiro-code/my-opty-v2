@@ -154,6 +154,36 @@ class FrameManagementFlowTest {
     }
 
     @Test
+    void aClientCanFileAFrameUnderACategory() throws Exception {
+        MockHttpSession client = loginAs(CLIENT_EMAIL, CLIENT_PASSWORD);
+        Long categoryId = jdbc.queryForObject("SELECT id FROM category WHERE slug = ?", Long.class, "men");
+
+        mvc.perform(post("/api/shop/frames")
+                        .session(client)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(frameJson("Zephyr 500", "Navy", "Titanium", "7200.00", 7, true, categoryId)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.categoryId").value(categoryId));
+
+        Long stored = jdbc.queryForObject(
+                "SELECT category_id FROM frame WHERE model = ? ORDER BY id DESC LIMIT 1", Long.class, "Zephyr 500");
+        assertThat(stored).isEqualTo(categoryId);
+    }
+
+    @Test
+    void aFrameFiledUnderALensCategoryIsRefused() throws Exception {
+        MockHttpSession client = loginAs(CLIENT_EMAIL, CLIENT_PASSWORD);
+        Long lensCategory = jdbc.queryForObject("SELECT id FROM category WHERE slug = ?", Long.class, "progressive");
+
+        mvc.perform(post("/api/shop/frames")
+                        .session(client)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(frameJson("Odd Frame", "Navy", "Titanium", "7200.00", 7, true, lensCategory)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("INVALID_CATEGORY"));
+    }
+
+    @Test
     void aFrameWithAMissingPriceIsRefused() throws Exception {
         MockHttpSession client = loginAs(CLIENT_EMAIL, CLIENT_PASSWORD);
 
@@ -222,8 +252,14 @@ class FrameManagementFlowTest {
 
     private static String frameJson(
             String model, String color, String material, String price, int stockQty, boolean active) {
+        return frameJson(model, color, material, price, stockQty, active, null);
+    }
+
+    private static String frameJson(
+            String model, String color, String material, String price, int stockQty, boolean active, Long categoryId) {
         String colorJson = color == null ? "null" : "\"%s\"".formatted(color);
-        return "{\"model\":\"%s\",\"color\":%s,\"material\":\"%s\",\"price\":%s,\"stockQty\":%d,\"active\":%b}"
-                .formatted(model, colorJson, material, price, stockQty, active);
+        String categoryJson = categoryId == null ? "null" : categoryId.toString();
+        return "{\"model\":\"%s\",\"color\":%s,\"material\":\"%s\",\"price\":%s,\"stockQty\":%d,\"active\":%b,\"categoryId\":%s}"
+                .formatted(model, colorJson, material, price, stockQty, active, categoryJson);
     }
 }

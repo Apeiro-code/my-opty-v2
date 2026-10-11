@@ -4,10 +4,12 @@ import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import {
   createFrame,
   discontinueFrame,
+  listShopCategories,
   listShopFrames,
   updateFrame,
 } from "../api";
-import type { Frame, FrameInput } from "../types";
+import type { Category, Frame, FrameInput } from "../types";
+import CategoryPicker from "./CategoryPicker";
 
 const PRICE_FORMAT = new Intl.NumberFormat("en-LK", {
   minimumFractionDigits: 2,
@@ -24,6 +26,7 @@ const PRICE_FORMAT = new Intl.NumberFormat("en-LK", {
  */
 export default function FrameManager() {
   const [frames, setFrames] = useState<Frame[] | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
@@ -41,6 +44,23 @@ export default function FrameManager() {
       }
       setLoadError(null);
       setFrames(result.data);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    listShopCategories().then((result) => {
+      if (!active) {
+        return;
+      }
+      if (!result.ok) {
+        setLoadError(messageFor(result.error));
+        return;
+      }
+      setCategories(result.data);
     });
     return () => {
       active = false;
@@ -122,6 +142,7 @@ export default function FrameManager() {
         <div className="rounded-lg border border-black/10 p-4 dark:border-white/15">
           <h2 className="text-base font-medium">New frame</h2>
           <FrameForm
+            categories={categories}
             submitLabel="Add frame"
             onSubmit={onCreate}
             onCancel={() => setAdding(false)}
@@ -145,6 +166,7 @@ export default function FrameManager() {
               <h2 className="text-base font-medium">Edit frame</h2>
               <FrameForm
                 initial={frame}
+                categories={categories}
                 submitLabel="Save changes"
                 onSubmit={(input) => onUpdate(frame.id, input)}
                 onCancel={() => setEditingId(null)}
@@ -168,6 +190,10 @@ export default function FrameManager() {
               </div>
               <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-4">
                 <Detail label="Material" value={frame.material} />
+                <Detail
+                  label="Category"
+                  value={categoryName(categories, frame.categoryId)}
+                />
                 <Detail
                   label="Price"
                   value={PRICE_FORMAT.format(frame.price)}
@@ -220,11 +246,13 @@ export default function FrameManager() {
  */
 function FrameForm({
   initial,
+  categories,
   submitLabel,
   onSubmit,
   onCancel,
 }: {
   initial?: Frame;
+  categories: Category[];
   submitLabel: string;
   onSubmit: (input: FrameInput) => Promise<string | null>;
   onCancel: () => void;
@@ -235,6 +263,9 @@ function FrameForm({
   const [price, setPrice] = useState(initial ? String(initial.price) : "");
   const [stockQty, setStockQty] = useState(
     initial ? String(initial.stockQty) : "",
+  );
+  const [categoryId, setCategoryId] = useState(
+    initial?.categoryId ? String(initial.categoryId) : "",
   );
   const [active, setActive] = useState(initial?.active ?? true);
   const [error, setError] = useState<string | null>(null);
@@ -277,6 +308,7 @@ function FrameForm({
       price: priceNumber,
       stockQty: stockNumber,
       active,
+      categoryId: categoryId ? Number(categoryId) : null,
     });
     setBusy(false);
     if (message) {
@@ -329,6 +361,14 @@ function FrameForm({
             value={stockQty}
             onChange={(event) => setStockQty(event.target.value)}
             className="rounded-md border border-black/15 bg-transparent px-2 py-1.5 text-sm dark:border-white/20"
+          />
+        </Field>
+        <Field label="Category">
+          <CategoryPicker
+            categories={categories}
+            itemType="FRAME"
+            value={categoryId}
+            onChange={setCategoryId}
           />
         </Field>
       </div>
@@ -385,6 +425,13 @@ function Detail({ label, value }: { label: string; value: string }) {
       <dd>{value}</dd>
     </div>
   );
+}
+
+function categoryName(categories: Category[], id: number | null): string {
+  if (id === null) {
+    return "Unfiled";
+  }
+  return categories.find((category) => category.id === id)?.name ?? "—";
 }
 
 function messageFor(error: { code: string; message: string }): string {

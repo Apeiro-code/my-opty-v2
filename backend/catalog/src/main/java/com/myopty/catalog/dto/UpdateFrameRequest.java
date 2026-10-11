@@ -15,6 +15,9 @@ import java.math.BigDecimal;
  * than silently leaving the old value. It is a separate record from
  * {@link CreateFrameRequest} because the two are free to diverge: an edit may one
  * day allow a field creation does not, or vice versa.
+ *
+ * <p>{@code categoryId} is the filing choice. It is nullable so a frame can be
+ * left unfiled, which the V3 column allows.
  */
 public record UpdateFrameRequest(
         @NotBlank(message = "Enter a model name.") @Size(max = 160, message = "Model name is too long.")
@@ -31,4 +34,6 @@ public record UpdateFrameRequest(
         @NotNull(message = "Enter a stock quantity.") @PositiveOrZero(message = "Stock quantity cannot be negative.")
         Integer stockQty,
 
-        Boolean active) {}
+        Boolean active,
+
+        Long categoryId) {}

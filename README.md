@@ -96,10 +96,13 @@ The shop owner's frame and lens stories are **implemented** at `/api/shop/frames
 and `/api/shop/lenses` — `GET /api/shop/frames` (the inventory list),
 `POST /api/shop/frames` (add), `PUT /api/shop/frames/{id}` (edit),
 `DELETE /api/shop/frames/{id}` (discontinue, a soft hide that keeps the record so
-old orders still resolve), and `GET`/`POST /api/shop/lenses` (list and add). They
-all sit behind the existing `ROLE_CLIENT` rule that every `/api/shop/**` endpoint
-already carries. The customer-facing `/api/frames` browse endpoints are not built
-yet, because nothing serves the storefront's `/frames` page.
+old orders still resolve), `GET`/`POST /api/shop/lenses` (list and add),
+`PUT /api/shop/lenses/{id}` (edit), and `GET /api/shop/categories` (the filing
+categories a frame or lens may be assigned to; `categoryId` on a frame or lens is
+optional). They all sit behind the existing `ROLE_CLIENT` rule that every
+`/api/shop/**` endpoint already carries. The customer-facing `/api/frames` browse
+endpoints are not built yet, because nothing serves the storefront's `/frames`
+page.
 
 **Database Tables:** `category`, `frame`, `lens`, `stock_entry`, `availability_report`
 

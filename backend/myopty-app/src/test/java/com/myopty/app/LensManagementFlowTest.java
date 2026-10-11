@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -139,6 +140,107 @@ class LensManagementFlowTest {
         mvc.perform(get("/api/shop/lenses")).andExpect(status().isUnauthorized());
     }
 
+    @Test
+    void aClientCanEditALensSoItsDetailsStayAccurate() throws Exception {
+        MockHttpSession client = loginAs(CLIENT_EMAIL, CLIENT_PASSWORD);
+        long lensId = createLens(client, "Essential Bifocal", "BIFOCAL", "Anti-reflective", "5200.00", 14, true);
+
+        mvc.perform(put("/api/shop/lenses/{id}", lensId)
+                        .session(client)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(lensJson("Essential Bifocal", "BIFOCAL", "Polarised", "5400.00", 9, false)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.coating").value("Polarised"))
+                .andExpect(jsonPath("$.data.price").value(5400.00))
+                .andExpect(jsonPath("$.data.stockQty").value(9))
+                .andExpect(jsonPath("$.data.active").value(false));
+
+        String coating = jdbc.queryForObject("SELECT coating FROM lens WHERE id = ?", String.class, lensId);
+        Boolean active = jdbc.queryForObject("SELECT is_active FROM lens WHERE id = ?", Boolean.class, lensId);
+        assertThat(coating).isEqualTo("Polarised");
+        assertThat(active).isFalse();
+    }
+
+    @Test
+    void editingALensThatDoesNotExistIsNotFound() throws Exception {
+        MockHttpSession client = loginAs(CLIENT_EMAIL, CLIENT_PASSWORD);
+
+        mvc.perform(put("/api/shop/lenses/{id}", 9_999_999L)
+                        .session(client)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(lensJson("Ghost", "SINGLE_VISION", null, "1000.00", 1, true)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value("NOT_FOUND"));
+    }
+
+    @Test
+    void aClientCanFileALensUnderACategory() throws Exception {
+        MockHttpSession client = loginAs(CLIENT_EMAIL, CLIENT_PASSWORD);
+        Long categoryId = jdbc.queryForObject("SELECT id FROM category WHERE slug = ?", Long.class, "progressive");
+
+        mvc.perform(post("/api/shop/lenses")
+                        .session(client)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(lensJson(
+                                "Comfort Progressive 1.60",
+                                "PROGRESSIVE",
+                                "Anti-reflective",
+                                "12500.00",
+                                7,
+                                true,
+                                categoryId)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.categoryId").value(categoryId));
+
+        Long stored = jdbc.queryForObject(
+                "SELECT category_id FROM lens WHERE name = ? ORDER BY id DESC LIMIT 1",
+                Long.class,
+                "Comfort Progressive 1.60");
+        assertThat(stored).isEqualTo(categoryId);
+    }
+
+    @Test
+    void aLensFiledUnderAFrameCategoryIsRefused() throws Exception {
+        MockHttpSession client = loginAs(CLIENT_EMAIL, CLIENT_PASSWORD);
+        Long frameCategory = jdbc.queryForObject("SELECT id FROM category WHERE slug = ?", Long.class, "men");
+
+        mvc.perform(post("/api/shop/lenses")
+                        .session(client)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(lensJson("Odd Lens", "SINGLE_VISION", null, "1000.00", 1, true, frameCategory)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("INVALID_CATEGORY"));
+    }
+
+    @Test
+    void aLensFiledUnderACategoryThatDoesNotExistIsRefused() throws Exception {
+        MockHttpSession client = loginAs(CLIENT_EMAIL, CLIENT_PASSWORD);
+
+        mvc.perform(post("/api/shop/lenses")
+                        .session(client)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(lensJson("Odd Lens", "SINGLE_VISION", null, "1000.00", 1, true, 9_999_999L)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("INVALID_CATEGORY"));
+    }
+
+    private long createLens(
+            MockHttpSession session,
+            String name,
+            String type,
+            String coating,
+            String price,
+            int stockQty,
+            boolean active)
+            throws Exception {
+        mvc.perform(post("/api/shop/lenses")
+                        .session(session)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(lensJson(name, type, coating, price, stockQty, active)))
+                .andExpect(status().isCreated());
+        return jdbc.queryForObject("SELECT id FROM lens WHERE name = ? ORDER BY id DESC LIMIT 1", Long.class, name);
+    }
+
     private MockHttpSession loginAs(String email, String password) throws Exception {
         MvcResult result = mvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -150,8 +252,14 @@ class LensManagementFlowTest {
 
     private static String lensJson(
             String name, String type, String coating, String price, int stockQty, boolean active) {
+        return lensJson(name, type, coating, price, stockQty, active, null);
+    }
+
+    private static String lensJson(
+            String name, String type, String coating, String price, int stockQty, boolean active, Long categoryId) {
         String coatingJson = coating == null ? "null" : "\"%s\"".formatted(coating);
-        return "{\"name\":\"%s\",\"type\":\"%s\",\"coating\":%s,\"price\":%s,\"stockQty\":%d,\"active\":%b}"
-                .formatted(name, type, coatingJson, price, stockQty, active);
+        String categoryJson = categoryId == null ? "null" : categoryId.toString();
+        return "{\"name\":\"%s\",\"type\":\"%s\",\"coating\":%s,\"price\":%s,\"stockQty\":%d,\"active\":%b,\"categoryId\":%s}"
+                .formatted(name, type, coatingJson, price, stockQty, active, categoryJson);
     }
 }

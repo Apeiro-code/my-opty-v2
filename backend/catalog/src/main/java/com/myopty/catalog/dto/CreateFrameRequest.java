@@ -20,6 +20,9 @@ import java.math.BigDecimal;
  * <p>{@code active} is a {@link Boolean} rather than a primitive so that omitting
  * it means "on sale", not "hidden"; the service applies that default. A frame is
  * deactivated instead of deleted so it can still be referenced by old orders.
+ *
+ * <p>{@code categoryId} is the filing choice. It is nullable so a frame can be
+ * created unfiled, which the V3 column allows.
  */
 public record CreateFrameRequest(
         @NotBlank(message = "Enter a model name.") @Size(max = 160, message = "Model name is too long.")
@@ -36,4 +39,6 @@ public record CreateFrameRequest(
         @NotNull(message = "Enter a stock quantity.") @PositiveOrZero(message = "Stock quantity cannot be negative.")
         Integer stockQty,
 
-        Boolean active) {}
+        Boolean active,
+
+        Long categoryId) {}
