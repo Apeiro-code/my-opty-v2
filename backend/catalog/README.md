@@ -10,7 +10,7 @@ Frames, lenses, categories and stock. Owner: Amarasekara K.N.
 | `frame` | Frames, with price and current stock |
 | `lens` | Lenses, with type and coating |
 | `stock_entry` | Audit log of every stock movement |
-| `availability_report` | Generated inventory snapshots |
+| `availability_report` | Reserved for generated snapshots — unused, the report is computed live |
 
 All DDL is written by Flyway, from `catalog/src/main/resources/db/migration`, and nothing else may create or alter them.
 The migration version band is **V2-V99** — take the next free number inside it, never one
@@ -19,8 +19,7 @@ duplicate-version failure that fails the whole build.
 
 ## Endpoints owned here
 
-Planned: `/api/frames`, `/api/lenses`, `/api/categories`,
-`/api/inventory/report`, `/api/inventory/alerts`, `/api/inventory/report/export`.
+Planned: the public storefront reads `/api/frames`, `/api/lenses`, `/api/categories`.
 
 **Built:** the shop owner's frame and lens stories —
 `GET /api/shop/frames` (inventory list), `POST /api/shop/frames` (add),
@@ -36,8 +35,24 @@ Also **built:** `GET /api/shop/inventory/report` — the live availability repor
 It reads every active frame and lens and bands each as `IN_STOCK`, `LOW_STOCK`
 (`0 < stock_qty <= low_stock_threshold`) or `OUT_OF_STOCK` (`stock_qty = 0`),
 returning the three counts and the per-item rows. It is computed on read and does
-not write the `availability_report` snapshot table, which belongs to the separate
-export story.
+not write the `availability_report` snapshot table.
+
+Also **built:** the two stories that read that report. `GET
+/api/shop/inventory/alerts` is the same items narrowed to the ones not `IN_STOCK`,
+worst first, for the in-app banner. `GET
+/api/shop/inventory/report/export?format=pdf|xlsx` renders the whole report as a
+downloadable file — OpenPDF for the PDF, Apache POI for the workbook — and writes
+nothing server-side. An unknown `format` is a 400 `INVALID_PARAMETER`; a render
+failure is a 500 `EXPORT_FAILED`; `ExportFormatConverter` makes `format` accept
+either case.
+
+The low-stock alert also leaves the process: `StockService.reserve` asks
+`LowStockAlerts` which of its movements crossed a threshold downward, and, once
+the surrounding transaction commits, `EmailLowStockAlertSender` mails a summary to
+the `myopty.alerts.recipient-email` address (`LOW_STOCK_ALERT_EMAIL`, blank
+disables it; `LOW_STOCK_ALERTS_ENABLED` gates the whole path). The send is
+deliberately off the request path — a mail outage must not fail a sale — so its
+failures are logged and swallowed.
 
 This module provides the `contracts.catalog.StockManager` seam. `StockService`
 implements it: `reserve` decrements a frame/lens with a conditional update
@@ -53,9 +68,6 @@ service checks the category exists and that its `item_type` accepts the record
 `INVALID_CATEGORY`. The categories themselves are the seeded rows from V7 — this
 story files records into existing categories, it does not create them.
 
-Nothing else is implemented yet. This module compiles and its tables exist; the
-remaining endpoints land with the features.
-
 ## Depends on
 
 `contracts`, `shared`.
@@ -63,3 +75,7 @@ remaining endpoints land with the features.
 It must not depend on another business module. If you need something from `order`, put an
 interface in `backend/contracts/order/` and let the reactor enforce it — an `import
 com.myopty.order.model.*` does not compile here, which is the point.
+
+OpenPDF and Apache POI are imported for the export (`PdfWriter`/`XSSFWorkbook` and their
+related types); all usage is in `AvailabilityReportExportService`.
+

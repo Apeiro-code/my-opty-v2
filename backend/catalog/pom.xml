@@ -55,6 +55,18 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- The availability report's PDF and Excel export. OpenPDF builds the PDF
+             from a table; POI builds the .xlsx. Both are catalog-local: only the
+             report export needs them, so no other module pays for the jars. -->
+        <dependency>
+            <groupId>com.github.librepdf</groupId>
+            <artifactId>openpdf</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webmvc-test</artifactId>

@@ -1,6 +1,7 @@
 package com.myopty.catalog.controller;
 
 import com.myopty.catalog.exception.InvalidCategoryException;
+import com.myopty.catalog.exception.ReportExportException;
 import com.myopty.catalog.exception.ResourceNotFoundException;
 import com.myopty.shared.auth.dto.ApiError;
 import java.util.stream.Collectors;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 /**
  * Turns this module's failures into the repository's error envelope, the same
@@ -59,6 +61,18 @@ public class CatalogExceptionHandler {
     }
 
     /**
+     * A path or query value could not be converted to the type the handler wants
+     * — an unknown {@code ?format=} on the report export is the case this is here
+     * for. It is a client mistake, so it answers 400 in the same envelope as the
+     * rest of the module's bad requests rather than Spring's default body.
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError parameterMismatch(MethodArgumentTypeMismatchException exception) {
+        return ApiError.of("INVALID_PARAMETER", "The value of '" + exception.getName() + "' is not valid.");
+    }
+
+    /**
      * A foreign key or {@code CHECK} constraint refused the write. A category id
      * that does not exist is the case this is here for; it is a client mistake,
      * not a server one, so it answers 400 rather than the default 500.
@@ -68,5 +82,15 @@ public class CatalogExceptionHandler {
     public ApiError constraintViolated(DataIntegrityViolationException exception) {
         return ApiError.of(
                 "INVALID_RECORD", "The record could not be saved: a referenced or constrained value is not valid.");
+    }
+
+    /**
+     * The report could not be rendered as a file. The request was valid, so this
+     * is the server's failure to produce the document and answers 500.
+     */
+    @ExceptionHandler(ReportExportException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ApiError exportFailed(ReportExportException exception) {
+        return ApiError.of("EXPORT_FAILED", exception.getMessage());
     }
 }

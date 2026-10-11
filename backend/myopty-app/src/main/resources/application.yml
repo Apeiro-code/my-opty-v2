@@ -114,6 +114,17 @@ myopty:
     fail-on-error: ${MAIL_FAIL_ON_ERROR:false}
     from-address: ${MAIL_FROM_ADDRESS:no-reply@myopty.local}
 
+  # Low-stock alerts email the shop when an order takes an item from above its reorder
+  # threshold to at or below it. The recipient is a shop setting, not a user lookup:
+  # the alert goes to the shop, and there is no role-to-mailbox mapping to resolve. A
+  # blank address disables the email while leaving the in-app banner working, which is
+  # what a developer without a mail account wants; the From: address reuses
+  # MAIL_FROM_ADDRESS, so the shop configures one mail contract.
+  alerts:
+    enabled: ${LOW_STOCK_ALERTS_ENABLED:true}
+    recipient-email: ${LOW_STOCK_ALERT_EMAIL:}
+    from-address: ${MAIL_FROM_ADDRESS:no-reply@myopty.local}
+
   # Payment gateway credentials, read from the PAYMENT_GATEWAY_* contract in .env.
   # `fake` needs no credentials and must never leave a developer's machine;
   # `payhere` requires the sandbox values from docs/DEPLOYMENT.md. The properties

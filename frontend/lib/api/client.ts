@@ -3,12 +3,14 @@ import type { ApiError, ApiMeta, ApiResult } from "@/types/api";
 /**
  * The one place `fetch` is called from.
  *
- * <p>Features call `apiGet` / `apiPost` rather than `fetch` directly, so the base URL, the
+ * <p>Features call `apiGet` / `apiPost` / … rather than `fetch` directly, so the base URL, the
  * credentials and the envelope unwrapping are defined once. A feature that calls `fetch`
  * itself silently opts out of all three.
  *
- * <p>Nothing calls this yet: the skeleton has no endpoints to call. It exists so the first
- * feature does not get to invent a second convention.
+ * <p>Every call but {@link apiDownload} returns the JSON envelope. `apiDownload` is the
+ * exception because a report export is bytes, not JSON: it streams the response as a
+ * Blob and hands it to the browser as a file download, reusing the same error
+ * unwrapping for the failure case.
  */
 
 const BASE_URL =
@@ -119,3 +121,50 @@ export const apiPut = <T>(path: string, body: unknown) =>
 
 export const apiDelete = <T>(path: string) =>
   request<T>(path, { method: "DELETE" });
+
+/**
+ * Downloads a file from an endpoint that answers with bytes rather than the JSON
+ * envelope — the availability report's PDF/Excel export.
+ *
+ * <p>It does its own `fetch` because {@link request} would try to parse the body as
+ * JSON. It still goes through this file, so the base URL and the session cookie are
+ * the same as every other call, and a failure is unwrapped from the same error
+ * envelope. The `filename` is supplied by the caller: the server sets
+ * `Content-Disposition`, but that header is not readable across origins, so the
+ * browser side names the saved file instead.
+ */
+export async function apiDownload(
+  path: string,
+  filename: string,
+): Promise<ApiResult<void>> {
+  let response: Response;
+  try {
+    response = await fetch(`${BASE_URL}${path}`, {
+      method: "GET",
+      credentials: "include",
+    });
+  } catch {
+    return {
+      ok: false,
+      error: {
+        code: "NETWORK_ERROR",
+        message: `Could not reach the API at ${BASE_URL}. Is the backend running?`,
+      },
+    };
+  }
+
+  if (!response.ok) {
+    return { ok: false, error: await readError(response) };
+  }
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  return { ok: true, data: undefined };
+}

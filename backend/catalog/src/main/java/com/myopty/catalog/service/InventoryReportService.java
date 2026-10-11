@@ -40,6 +40,25 @@ public class InventoryReportService {
         return new AvailabilityReportResponse(items.size(), inStock, lowStock, outOfStock, items);
     }
 
+    /**
+     * The items the shop must act on now: everything not in stock, low first so
+     * the empty shelves read before the thinning ones. This is the same live view
+     * as {@link #generate()} narrowed to the two problem bands, which is what the
+     * in-app banner shows — it is the current state, not the email the sale sent.
+     */
+    @Transactional(readOnly = true)
+    public List<AvailabilityItemResponse> alerts() {
+        return generate().items().stream()
+                .filter(item -> item.status() != StockStatus.IN_STOCK)
+                .sorted((left, right) -> Integer.compare(rank(left.status()), rank(right.status())))
+                .toList();
+    }
+
+    /** Out of stock sorts before low stock. */
+    private static int rank(StockStatus status) {
+        return status == StockStatus.OUT_OF_STOCK ? 0 : 1;
+    }
+
     private static int count(List<AvailabilityItemResponse> items, StockStatus status) {
         return (int) items.stream().filter(item -> item.status() == status).count();
     }

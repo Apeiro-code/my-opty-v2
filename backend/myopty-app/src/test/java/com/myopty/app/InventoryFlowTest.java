@@ -1,10 +1,13 @@
 package com.myopty.app;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -13,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockHttpSession;
@@ -93,6 +97,81 @@ class InventoryFlowTest {
 
         mvc.perform(get("/api/shop/inventory/report").session(customer)).andExpect(status().isForbidden());
         mvc.perform(get("/api/shop/inventory/report")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void theClientReadsTheLowStockAlertsAndNoItemIsInStock() throws Exception {
+        MockHttpSession client = loginAs(CLIENT_EMAIL, CLIENT_PASSWORD);
+
+        mvc.perform(get("/api/shop/inventory/alerts").session(client))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data").isArray())
+                // Every alert is an item the shop must act on: not in stock.
+                .andExpect(jsonPath("$.data[?(@.status == 'IN_STOCK')]").isEmpty());
+    }
+
+    @Test
+    void theLowStockAlertsAreForTheClientOnly() throws Exception {
+        MockHttpSession customer = loginAs(CUSTOMER_EMAIL, CUSTOMER_PASSWORD);
+
+        mvc.perform(get("/api/shop/inventory/alerts").session(customer)).andExpect(status().isForbidden());
+        mvc.perform(get("/api/shop/inventory/alerts")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void theClientDownloadsTheReportAsPdf() throws Exception {
+        MockHttpSession client = loginAs(CLIENT_EMAIL, CLIENT_PASSWORD);
+
+        MvcResult result = mvc.perform(get("/api/shop/inventory/report/export")
+                        .param("format", "pdf")
+                        .session(client))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PDF))
+                .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, containsString("availability-report-")))
+                .andReturn();
+
+        assertThat(magicOf(result)).as("a PDF starts with the %PDF magic").isEqualTo("%PDF");
+    }
+
+    @Test
+    void theClientDownloadsTheReportAsAWorkbook() throws Exception {
+        MockHttpSession client = loginAs(CLIENT_EMAIL, CLIENT_PASSWORD);
+
+        MvcResult result = mvc.perform(get("/api/shop/inventory/report/export")
+                        .param("format", "xlsx")
+                        .session(client))
+                .andExpect(status().isOk())
+                .andExpect(content()
+                        .contentTypeCompatibleWith("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .andReturn();
+
+        // Every .xlsx is a zip archive, so it opens with the local-file header "PK".
+        assertThat(magicOf(result, 2)).as("an xlsx is a zip").isEqualTo("PK");
+    }
+
+    @Test
+    void theReportExportIsForTheClientOnly() throws Exception {
+        MockHttpSession customer = loginAs(CUSTOMER_EMAIL, CUSTOMER_PASSWORD);
+
+        mvc.perform(get("/api/shop/inventory/report/export")
+                        .param("format", "pdf")
+                        .session(customer))
+                .andExpect(status().isForbidden());
+        mvc.perform(get("/api/shop/inventory/report/export").param("format", "pdf"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void anUnknownExportFormatIsRefusedInTheErrorEnvelope() throws Exception {
+        MockHttpSession client = loginAs(CLIENT_EMAIL, CLIENT_PASSWORD);
+
+        mvc.perform(get("/api/shop/inventory/report/export")
+                        .param("format", "docx")
+                        .session(client))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("INVALID_PARAMETER"));
     }
 
     @Test
@@ -218,6 +297,16 @@ class InventoryFlowTest {
 
     private int stockOf(String table, long id) {
         return jdbc.queryForObject("SELECT stock_qty FROM " + table + " WHERE id = ?", Integer.class, id);
+    }
+
+    /** The first bytes of a downloaded file, as text, to check its magic number. */
+    private static String magicOf(MvcResult result) {
+        return magicOf(result, 4);
+    }
+
+    private static String magicOf(MvcResult result, int length) {
+        byte[] body = result.getResponse().getContentAsByteArray();
+        return new String(body, 0, length, StandardCharsets.ISO_8859_1);
     }
 
     private long anyActiveFrameId() {

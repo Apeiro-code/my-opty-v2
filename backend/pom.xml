@@ -51,6 +51,11 @@
         <!-- Not managed by the Spring Boot BOM; pinned here so all modules agree. -->
         <springdoc.version>3.1.0</springdoc.version>
         <spotless.version>3.10.3</spotless.version>
+        <!-- Report export: OpenPDF writes the PDF, Apache POI the .xlsx. Neither is
+             in the Boot BOM, so they are pinned once here. Keep them current — both
+             are libraries that parse untrusted formats and have had security fixes. -->
+        <openpdf.version>3.0.5</openpdf.version>
+        <poi.version>5.5.1</poi.version>
     </properties>
 
     <dependencyManagement>
@@ -59,6 +64,17 @@
                 <groupId>org.springdoc</groupId>
                 <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
                 <version>${springdoc.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.github.librepdf</groupId>
+                <artifactId>openpdf</artifactId>
+                <version>${openpdf.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi-ooxml</artifactId>
+                <version>${poi.version}</version>
             </dependency>
 
             <!-- Reactor modules, so a module depends on a sibling by type, not version. -->

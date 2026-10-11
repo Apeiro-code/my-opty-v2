@@ -1,11 +1,13 @@
 import AvailabilityReport from "@/features/catalog/components/AvailabilityReport";
 import FrameManager from "@/features/catalog/components/FrameManager";
 import LensManager from "@/features/catalog/components/LensManager";
+import LowStockAlerts from "@/features/catalog/components/LowStockAlerts";
 
 /**
  * The shop owner's inventory page: a live availability report over the frame
- * catalogue and the lens collection. A thin server component; everything lives
- * in `features/catalog`, the catalog module's ownership boundary.
+ * catalogue and the lens collection, with a low-stock banner above it. A thin
+ * server component; everything lives in `features/catalog`, the catalog module's
+ * ownership boundary.
  */
 export default function ShopInventoryPage() {
   return (
@@ -17,9 +19,12 @@ export default function ShopInventoryPage() {
             Every active frame and lens with what is on the shelf right now,
             banded as in stock, low stock or out of stock. Stock falls as orders
             are placed and comes back when an order is rejected, so this view
-            tracks the shelf live — use it to plan what to reorder.
+            tracks the shelf live — use it to plan what to reorder. The banner
+            above flags anything already low or out, and the report downloads as
+            a PDF or an Excel workbook for your records.
           </p>
         </div>
+        <LowStockAlerts />
         <AvailabilityReport />
       </section>
 

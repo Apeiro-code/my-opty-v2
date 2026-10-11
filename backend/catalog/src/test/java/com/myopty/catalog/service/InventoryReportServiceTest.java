@@ -57,6 +57,18 @@ class InventoryReportServiceTest {
         assertThat(report.outOfStockCount()).isEqualTo(1);
     }
 
+    @Test
+    void theAlertsAreTheItemsNotInStockOutOfStockFirst() {
+        List<AvailabilityItemResponse> alerts = service.alerts();
+
+        assertThat(alerts)
+                .extracting(AvailabilityItemResponse::name)
+                .containsExactly("Discontinued", "Astra 2100 Tortoise");
+        assertThat(alerts)
+                .extracting(AvailabilityItemResponse::status)
+                .containsExactly(StockStatus.OUT_OF_STOCK, StockStatus.LOW_STOCK);
+    }
+
     private static InventoryReportRepository reporting(List<StockRow> frames, List<StockRow> lenses) {
         return new InventoryReportRepository(null) {
             @Override

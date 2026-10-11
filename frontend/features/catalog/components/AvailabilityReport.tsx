@@ -1,34 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { getAvailabilityReport } from "../api";
+import { exportAvailabilityReport, getAvailabilityReport } from "../api";
 import type { ApiResult } from "@/types/api";
-import type {
-  AvailabilityItem,
-  AvailabilityReport as Report,
-  StockStatus,
-} from "../types";
+import { STATUS_BADGE, STATUS_LABEL, STATUS_ORDER } from "../statusDisplay";
+import type { AvailabilityItem, AvailabilityReport as Report } from "../types";
 
 const REFRESH_INTERVAL_MS = 30_000;
-
-const STATUS_LABEL: Record<StockStatus, string> = {
-  IN_STOCK: "In stock",
-  LOW_STOCK: "Low stock",
-  OUT_OF_STOCK: "Out of stock",
-};
-
-const STATUS_BADGE: Record<StockStatus, string> = {
-  IN_STOCK: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
-  LOW_STOCK: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-  OUT_OF_STOCK: "bg-red-500/15 text-red-700 dark:text-red-400",
-};
-
-/** Out of stock first, then low, so the shelves to restock are at the top. */
-const STATUS_ORDER: Record<StockStatus, number> = {
-  OUT_OF_STOCK: 0,
-  LOW_STOCK: 1,
-  IN_STOCK: 2,
-};
 
 /**
  * The shop owner's live availability report: every active frame and lens with
@@ -39,12 +17,16 @@ const STATUS_ORDER: Record<StockStatus, number> = {
  * read, so a refresh — on a button, or on a light interval — is what keeps it
  * real-time. The backend is also the authority on the role boundary; this only
  * reports what it says, turning a 403/401 into "sign in as the shop owner".
+ *
+ * <p>The export buttons hand the same rows to the backend as a file: the server
+ * renders the PDF/Excel, and the browser names the download.
  */
 export default function AvailabilityReport() {
   const [report, setReport] = useState<Report | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [refreshError, setRefreshError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [exporting, setExporting] = useState<"pdf" | "xlsx" | null>(null);
 
   const apply = useCallback((result: ApiResult<Report>) => {
     if (!result.ok) {
@@ -82,6 +64,17 @@ export default function AvailabilityReport() {
     setRefreshing(false);
   }
 
+  async function onExport(format: "pdf" | "xlsx") {
+    setExporting(format);
+    const date = new Date().toISOString().slice(0, 10);
+    const result = await exportAvailabilityReport(
+      format,
+      `availability-report-${date}.${format}`,
+    );
+    setRefreshError(result.ok ? null : messageFor(result.error));
+    setExporting(null);
+  }
+
   if (report === null) {
     if (loadError) {
       return (
@@ -108,14 +101,32 @@ export default function AvailabilityReport() {
           <Summary label="Low stock" value={report.lowStockCount} />
           <Summary label="Out of stock" value={report.outOfStockCount} />
         </dl>
-        <button
-          type="button"
-          onClick={() => void onRefresh()}
-          disabled={refreshing}
-          className="rounded-md border border-black/15 px-3 py-1.5 text-sm disabled:opacity-50 dark:border-white/20"
-        >
-          {refreshing ? "Refreshing…" : "Refresh"}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => void onExport("pdf")}
+            disabled={exporting !== null}
+            className="rounded-md border border-black/15 px-3 py-1.5 text-sm disabled:opacity-50 dark:border-white/20"
+          >
+            {exporting === "pdf" ? "Exporting…" : "Export PDF"}
+          </button>
+          <button
+            type="button"
+            onClick={() => void onExport("xlsx")}
+            disabled={exporting !== null}
+            className="rounded-md border border-black/15 px-3 py-1.5 text-sm disabled:opacity-50 dark:border-white/20"
+          >
+            {exporting === "xlsx" ? "Exporting…" : "Export Excel"}
+          </button>
+          <button
+            type="button"
+            onClick={() => void onRefresh()}
+            disabled={refreshing}
+            className="rounded-md border border-black/15 px-3 py-1.5 text-sm disabled:opacity-50 dark:border-white/20"
+          >
+            {refreshing ? "Refreshing…" : "Refresh"}
+          </button>
+        </div>
       </div>
 
       {refreshError ? (

@@ -24,7 +24,7 @@ What is built and working:
 | Authentication | Session login/logout with `CUSTOMER` vs `CLIENT` roles (Spring Security, deny-by-default on `/api/**`); `AuthFlowTest` proves the whole flow |
 | Staging preview | `compose.prod.yaml` builds API + web images behind one nginx proxy on **:8088** |
 | Payment config | PayHere sandbox runbook in `docs/DEPLOYMENT.md`; bad `PAYMENT_GATEWAY_*` config fails startup naming the variable |
-| Email | `spring.mail` wired from `MAIL_*`; `MailSendingTest` proves a real send through Mailpit |
+| Email | `spring.mail` wired from `MAIL_*`; low-stock emails to `LOW_STOCK_ALERT_EMAIL` (Mailpit in development); `MailSendingTest` proves a real send |
 
 What is **not** built: most feature endpoints listed in this file, and a real object
 store. The API answers `/actuator/health`, the auth endpoints, and the order module's
@@ -87,9 +87,6 @@ GET    /api/lenses/{id}               # Detail
 POST   /api/lenses                    # Create (client only)
 PUT    /api/lenses/{id}               # Update (client only)
 GET    /api/categories                # All categories
-GET    /api/inventory/report          # Availability report
-GET    /api/inventory/alerts          # Low-stock alerts
-POST   /api/inventory/report/export   # Export PDF/Excel
 ```
 
 The shop owner's frame and lens stories are **implemented** at `/api/shop/frames`
@@ -112,9 +109,10 @@ boundary through the `contracts.catalog.StockManager` interface, so `order` book
 stock on placement and releases it on rejection without reading catalog's tables;
 an order the shelf cannot fill is refused with `409 OUT_OF_STOCK`. `catalog`'s
 report is computed live and does not write the `availability_report` snapshot
-table — that, and the export, belong to the separate export story.
+table. Also built are the two inventory additions: `GET /api/shop/inventory/alerts` (non-IN_STOCK items, worst first) and `GET /api/shop/inventory/report/export?format=pdf|xlsx` (export to PDF/Excel, computed live). A low-stock alert email is sent to the configured recipient after a sale that crosses a threshold (disabled if the address is blank or alerts are off).
 
-**Database Tables:** `category`, `frame`, `lens`, `stock_entry`, `availability_report`
+
+**Database Tables:** `category`, `frame`, `lens`, `stock_entry`, `availability_report` (snapshot, unused)
 
 ---
 
