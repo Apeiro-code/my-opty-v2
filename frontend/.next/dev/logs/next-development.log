@@ -1,0 +1,177 @@
+[00:00:02.006] Server  LOG     It looks like you're trying to use TypeScript but do not have the required package(s) installed.
+Installing dependencies
+
+If you are not trying to use TypeScript, please remove the tsconfig.json file from your package root (and any TypeScript files in your app and pages directories).
+
+[00:00:02.126] Server  LOG     
+[00:00:02.127] Server  LOG     Installing devDependencies (npm):
+[00:00:02.128] Server  LOG     - typescript
+[00:00:02.128] Server  LOG     
+[00:00:06.573] Server  LOG     
+[00:00:06.876] Server  LOG      ✓ Ready in 6.2s
+[00:00:29.875] Server  LOG      ○ Compiling /tasks ...
+[00:00:31.555] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:54.852] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:02:12.762] Server  ERROR    ⨯ ./app/(client)/dashboard/page.tsx:130:21
+Parsing ecmascript source code failed
+  128 |               <svg className="w-6 h-6 text-success-600" fill="none" stroke="currentColor">
+  129 |                 <path d="M12 2v2m0 10v2m-7-10v2m7-10v2m-3.5 7.5h15a3.5 3.5 0 0 1 0 7h-15a3.5 3.5 0 0 1 0-7zM5 10.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" />
+> 130 |               </div>
+      |                     ^
+> 131 |               <div className="ml-4">
+      | ^^^^^^^^^^^^^^^
+  132 |                 <p className="text-sm text-gray-500">Total Orders</p>
+  133 |                 <p className="text-3xl font-bold text-success-600">{metrics.totalOrders}</p>
+  134 |               </div>
+
+Expected '</', got 'jsx text (
+              )'
+
+
+[00:02:12.886] Browser ERROR   ./app/(client)/dashboard/page.tsx:130:21
+Parsing ecmascript source code failed
+  128 |               <svg className="w-6 h-6 text-success-600" fill="none" stroke="currentColor">
+  129 |                 <path d="M12 2v2m0 10v2m-7-10v2m7-10v2m-3.5 7.5h15a3.5 3.5 0 0 1 0 7h-15a3.5 3.5 0 0 1 0-7zM5 10.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" />
+> 130 |               </div>
+      |                     ^
+> 131 |               <div className="ml-4">
+      | ^^^^^^^^^^^^^^^
+  132 |                 <p className="text-sm text-gray-500">Total Orders</p>
+  133 |                 <p className="text-3xl font-bold text-success-600">{metrics.totalOrders}</p>
+  134 |               </div>
+
+Expected '</', got 'jsx text (
+              )'
+[00:02:13.977] Browser ERROR   ./app/(client)/dashboard/page.tsx:130:21
+Parsing ecmascript source code failed
+  128 |               <svg className="w-6 h-6 text-success-600" fill="none" stroke="currentColor">
+  129 |                 <path d="M12 2v2m0 10v2m-7-10v2m7-10v2m-3.5 7.5h15a3.5 3.5 0 0 1 0 7h-15a3.5 3.5 0 0 1 0-7zM5 10.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" />
+> 130 |               </div>
+      |                     ^
+> 131 |               <div className="ml-4">
+      | ^^^^^^^^^^^^^^^
+  132 |                 <p className="text-sm text-gray-500">Total Orders</p>
+  133 |                 <p className="text-3xl font-bold text-success-600">{metrics.totalOrders}</p>
+  134 |               </div>
+
+Expected '</', got 'jsx text (
+              )'
+[00:02:14.152] Browser ERROR   ./app/(client)/dashboard/page.tsx:130:21
+Parsing ecmascript source code failed
+  128 |               <svg className="w-6 h-6 text-success-600" fill="none" stroke="currentColor">
+  129 |                 <path d="M12 2v2m0 10v2m-7-10v2m7-10v2m-3.5 7.5h15a3.5 3.5 0 0 1 0 7h-15a3.5 3.5 0 0 1 0-7zM5 10.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" />
+> 130 |               </div>
+      |                     ^
+> 131 |               <div className="ml-4">
+      | ^^^^^^^^^^^^^^^
+  132 |                 <p className="text-sm text-gray-500">Total Orders</p>
+  133 |                 <p className="text-3xl font-bold text-success-600">{metrics.totalOrders}</p>
+  134 |               </div>
+
+Expected '</', got 'jsx text (
+              )'
+[00:02:15.594] Browser ERROR   uncaughtError: Error: ./app/(client)/dashboard/page.tsx:130:21
+Parsing ecmascript source code failed
+  128 |               <svg className="w-6 h-6 text-success-600" fill="none" stroke="currentColor">
+  129 |                 <path d="M12 2v2m0 10v2m-7-10v2m7-10v2m-3.5 7.5h15a3.5 3.5 0 0 1 0 7h-15a3.5 3.5 0 0 1 0-7zM5 10.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" />
+> 130 |               </div>
+      |                     ^
+> 131 |               <div className="ml-4">
+      | ^^^^^^^^^^^^^^^
+  132 |                 <p className="text-sm text-gray-500">Total Orders</p>
+  133 |                 <p className="text-3xl font-bold text-success-600">{metrics.totalOrders}</p>
+  134 |               </div>
+
+Expected '</', got 'jsx text (
+              )'
+
+
+[00:02:15.726] Browser ERROR   ./app/(client)/dashboard/page.tsx:130:21
+Parsing ecmascript source code failed
+  128 |               <svg className="w-6 h-6 text-success-600" fill="none" stroke="currentColor">
+  129 |                 <path d="M12 2v2m0 10v2m-7-10v2m7-10v2m-3.5 7.5h15a3.5 3.5 0 0 1 0 7h-15a3.5 3.5 0 0 1 0-7zM5 10.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" />
+> 130 |               </div>
+      |                     ^
+> 131 |               <div className="ml-4">
+      | ^^^^^^^^^^^^^^^
+  132 |                 <p className="text-sm text-gray-500">Total Orders</p>
+  133 |                 <p className="text-3xl font-bold text-success-600">{metrics.totalOrders}</p>
+  134 |               </div>
+
+Expected '</', got 'jsx text (
+              )'
+[00:02:15.843] Browser ERROR   ./app/(client)/dashboard/page.tsx:130:21
+Parsing ecmascript source code failed
+  128 |               <svg className="w-6 h-6 text-success-600" fill="none" stroke="currentColor">
+  129 |                 <path d="M12 2v2m0 10v2m-7-10v2m7-10v2m-3.5 7.5h15a3.5 3.5 0 0 1 0 7h-15a3.5 3.5 0 0 1 0-7zM5 10.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" />
+> 130 |               </div>
+      |                     ^
+> 131 |               <div className="ml-4">
+      | ^^^^^^^^^^^^^^^
+  132 |                 <p className="text-sm text-gray-500">Total Orders</p>
+  133 |                 <p className="text-3xl font-bold text-success-600">{metrics.totalOrders}</p>
+  134 |               </div>
+
+Expected '</', got 'jsx text (
+              )'
+[00:02:39.067] Browser ERROR   ./app/(client)/dashboard/page.tsx:130:21
+Parsing ecmascript source code failed
+  128 |               <svg className="w-6 h-6 text-success-600" fill="none" stroke="currentColor">
+  129 |                 <path d="M12 2v2m0 10v2m-7-10v2m7-10v2m-3.5 7.5h15a3.5 3.5 0 0 1 0 7h-15a3.5 3.5 0 0 1 0-7zM5 10.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" />
+> 130 |               </div>
+      |                     ^
+> 131 |               <div className="ml-4">
+      | ^^^^^^^^^^^^^^^
+  132 |                 <p className="text-sm text-gray-500">Total Orders</p>
+  133 |                 <p className="text-3xl font-bold text-success-600">{metrics.totalOrders}</p>
+  134 |               </div>
+
+Expected '</', got 'jsx text (
+              )'
+[00:02:40.535] Browser ERROR   uncaughtError: Error: ./app/(client)/dashboard/page.tsx:130:21
+Parsing ecmascript source code failed
+  128 |               <svg className="w-6 h-6 text-success-600" fill="none" stroke="currentColor">
+  129 |                 <path d="M12 2v2m0 10v2m-7-10v2m7-10v2m-3.5 7.5h15a3.5 3.5 0 0 1 0 7h-15a3.5 3.5 0 0 1 0-7zM5 10.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" />
+> 130 |               </div>
+      |                     ^
+> 131 |               <div className="ml-4">
+      | ^^^^^^^^^^^^^^^
+  132 |                 <p className="text-sm text-gray-500">Total Orders</p>
+  133 |                 <p className="text-3xl font-bold text-success-600">{metrics.totalOrders}</p>
+  134 |               </div>
+
+Expected '</', got 'jsx text (
+              )'
+
+
+[00:02:40.726] Browser ERROR   ./app/(client)/dashboard/page.tsx:130:21
+Parsing ecmascript source code failed
+  128 |               <svg className="w-6 h-6 text-success-600" fill="none" stroke="currentColor">
+  129 |                 <path d="M12 2v2m0 10v2m-7-10v2m7-10v2m-3.5 7.5h15a3.5 3.5 0 0 1 0 7h-15a3.5 3.5 0 0 1 0-7zM5 10.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" />
+> 130 |               </div>
+      |                     ^
+> 131 |               <div className="ml-4">
+      | ^^^^^^^^^^^^^^^
+  132 |                 <p className="text-sm text-gray-500">Total Orders</p>
+  133 |                 <p className="text-3xl font-bold text-success-600">{metrics.totalOrders}</p>
+  134 |               </div>
+
+Expected '</', got 'jsx text (
+              )'
+[00:02:40.727] Browser ERROR   ./app/(client)/dashboard/page.tsx:130:21
+Parsing ecmascript source code failed
+  128 |               <svg className="w-6 h-6 text-success-600" fill="none" stroke="currentColor">
+  129 |                 <path d="M12 2v2m0 10v2m-7-10v2m7-10v2m-3.5 7.5h15a3.5 3.5 0 0 1 0 7h-15a3.5 3.5 0 0 1 0-7zM5 10.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" />
+> 130 |               </div>
+      |                     ^
+> 131 |               <div className="ml-4">
+      | ^^^^^^^^^^^^^^^
+  132 |                 <p className="text-sm text-gray-500">Total Orders</p>
+  133 |                 <p className="text-3xl font-bold text-success-600">{metrics.totalOrders}</p>
+  134 |               </div>
+
+Expected '</', got 'jsx text (
+              )'
+[00:08:07.035] Server  LOG      ✓ Compiled in 85ms
+[00:08:08.005] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:08:29.249] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold

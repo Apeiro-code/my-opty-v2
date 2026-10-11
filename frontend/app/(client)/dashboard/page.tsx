@@ -127,7 +127,7 @@ export default function DashboardPage() {
             <div className="w-12 h-12 rounded-xl bg-success-100 flex items-center justify-center flex-shrink-0">
               <svg className="w-6 h-6 text-success-600" fill="none" stroke="currentColor">
                 <path d="M12 2v2m0 10v2m-7-10v2m7-10v2m-3.5 7.5h15a3.5 3.5 0 0 1 0 7h-15a3.5 3.5 0 0 1 0-7zM5 10.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" />
-              </div>
+              </svg>
               <div className="ml-4">
                 <p className="text-sm text-gray-500">Total Orders</p>
                 <p className="text-3xl font-bold text-success-600">{metrics.totalOrders}</p>

@@ -30,7 +30,7 @@ export default function ClientWorkflowPage() {
         setLoading(true);
         try {
           // Fetch all tasks
-          const tasksResult: ApiResponse<TodoTaskResponse[]> = await getTasks(clientId);
+          const tasksResult: ApiResponse<TodoTaskResponse[]> = await todoTasks.getAll(clientId);
           if (tasksResult.success && tasksResult.data) {
             setTasks(tasksResult.data);
           } else {
@@ -38,13 +38,13 @@ export default function ClientWorkflowPage() {
           }
 
           // Fetch queue tasks
-          const queueResult: ApiResponse<TodoTaskResponse[]> = await getTaskQueue(clientId);
+          const queueResult: ApiResponse<TodoTaskResponse[]> = await todoTasks.getQueue(clientId);
           if (queueResult.success && queueResult.data) {
             setQueueTasks(queueResult.data);
           }
 
           // Fetch overdue tasks
-          const overdueResult: ApiResponse<TodoTaskResponse[]> = await getOverdueTasks(clientId);
+          const overdueResult: ApiResponse<TodoTaskResponse[]> = await todoTasks.getOverdue(clientId);
           if (overdueResult.success && overdueResult.data) {
             setOverdueTasks(overdueResult.data);
           }

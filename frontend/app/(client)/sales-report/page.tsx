@@ -245,7 +245,7 @@ export default function SalesReportPage() {
             onClick={() => {
               // Export as Excel
               window.open(
-                `/api/reports/export/sales/excel?clientId=1&month=${currentMonth.month}&year=${currentYear.year}`,
+                `/api/reports/export/sales/excel?clientId=1&month=${currentMonth.month}&year=${currentMonth.year}`,
                 "_blank"
               );
             }}

@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { dealerApi } from "@/features/workflow/api";
 import { dealerTypes } from "@/types/workflow";
 
+const { id } = useParams();
+
 interface DealerContact {
   dealerId: number;
   name: string;

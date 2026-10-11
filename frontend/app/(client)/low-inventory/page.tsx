@@ -118,7 +118,6 @@ export default function LowInventoryPage() {
                   </tr>
                 )}
               </tbody>
-            </table>
           </table>
         </div>
       </div>

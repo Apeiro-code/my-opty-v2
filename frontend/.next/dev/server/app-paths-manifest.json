@@ -1,0 +1,5 @@
+{
+  "/(client)/dashboard/page": "app/(client)/dashboard/page.js",
+  "/(client)/dealers/page": "app/(client)/dealers/page.js",
+  "/(client)/tasks/page": "app/(client)/tasks/page.js"
+}
