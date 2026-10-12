@@ -14,12 +14,16 @@ import type {
   FrameInput,
   Lens,
   LensInput,
+  StorefrontFrame,
 } from "./types";
 
 /**
  * The shop owner's frame, lens and category catalogue. The shop owner is a
  * `CLIENT`, so these calls go to `/api/shop/**`, which the backend restricts to
  * that role.
+ *
+ * <p>{@link listStorefrontFrames} is the exception: it reads the public
+ * `/api/frames`, which the storefront's anonymous visitors use to browse.
  */
 
 /** Every filing category, oldest first, for the frame and lens forms. */
@@ -30,6 +34,15 @@ export function listShopCategories(): Promise<ApiResult<Category[]>> {
 /** Every frame, oldest first, for the inventory list. */
 export function listShopFrames(): Promise<ApiResult<Frame[]>> {
   return apiGet<Frame[]>("/api/shop/frames");
+}
+
+/**
+ * Every active frame, oldest first, for the public shop wall. Anonymous: it reads
+ * `/api/frames`, which needs no session. Each frame carries only what a visitor
+ * may see — the friendly `inStock` flag and a thumbnail, not the shop's count.
+ */
+export function listStorefrontFrames(): Promise<ApiResult<StorefrontFrame[]>> {
+  return apiGet<StorefrontFrame[]>("/api/frames");
 }
 
 /** Adds a frame so it appears on the site. */

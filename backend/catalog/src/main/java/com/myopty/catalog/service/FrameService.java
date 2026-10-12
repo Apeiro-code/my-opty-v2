@@ -2,6 +2,7 @@ package com.myopty.catalog.service;
 
 import com.myopty.catalog.dto.CreateFrameRequest;
 import com.myopty.catalog.dto.FrameResponse;
+import com.myopty.catalog.dto.StorefrontFrameResponse;
 import com.myopty.catalog.dto.UpdateFrameRequest;
 import com.myopty.catalog.exception.ResourceNotFoundException;
 import com.myopty.catalog.model.CategoryItemType;
@@ -93,6 +94,17 @@ public class FrameService {
     @Transactional(readOnly = true)
     public List<FrameResponse> list() {
         return frames.findAllByOrderByIdAsc().stream().map(FrameResponse::from).toList();
+    }
+
+    /**
+     * The frames a browsing visitor may see: the active ones, oldest first, wrapped
+     * in the public shape that drops the shop's own stock count and active flag.
+     */
+    @Transactional(readOnly = true)
+    public List<StorefrontFrameResponse> listActiveForStorefront() {
+        return frames.findAllByActiveTrueOrderByIdAsc().stream()
+                .map(StorefrontFrameResponse::from)
+                .toList();
     }
 
     private static void apply(

@@ -36,6 +36,22 @@ export type Frame = {
 };
 
 /**
+ * Mirrors the catalog module's `StorefrontFrameResponse`: what a browsing visitor
+ * is shown for a frame. It is deliberately narrower than {@link Frame} — stock is
+ * reduced to `inStock`, and the shop's `active` flag and exact count are not
+ * exposed. `imageUrl` is the thumbnail, which may be null.
+ */
+export type StorefrontFrame = {
+  id: number;
+  model: string;
+  color: string | null;
+  material: string;
+  price: number;
+  imageUrl: string | null;
+  inStock: boolean;
+};
+
+/**
  * The body of `POST /api/shop/frames` and `PUT /api/shop/frames/{id}`. The two
  * requests carry the same fields, so one type serves both; `color` is nullable
  * because it is a variant rather than an identity, and `categoryId` is nullable

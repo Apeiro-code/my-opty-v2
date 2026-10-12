@@ -98,9 +98,15 @@ old orders still resolve), `GET`/`POST /api/shop/lenses` (list and add),
 `PUT /api/shop/lenses/{id}` (edit), and `GET /api/shop/categories` (the filing
 categories a frame or lens may be assigned to; `categoryId` on a frame or lens is
 optional). They all sit behind the existing `ROLE_CLIENT` rule that every
-`/api/shop/**` endpoint already carries. The customer-facing `/api/frames` browse
-endpoints are not built yet, because nothing serves the storefront's `/frames`
-page.
+`/api/shop/**` endpoint already carries.
+
+The customer-facing frame browse is **implemented**: `GET /api/frames` is the
+anonymous shop wall. It is public (no session), returns only active frames, oldest
+first, and exposes only the visitor-safe fields — model, colour, material, price,
+thumbnail and a friendly in-stock flag — never the exact stock count, the active
+flag or the category. The storefront's `/frames` page renders it as a grid. The
+matching `/api/lenses` and `/api/categories` reads are not built yet, because
+nothing serves the storefront's `/lenses` page.
 
 The inventory stories are **implemented** too: stock auto-decrements when an order
 is placed and comes back when one is rejected, and the shop reads a real-time

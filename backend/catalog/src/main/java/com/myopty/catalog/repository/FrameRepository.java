@@ -35,6 +35,14 @@ public interface FrameRepository extends Repository<Frame, Long> {
     List<Frame> findAllByOrderByIdAsc();
 
     /**
+     * The frames on the shop wall, oldest first, for a browsing visitor. Scoped to
+     * {@code is_active = true} because an inactive frame is kept only so old orders
+     * resolve and must never appear on the storefront; the wrap in the service is
+     * what narrows it to the public fields.
+     */
+    List<Frame> findAllByActiveTrueOrderByIdAsc();
+
+    /**
      * Takes {@code quantity} off a frame in one statement. Returns the number of
      * rows changed, which is zero — and nothing is modified — when the frame
      * does not have that many left.

@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.myopty.catalog.dto.CreateFrameRequest;
 import com.myopty.catalog.dto.FrameResponse;
+import com.myopty.catalog.dto.StorefrontFrameResponse;
 import com.myopty.catalog.dto.UpdateFrameRequest;
 import com.myopty.catalog.exception.InvalidCategoryException;
 import com.myopty.catalog.exception.ResourceNotFoundException;
@@ -164,6 +165,32 @@ class FrameServiceTest {
         assertThat(service.list()).extracting(FrameResponse::model).containsExactly("Astra 2100", "Willow 08");
     }
 
+    @Test
+    void theStorefrontListsOnlyActiveFramesOldestFirst() {
+        service.create(request("Astra 2100", "Matte Black", "Acetate", "4500.00", 12, null));
+        service.create(request("Falcon 330", "Clear", "Acetate", "5400.00", 0, false));
+        service.create(request("Willow 08", "Plum", "TR-90", "3800.00", 15, null));
+
+        assertThat(service.listActiveForStorefront())
+                .extracting(StorefrontFrameResponse::model)
+                .containsExactly("Astra 2100", "Willow 08");
+    }
+
+    @Test
+    void theStorefrontReportsThumbnailAndFriendlyStock() {
+        FrameResponse inStock = service.create(request("Astra 2100", "Matte Black", "Acetate", "4500.00", 12, null));
+        FrameResponse soldOut = service.create(request("Willow 08", "Plum", "TR-90", "3800.00", 0, null));
+        frames.findById(inStock.id()).orElseThrow().setImageUrl("/images/frames/astra-2100.jpg");
+
+        List<StorefrontFrameResponse> listed = service.listActiveForStorefront();
+
+        assertThat(listed)
+                .extracting(StorefrontFrameResponse::imageUrl)
+                .containsExactly("/images/frames/astra-2100.jpg", null);
+        assertThat(listed).extracting(StorefrontFrameResponse::inStock).containsExactly(true, false);
+        assertThat(listed).extracting(StorefrontFrameResponse::id).containsExactly(inStock.id(), soldOut.id());
+    }
+
     private static CreateFrameRequest request(
             String model, String color, String material, String price, int stockQty, Boolean active) {
         return request(model, color, material, price, stockQty, active, null);
@@ -196,6 +223,14 @@ class FrameServiceTest {
         @Override
         public List<Frame> findAllByOrderByIdAsc() {
             return byId.values().stream()
+                    .sorted(Comparator.comparing(Frame::getId))
+                    .toList();
+        }
+
+        @Override
+        public List<Frame> findAllByActiveTrueOrderByIdAsc() {
+            return byId.values().stream()
+                    .filter(Frame::isActive)
                     .sorted(Comparator.comparing(Frame::getId))
                     .toList();
         }

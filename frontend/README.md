@@ -63,7 +63,9 @@ owner sees `/shop/orders`. The `/shop` segment is what separates them.
 | `/shop/billing`   | `app/(client)/shop/billing/`    | Shop owner                      |
 | `/api/*`          | `app/api/`                      | BFF route handlers              |
 
-Only `/` and `/prescriptions` have a page. Every other directory holds a `.gitkeep` and nothing else.
+The pages built so far include `/`, `/prescriptions`, `/orders`, `/notifications`, `/frames` and
+the `/shop/*` owner screens; `/lenses`, `/questions` and `/account` still hold a `.gitkeep` and
+nothing else.
 
 ### Why `/shop` and not `/admin`, and why on every route
 

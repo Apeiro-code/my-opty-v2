@@ -19,7 +19,17 @@ duplicate-version failure that fails the whole build.
 
 ## Endpoints owned here
 
-Planned: the public storefront reads `/api/frames`, `/api/lenses`, `/api/categories`.
+The public storefront reads `/api/frames`, `/api/lenses`, `/api/categories`.
+**Built:** `GET /api/frames` — the anonymous shop wall. It sits outside
+`/api/shop/**` and is on the filter chain's public list, so it needs no session.
+It returns only active frames, oldest first, and only through
+`StorefrontFrameResponse`: `id`, `model`, `color`, `material`, `price`, `imageUrl`
+and a friendly `inStock` flag. The exact `stockQty`, the `active` flag and the
+category stay on the owner's `FrameResponse`, so the narrower public record is
+what keeps an owner-only field from leaking onto the storefront later. The
+`image_url` column is mapped on `Frame` for this read; the owner's create writes
+null and an update keeps the stored value. `/api/lenses` and `/api/categories`
+are not built yet — nothing serves the storefront's `/lenses` page.
 
 **Built:** the shop owner's frame and lens stories —
 `GET /api/shop/frames` (inventory list), `POST /api/shop/frames` (add),

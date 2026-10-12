@@ -203,6 +203,14 @@ class StockServiceTest {
         }
 
         @Override
+        public List<Frame> findAllByActiveTrueOrderByIdAsc() {
+            return frames.values().stream()
+                    .filter(Frame::isActive)
+                    .sorted(Comparator.comparing(Frame::getId))
+                    .toList();
+        }
+
+        @Override
         public int decrementStock(long id, int quantity) {
             Frame frame = frames.get(id);
             if (frame == null || frame.getStockQty() < quantity) {
