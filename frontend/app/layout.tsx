@@ -1,4 +1,6 @@
 
+import "@/app/globals.css";
+
 export const metadata = {
     title: "MyOpty Application",
     description: "Epic 8 - Dealer Workflow",
