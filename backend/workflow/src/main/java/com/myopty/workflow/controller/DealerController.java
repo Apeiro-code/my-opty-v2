@@ -2,11 +2,11 @@ package com.myopty.workflow.controller;
 
 import com.myopty.workflow.model.Dealer;
 import com.myopty.workflow.service.DealerService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/api/dealers")
 public class DealerController {
@@ -17,39 +17,22 @@ public class DealerController {
         this.dealerService = dealerService;
     }
 
-    @PostMapping
-    public Dealer createDealer(@RequestParam String name,
-                               @RequestParam String email,
-                               @RequestParam String itemType) {
-        return dealerService.createDealer(name, email, itemType);
-    }
-
+    // Service එකේ no arguments නම් මෙතැනත් එහෙමමයි
     @GetMapping
     public List<Dealer> getAllDealers() {
         return dealerService.getAllDealers();
     }
 
-    @GetMapping("/active")
-    public List<Dealer> getActiveDealers() {
-        return dealerService.getActiveDealers();
+    // Service එකේ parameters වලට අනුව (උදාහරණයක් ලෙස String 3ක් ගනී නම්)
+    @PostMapping
+    public ResponseEntity<?> createDealer(@RequestBody Dealer dealer) {
+        Dealer created = dealerService.createDealer(dealer.getName(), dealer.getEmail(), dealer.getType());
+        return ResponseEntity.ok(created);
     }
 
-    @GetMapping("/{email}")
-    public Dealer getDealerByEmail(@PathVariable String email) {
-        return dealerService.getDealerByEmail(email).orElseThrow();
-    }
-
-    @PutMapping("/{dealerId}")
-    public Dealer updateDealer(@PathVariable Integer dealerId,
-                               @RequestParam(required = false) String name,
-                               @RequestParam(required = false) String email,
-                               @RequestParam(required = false) String itemType,
-                               @RequestParam(required = false) boolean active) {
-        return dealerService.updateDealer(dealerId, name, email, itemType, active);
-    }
-
-    @DeleteMapping("/{dealerId}")
-    public void deleteDealer(@PathVariable Integer dealerId) {
-        dealerService.deleteDealer(dealerId);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteDealer(@PathVariable Integer id) {
+        dealerService.deleteDealer(id);
+        return ResponseEntity.ok().build();
     }
 }

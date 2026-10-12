@@ -20,7 +20,19 @@ public class ReportController {
         this.service = service;
     }
 
-    // ===== Monthly Sales Report =====
+// ===== Monthly Sales Report =====
+
+    @GetMapping("/sales/monthly")
+    public ReportSalesMonthlyResponse getMonthlySalesReport(
+            @RequestParam Integer clientId,
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Integer year) {
+        ReportSalesMonthlyRequest request = new ReportSalesMonthlyRequest();
+        request.setClientId(clientId);
+        if (month != null) request.setMonth(month);
+        if (year != null) request.setYear(year);
+        return service.generateMonthlySalesReport(request);
+    }
 
     @PostMapping("/sales/monthly")
     public ReportSalesMonthlyResponse generateMonthlySalesReport(
@@ -28,36 +40,24 @@ public class ReportController {
         return service.generateMonthlySalesReport(request);
     }
 
-    @GetMapping("/sales/monthly/history")
-    public List<ReportHistoricalResponse> getMonthlySalesHistory(
+    // ===== Monthly Inventory Report =====
+
+    @GetMapping("/inventory/monthly")
+    public ReportInventoryMonthlyResponse getMonthlyInventoryReport(
             @RequestParam Integer clientId,
             @RequestParam(required = false) Integer month,
             @RequestParam(required = false) Integer year) {
-        ReportHistoricalRequest request = new ReportHistoricalRequest();
+        ReportInventoryMonthlyRequest request = new ReportInventoryMonthlyRequest();
         request.setClientId(clientId);
         if (month != null) request.setMonth(month);
         if (year != null) request.setYear(year);
-        return service.getHistoricalReports(request);
+        return service.generateMonthlyInventoryReport(request);
     }
-
-    // ===== Monthly Inventory Report =====
 
     @PostMapping("/inventory/monthly")
     public ReportInventoryMonthlyResponse generateMonthlyInventoryReport(
             @RequestBody ReportInventoryMonthlyRequest request) {
         return service.generateMonthlyInventoryReport(request);
-    }
-
-    @GetMapping("/inventory/monthly/history")
-    public List<ReportHistoricalResponse> getInventoryHistory(
-            @RequestParam Integer clientId,
-            @RequestParam(required = false) Integer month,
-            @RequestParam(required = false) Integer year) {
-        ReportHistoricalRequest request = new ReportHistoricalRequest();
-        request.setClientId(clientId);
-        if (month != null) request.setMonth(month);
-        if (year != null) request.setYear(year);
-        return service.getInventoryReportHistory(request);
     }
 
     // ===== Historical Reports =====
