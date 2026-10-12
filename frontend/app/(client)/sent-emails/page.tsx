@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { dealerApi } from "@/features/workflow/api";
+import { api } from "@/lib/api";
 
 interface DealerEmailStatus {
   emailId: number;
@@ -39,19 +39,19 @@ export default function SentEmailsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadData = async () => {
+const loadData = async () => {
       setLoading(true);
       try {
         // Fetch sent emails - in a real implementation, this would be a dedicated API endpoint
-        // For now, we'll use the dealer API to get active dealers and simulate email status
-        const dealerResult = await dealerApi.getActiveDealers();
+        // For now, we'll use the api.todoTasks to get tasks data
+        const tasksResult = await api.todoTasks.getAll(1);
         
-        if (dealerResult.success && dealerResult.data) {
-          const emails: DealerEmailStatus[] = dealerResult.data.map((dealer: any) => ({
+        if (tasksResult.success && tasksResult.data) {
+          const emails: DealerEmailStatus[] = tasksResult.data.map((task: any) => ({
             emailId: Math.floor(Math.random() * 1000),
-            dealerId: dealer.dealerId,
-            dealerName: dealer.name,
-            subject: `Stock Request - ${dealer.name}`,
+            dealerId: task.clientId,
+            dealerName: `Dealer ${task.clientId}`,
+            subject: `Task ${task.taskId}`,
             status: Math.random() > 0.5 ? "SENT" : "DRAFT",
             createdAt: new Date().toISOString(),
             sentAt: Math.random() > 0.5 ? new Date().toISOString() : null,
@@ -65,9 +65,8 @@ export default function SentEmailsPage() {
           };
           
           emails.forEach((email) => {
-            statusCounts[email.status as keyof typeof statusCounts]!(
-              statusCounts[email.status as keyof typeof statusCounts]! + 1
-            );
+            statusCounts[email.status as keyof typeof statusCounts] =
+              statusCounts[email.status as keyof typeof statusCounts] + 1;
           });
           
           setData({
@@ -121,12 +120,13 @@ export default function SentEmailsPage() {
         <h3 className="text-lg font-medium mb-3">Email History</h3>
         <div className="overflow-x-auto">
           <table className="min-w-full rounded border">
-            <thead>
+              <thead>
               <tr className="bg-gray-50">
-                <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dealer</th>
-                <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
-                <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sent</th>
+                  <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dealer</th>
+                  <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                  <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sent</th>
+              </tr> {/* <--- මේ ටැග් එක මෙතනට එකතු කරන්න */}
               </thead>
               <tbody>
                 {data.emails.map((email) => (
@@ -134,15 +134,15 @@ export default function SentEmailsPage() {
                     <td className="p-3">{email.dealerName}</td>
                     <td className="p-3">{email.subject}</td>
                     <td className="p-3">
-                      <span className="text-xs font-medium px-2 py-1 rounded {
-                        email.status === "DRAFT"
-                          ? "bg-gray-100 text-gray-700"
-                          : email.status === "SENT"
-                            ? "bg-green-100 text-green-800"
-                            : email.status === "REPLIED"
-                              ? "bg-orange-100 text-orange-800"
-                              : "bg-blue-100 text-blue-800"
-                      }">
+                     <span className={`text-xs font-medium px-2 py-1 rounded ${
+                         email.status === "DRAFT"
+                             ? "bg-gray-100 text-gray-700"
+                             : email.status === "SENT"
+                                 ? "bg-green-100 text-green-800"
+                                 : email.status === "REPLIED"
+                                     ? "bg-orange-100 text-orange-800"
+                                     : "bg-blue-100 text-blue-800"
+                     }`}>
                         {email.status}
                       </span>
                     </td>
@@ -150,15 +150,14 @@ export default function SentEmailsPage() {
                   </tr>
                 ))}
                 {data.emails.length === 0 && (
-                  <tr>
-                    <td colSpan="4" className="p-4 text-center text-gray-500">
-                      No emails found
-                    </td>
-                  </tr>
+                    <tr>
+                        <td colSpan={4} className="p-4 text-center text-gray-500">
+                            No emails found
+                        </td>
+                    </tr>
                 )}
               </tbody>
-            </table>
-          </div>
+          </table>
         </div>
       </div>
     </div>

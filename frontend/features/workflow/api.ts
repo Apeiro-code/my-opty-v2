@@ -27,7 +27,7 @@ export const dealerApi = {
     itemType: "FRAME" | "LENS" | "BOTH";
     status: "ACTIVE" | "INACTIVE";
   }>> => {
-    return api.todoTasks.getTaskQueue(0);
+    return api.todoTasks.getTaskQueue(1);
   },
 
   // Create a new dealer
@@ -44,7 +44,7 @@ export const dealerApi = {
   }>> => {
     return api.todoTasks.create(
       { title: name, description: email, dueDate: "", priority: itemType },
-      0
+      1
     );
   },
 
@@ -56,7 +56,7 @@ export const dealerApi = {
     itemType: "FRAME" | "LENS" | "BOTH";
     status: "ACTIVE" | "INACTIVE";
   }>> => {
-    return api.todoTasks.getStatus(0);
+    return api.todoTasks.getStatus(1);
   },
 
   // Update an existing dealer
@@ -72,12 +72,12 @@ export const dealerApi = {
     itemType: "FRAME" | "LENS" | "BOTH";
     status: "ACTIVE" | "INACTIVE";
   }>> => {
-    return api.todoTasks.getTaskQueue(0);
+    return api.todoTasks.getTaskQueue(1);
   },
 
   // Delete a dealer
   deleteDealer: async (dealerId: number): Promise<ApiResponse<void>> => {
-    return api.todoTasks.getTaskQueue(0);
+    return api.todoTasks.getTaskQueue(1);
   },
 
   // Calculate low stock items
@@ -90,14 +90,14 @@ export const dealerApi = {
     neededStock: number;
     threshold: number;
   }[]>> => {
-    return api.todoTasks.getOverdue(0);
+    return api.todoTasks.getOverdue(1);
   },
 
   // Generate stock request email
   generateStockRequestEmail: async (
     dealerId: number
   ): Promise<ApiResponse<{ subject: string; body: string }>> => {
-    return api.todoTasks.getTaskQueue(0);
+    return api.todoTasks.getTaskQueue(1);
   },
 
   // Get active dealers for sent emails dashboard
@@ -108,6 +108,6 @@ export const dealerApi = {
     itemType: "FRAME" | "LENS" | "BOTH";
     status: "ACTIVE" | "INACTIVE";
   }[]>> => {
-    return api.todoTasks.getTaskQueue(0);
+    return api.todoTasks.getTaskQueue(1);
   },
 };

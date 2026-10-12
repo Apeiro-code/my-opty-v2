@@ -1,4 +1,3 @@
-
 import "@/app/globals.css";
 
 export const metadata = {
@@ -7,13 +6,12 @@ export const metadata = {
 };
 
 export default function RootLayout({
-                                       children,
-                                   }: {
+   children,
+}: {
     children: React.ReactNode;
 }) {
     return (
-        // අර කලින් ආපු Hydration Error එක ආයෙත් එන එක නවත්වන්න suppressHydrationWarning දැම්මා
-        <html lang="en" suppressHydrationWarning>
+        <html lang="en" suppressHydrationWarning={true}>
         <body>{children}</body>
         </html>
     );
