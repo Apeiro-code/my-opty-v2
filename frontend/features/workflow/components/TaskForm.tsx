@@ -84,7 +84,6 @@ export const TaskForm: React.FC<TaskFormProps> = ({ onSubmit, isLoading = false 
       <div className="flex space-x-2">
         <select
           name="priority"
-          defaultValue="MEDIUM"
           value={formData.priority}
           onChange={handleChange}
           className="flex-1 px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
