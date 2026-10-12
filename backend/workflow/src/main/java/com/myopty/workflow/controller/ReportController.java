@@ -5,9 +5,11 @@ import com.myopty.workflow.model.*;
 import com.myopty.workflow.service.ReportService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+
 import java.time.*;
 import java.util.*;
 
+@CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/api/reports")
 public class ReportController {
