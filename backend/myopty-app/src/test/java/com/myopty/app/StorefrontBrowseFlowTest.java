@@ -98,14 +98,26 @@ class StorefrontBrowseFlowTest {
     }
 
     private long createFrame(
-            MockHttpSession session, String model, String color, String material, int stockQty, boolean active)
+            MockHttpSession session,
+            String model,
+            String color,
+            String material,
+            double price,
+            int stockQty,
+            boolean active)
             throws Exception {
         mvc.perform(post("/api/shop/frames")
                         .session(session)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(frameJson(model, color, material, stockQty, active)))
+                        .content(frameJson(model, color, material, price, stockQty, active)))
                 .andExpect(status().isCreated());
         return jdbc.queryForObject("SELECT id FROM frame WHERE model = ? ORDER BY id DESC LIMIT 1", Long.class, model);
+    }
+
+    private long createFrame(
+            MockHttpSession session, String model, String color, String material, int stockQty, boolean active)
+            throws Exception {
+        return createFrame(session, model, color, material, 7200.00, stockQty, active);
     }
 
     private MockHttpSession loginAs(String email, String password) throws Exception {
@@ -117,9 +129,60 @@ class StorefrontBrowseFlowTest {
         return (MockHttpSession) result.getRequest().getSession(false);
     }
 
+    private static String frameJson(
+            String model, String color, String material, double price, int stockQty, boolean active) {
+        return String.format(
+                "{\"model\":\"%s\",\"color\":\"%s\",\"material\":\"%s\",\"price\":%s,\"stockQty\":%d,\"active\":%b,\"categoryId\":null}",
+                model, color, material, String.valueOf(price), stockQty, active);
+    }
+
     private static String frameJson(String model, String color, String material, int stockQty, boolean active) {
-        String template = "{\"model\":\"%s\",\"color\":\"%s\",\"material\":\"%s\",\"price\":7200.00,"
-                + "\"stockQty\":%d,\"active\":%b,\"categoryId\":null}";
-        return template.formatted(model, color, material, stockQty, active);
+        return frameJson(model, color, material, 7200.00, stockQty, active);
+    }
+
+    @Test
+    void anAnonymousVisitorCanFilterFramesByCategoryPriceColorAndMaterial() throws Exception {
+        MockHttpSession client = loginAs(CLIENT_EMAIL, CLIENT_PASSWORD);
+        Long menId = jdbc.queryForObject("SELECT id FROM category WHERE slug = ?", Long.class, "men");
+        Long womenId = jdbc.queryForObject("SELECT id FROM category WHERE slug = ?", Long.class, "women");
+
+        long menBlack = createFrame(client, "Astra 800", "Matte Black", "Acetate", 4500.00, 5, true);
+        jdbc.update("UPDATE frame SET category_id = ? WHERE id = ?", menId, menBlack);
+
+        long menGunmetal = createFrame(client, "Kestrel 900", "Gunmetal", "Stainless Steel", 6800.00, 5, true);
+        jdbc.update("UPDATE frame SET category_id = ? WHERE id = ?", menId, menGunmetal);
+
+        long womenGold = createFrame(client, "Meridian 900", "Champagne", "Titanium", 9200.00, 5, true);
+        jdbc.update("UPDATE frame SET category_id = ? WHERE id = ?", womenId, womenGold);
+
+        mvc.perform(get("/api/frames").param("category", "men"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[*].model", hasItem("Astra 800")))
+                .andExpect(jsonPath("$.data[*].model", hasItem("Kestrel 900")))
+                .andExpect(jsonPath("$.data[*].model", not(hasItem("Meridian 900"))));
+
+        mvc.perform(get("/api/frames").param("minPrice", "5000").param("maxPrice", "8000"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[*].model", hasItem("Kestrel 900")))
+                .andExpect(jsonPath("$.data[*].model", not(hasItem("Astra 800"))))
+                .andExpect(jsonPath("$.data[*].model", not(hasItem("Meridian 900"))));
+
+        mvc.perform(get("/api/frames").param("color", "black"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[*].model", hasItem("Astra 800")))
+                .andExpect(jsonPath("$.data[*].model", not(hasItem("Kestrel 900"))));
+
+        mvc.perform(get("/api/frames").param("material", "titanium"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[*].model", hasItem("Meridian 900")))
+                .andExpect(jsonPath("$.data[*].model", not(hasItem("Astra 800"))));
+
+        mvc.perform(get("/api/frames")
+                        .param("category", "men")
+                        .param("minPrice", "4000")
+                        .param("maxPrice", "5000"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[*].model", hasItem("Astra 800")))
+                .andExpect(jsonPath("$.data[*].model", not(hasItem("Kestrel 900"))));
     }
 }

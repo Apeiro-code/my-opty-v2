@@ -19,17 +19,40 @@ const IMAGE_SIZES = "(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 90vw";
  * browse. Anonymous — it reads the public `/api/frames`, so it works logged out,
  * and the backend scopes the list to active frames and to the visitor-safe fields.
  *
- * <p>A client component because it loads on mount. Each card shows the thumbnail,
- * model, colour and material, the price and whether it is in stock; a frame with
- * no image, or one that fails to load, falls back to the placeholder tile.
+ * <p>A client component because it loads on mount and responds to filter changes.
+ * Each card shows the thumbnail, model, colour and material, the price and whether
+ * it is in stock; a frame with no image, or one that fails to load, falls back to
+ * the placeholder tile.
  */
 export default function FrameGrid() {
   const [frames, setFrames] = useState<StorefrontFrame[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [category, setCategory] = useState("");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [color, setColor] = useState("");
+  const [material, setMaterial] = useState("");
+  const [debouncedColor, setDebouncedColor] = useState("");
+  const [debouncedMaterial, setDebouncedMaterial] = useState("");
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedColor(color), 300);
+    return () => clearTimeout(timer);
+  }, [color]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedMaterial(material), 300);
+    return () => clearTimeout(timer);
+  }, [material]);
 
   useEffect(() => {
     let active = true;
-    listStorefrontFrames().then((result) => {
+    listStorefrontFrames({
+      category: category || undefined,
+      minPrice: minPrice || undefined,
+      maxPrice: maxPrice || undefined,
+      color: debouncedColor || undefined,
+      material: debouncedMaterial || undefined,
+    }).then((result) => {
       if (!active) {
         return;
       }
@@ -43,7 +66,17 @@ export default function FrameGrid() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [category, minPrice, maxPrice, debouncedColor, debouncedMaterial]);
+
+  function clearFilters() {
+    setCategory("");
+    setMinPrice("");
+    setMaxPrice("");
+    setColor("");
+    setMaterial("");
+    setDebouncedColor("");
+    setDebouncedMaterial("");
+  }
 
   if (loadError) {
     return (
@@ -59,18 +92,64 @@ export default function FrameGrid() {
 
   if (frames.length === 0) {
     return (
-      <p className="text-sm opacity-70">
-        No frames are on the wall yet. Check back soon.
-      </p>
+      <>
+        <FilterControls
+          category={category}
+          minPrice={minPrice}
+          maxPrice={maxPrice}
+          color={color}
+          material={material}
+          onCategoryChange={setCategory}
+          onMinPriceChange={setMinPrice}
+          onMaxPriceChange={setMaxPrice}
+          onColorChange={setColor}
+          onMaterialChange={setMaterial}
+          onClear={clearFilters}
+          hasFilters={Boolean(
+            category ||
+            minPrice ||
+            maxPrice ||
+            debouncedColor ||
+            debouncedMaterial,
+          )}
+        />
+        <p className="text-sm opacity-70">
+          {Boolean(category || minPrice || maxPrice || debouncedColor || debouncedMaterial)
+            ? "No frames match your filters. Try adjusting them."
+            : "No frames are on the wall yet. Check back soon."}
+        </p>
+      </>
     );
   }
 
   return (
-    <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {frames.map((frame) => (
-        <FrameCard key={frame.id} frame={frame} />
-      ))}
-    </ul>
+    <>
+      <FilterControls
+        category={category}
+        minPrice={minPrice}
+        maxPrice={maxPrice}
+        color={color}
+        material={material}
+        onCategoryChange={setCategory}
+        onMinPriceChange={setMinPrice}
+        onMaxPriceChange={setMaxPrice}
+        onColorChange={setColor}
+        onMaterialChange={setMaterial}
+        onClear={clearFilters}
+        hasFilters={Boolean(
+          category ||
+          minPrice ||
+          maxPrice ||
+          debouncedColor ||
+          debouncedMaterial,
+        )}
+      />
+      <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {frames.map((frame) => (
+          <FrameCard key={frame.id} frame={frame} />
+        ))}
+      </ul>
+    </>
   );
 }
 
@@ -122,5 +201,106 @@ function FrameCard({ frame }: { frame: StorefrontFrame }) {
         </p>
       </div>
     </li>
+  );
+}
+
+type FilterControlsProps = {
+  category: string;
+  minPrice: string;
+  maxPrice: string;
+  color: string;
+  material: string;
+  onCategoryChange: (value: string) => void;
+  onMinPriceChange: (value: string) => void;
+  onMaxPriceChange: (value: string) => void;
+  onColorChange: (value: string) => void;
+  onMaterialChange: (value: string) => void;
+  onClear: () => void;
+  hasFilters: boolean;
+};
+
+function FilterControls({
+  category,
+  minPrice,
+  maxPrice,
+  color,
+  material,
+  onCategoryChange,
+  onMinPriceChange,
+  onMaxPriceChange,
+  onColorChange,
+  onMaterialChange,
+  onClear,
+  hasFilters,
+}: FilterControlsProps) {
+  return (
+    <div className="flex flex-col gap-3 rounded-lg border border-black/10 p-4 dark:border-white/15">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium">Category</span>
+          <select
+            value={category}
+            onChange={(event) => onCategoryChange(event.target.value)}
+            className="rounded-md border border-black/15 bg-transparent px-2 py-1.5 text-sm dark:border-white/20"
+          >
+            <option value="">All categories</option>
+            <option value="men">Men</option>
+            <option value="women">Women</option>
+            <option value="kids">Kids</option>
+          </select>
+        </label>
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium">Min price</span>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={minPrice}
+            onChange={(event) => onMinPriceChange(event.target.value)}
+            className="rounded-md border border-black/15 bg-transparent px-2 py-1.5 text-sm dark:border-white/20"
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium">Max price</span>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={maxPrice}
+            onChange={(event) => onMaxPriceChange(event.target.value)}
+            className="rounded-md border border-black/15 bg-transparent px-2 py-1.5 text-sm dark:border-white/20"
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium">Colour</span>
+          <input
+            type="text"
+            value={color}
+            onChange={(event) => onColorChange(event.target.value)}
+            className="rounded-md border border-black/15 bg-transparent px-2 py-1.5 text-sm dark:border-white/20"
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium">Material</span>
+          <input
+            type="text"
+            value={material}
+            onChange={(event) => onMaterialChange(event.target.value)}
+            className="rounded-md border border-black/15 bg-transparent px-2 py-1.5 text-sm dark:border-white/20"
+          />
+        </label>
+      </div>
+      {Boolean(category || minPrice || maxPrice || color || material) ? (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={onClear}
+            className="rounded-md border border-black/15 px-3 py-1.5 text-sm dark:border-white/20"
+          >
+            Clear filters
+          </button>
+        </div>
+      ) : null}
+    </div>
   );
 }

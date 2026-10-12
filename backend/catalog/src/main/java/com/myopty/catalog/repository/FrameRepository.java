@@ -43,6 +43,29 @@ public interface FrameRepository extends Repository<Frame, Long> {
     List<Frame> findAllByActiveTrueOrderByIdAsc();
 
     /**
+     * The frames on the shop wall, filtered for a browsing visitor. All filters are
+     * optional: a null parameter means "no filter". The results are oldest first and
+     * only active frames are returned.
+     */
+    @Query("""
+            SELECT f.* FROM frame f
+            LEFT JOIN category c ON f.category_id = c.id
+            WHERE f.is_active = TRUE
+              AND (:categorySlug IS NULL OR LOWER(c.slug) = LOWER(:categorySlug))
+              AND (:minPrice IS NULL OR f.price >= :minPrice)
+              AND (:maxPrice IS NULL OR f.price <= :maxPrice)
+              AND (:color IS NULL OR f.color IS NULL OR LOWER(f.color) LIKE LOWER(CONCAT('%', :color, '%')))
+              AND (:material IS NULL OR LOWER(f.material) LIKE LOWER(CONCAT('%', :material, '%')))
+            ORDER BY f.id ASC
+            """)
+    List<Frame> findActiveForStorefront(
+            @Param("categorySlug") String categorySlug,
+            @Param("minPrice") java.math.BigDecimal minPrice,
+            @Param("maxPrice") java.math.BigDecimal maxPrice,
+            @Param("color") String color,
+            @Param("material") String material);
+
+    /**
      * Takes {@code quantity} off a frame in one statement. Returns the number of
      * rows changed, which is zero — and nothing is modified — when the frame
      * does not have that many left.

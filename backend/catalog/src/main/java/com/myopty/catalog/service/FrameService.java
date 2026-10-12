@@ -107,6 +107,36 @@ public class FrameService {
                 .toList();
     }
 
+    /**
+     * The frames a browsing visitor may see, filtered by the provided criteria. All
+     * parameters are optional; an empty or blank string is treated as no filter.
+     * Results are oldest first and only active frames are returned.
+     */
+    @Transactional(readOnly = true)
+    public List<StorefrontFrameResponse> listActiveForStorefrontFiltered(
+            String categorySlug,
+            java.math.BigDecimal minPrice,
+            java.math.BigDecimal maxPrice,
+            String color,
+            String material) {
+        String normalizedCategory = normalize(categorySlug);
+        String normalizedColor = normalize(color);
+        String normalizedMaterial = normalize(material);
+        return frames
+                .findActiveForStorefront(normalizedCategory, minPrice, maxPrice, normalizedColor, normalizedMaterial)
+                .stream()
+                .map(StorefrontFrameResponse::from)
+                .toList();
+    }
+
+    private static String normalize(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
     private static void apply(
             Frame frame, String model, String color, String material, BigDecimal price, int stockQty, Long categoryId) {
         frame.setModel(model);

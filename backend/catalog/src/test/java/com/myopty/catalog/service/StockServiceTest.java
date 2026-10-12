@@ -211,6 +211,44 @@ class StockServiceTest {
         }
 
         @Override
+        public List<Frame> findActiveForStorefront(
+                String categorySlug,
+                java.math.BigDecimal minPrice,
+                java.math.BigDecimal maxPrice,
+                String color,
+                String material) {
+            return frames.values().stream()
+                    .filter(Frame::isActive)
+                    .filter(frame -> {
+                        if (minPrice != null
+                                && frame.getPrice() != null
+                                && frame.getPrice().compareTo(minPrice) < 0) {
+                            return false;
+                        }
+                        if (maxPrice != null
+                                && frame.getPrice() != null
+                                && frame.getPrice().compareTo(maxPrice) > 0) {
+                            return false;
+                        }
+                        if (color != null && !color.isBlank()) {
+                            String c = frame.getColor();
+                            if (c == null || !c.toLowerCase().contains(color.toLowerCase())) {
+                                return false;
+                            }
+                        }
+                        if (material != null && !material.isBlank()) {
+                            String m = frame.getMaterial();
+                            if (m == null || !m.toLowerCase().contains(material.toLowerCase())) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    })
+                    .sorted(Comparator.comparing(Frame::getId))
+                    .toList();
+        }
+
+        @Override
         public int decrementStock(long id, int quantity) {
             Frame frame = frames.get(id);
             if (frame == null || frame.getStockQty() < quantity) {

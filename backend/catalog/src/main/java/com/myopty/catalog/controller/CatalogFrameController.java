@@ -30,7 +30,15 @@ public class CatalogFrameController {
 
     /** Every active frame, oldest first, for the shop wall. */
     @GetMapping
-    public ApiResponse<List<StorefrontFrameResponse>> list() {
-        return ApiResponse.of(service.listActiveForStorefront());
+    public ApiResponse<List<StorefrontFrameResponse>> list(
+            @org.springframework.web.bind.annotation.RequestParam(value = "category", required = false) String category,
+            @org.springframework.web.bind.annotation.RequestParam(value = "minPrice", required = false)
+                    java.math.BigDecimal minPrice,
+            @org.springframework.web.bind.annotation.RequestParam(value = "maxPrice", required = false)
+                    java.math.BigDecimal maxPrice,
+            @org.springframework.web.bind.annotation.RequestParam(value = "color", required = false) String color,
+            @org.springframework.web.bind.annotation.RequestParam(value = "material", required = false)
+                    String material) {
+        return ApiResponse.of(service.listActiveForStorefrontFiltered(category, minPrice, maxPrice, color, material));
     }
 }

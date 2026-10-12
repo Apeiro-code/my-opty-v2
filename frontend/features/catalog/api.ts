@@ -41,8 +41,46 @@ export function listShopFrames(): Promise<ApiResult<Frame[]>> {
  * `/api/frames`, which needs no session. Each frame carries only what a visitor
  * may see — the friendly `inStock` flag and a thumbnail, not the shop's count.
  */
-export function listStorefrontFrames(): Promise<ApiResult<StorefrontFrame[]>> {
-  return apiGet<StorefrontFrame[]>("/api/frames");
+export function listStorefrontFrames(params?: {
+  category?: string;
+  minPrice?: string | number | null;
+  maxPrice?: string | number | null;
+  color?: string | null;
+  material?: string | null;
+}): Promise<ApiResult<StorefrontFrame[]>> {
+  const clean: Record<string, string | number | boolean | undefined> = {};
+  if (params?.category) {
+    clean.category = params.category;
+  }
+  if (
+    params?.minPrice !== undefined &&
+    params?.minPrice !== null &&
+    String(params.minPrice).trim() !== ""
+  ) {
+    clean.minPrice = params.minPrice;
+  }
+  if (
+    params?.maxPrice !== undefined &&
+    params?.maxPrice !== null &&
+    String(params.maxPrice).trim() !== ""
+  ) {
+    clean.maxPrice = params.maxPrice;
+  }
+  if (
+    params?.color !== undefined &&
+    params?.color !== null &&
+    params.color.trim() !== ""
+  ) {
+    clean.color = params.color.trim();
+  }
+  if (
+    params?.material !== undefined &&
+    params?.material !== null &&
+    params.material.trim() !== ""
+  ) {
+    clean.material = params.material.trim();
+  }
+  return apiGet<StorefrontFrame[]>("/api/frames", clean);
 }
 
 /** Adds a frame so it appears on the site. */
