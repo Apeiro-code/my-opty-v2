@@ -102,7 +102,7 @@ export default function SalesReportPage() {
   }
 
   const { currentMonth, history } = data;
-  const { month, year, months, years } = data.filters;
+  const { months, years, filterMonth, filterYear } = data.filters;
 
   return (
     <div className="p-4">
