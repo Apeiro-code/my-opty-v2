@@ -28,7 +28,7 @@
     <modules>
         <!-- Cross-module interfaces and events. No Spring, no entities. -->
         <module>contracts</module>
-        <!-- Auth, users, Q&amp;A, config. Owns the V1 migration band. -->
+        <!-- Auth, users, Q&A, config. Owns the V1 migration band. -->
         <module>shared</module>
         <!-- Catalog and inventory. Owns V2-V99. -->
         <module>catalog</module>

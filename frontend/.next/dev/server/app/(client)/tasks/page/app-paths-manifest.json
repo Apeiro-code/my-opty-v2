@@ -1,0 +1,3 @@
+{
+  "/(client)/tasks/page": "app/(client)/tasks/page.js"
+}

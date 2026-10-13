@@ -4,7 +4,6 @@
 # Order matters: `.env*` is ignored wholesale, then the example files are taken
 # back out. Putting `!.env.example` BEFORE the broad rule does not work, because
 # git refuses to re-include a file inside a directory it has already excluded.
-
 .env
 .env.*
 !.env.example
@@ -16,7 +15,7 @@
 *.p12
 *.jks
 id_rsa
-id_ed25519
+id_ed255519
 credentials.json
 service-account*.json
 
@@ -82,7 +81,6 @@ docker-data/
 ._*
 .Spotlight-V100
 .Trashes
-Thumbs.db
 ehthumbs.db
 Desktop.ini
 

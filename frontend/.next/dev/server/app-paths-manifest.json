@@ -1,0 +1,4 @@
+{
+  "/(client)/tasks/page": "app/(client)/tasks/page.js",
+  "/_not-found/page": "app/_not-found/page.js"
+}
