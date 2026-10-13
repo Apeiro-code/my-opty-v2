@@ -122,6 +122,12 @@ table. Also built are the two inventory additions: `GET /api/shop/inventory/aler
 
 
 **Database Tables:** `category`, `frame`, `lens`, `stock_entry`, `availability_report` (snapshot, unused)
+GET    /api/inventory/report          # Availability report
+GET    /api/inventory/alerts          # Low-stock alerts
+POST   /api/inventory/report/export   # Export PDF/Excel
+```
+
+**Database Tables:** `category`, `frame`, `lens`, `stock_entry`, `availability_report`
 
 ---
 
@@ -138,6 +144,8 @@ table. Also built are the two inventory additions: `GET /api/shop/inventory/aler
 - Prescription form with all optical fields + document upload
 - Progressive order workflow: PENDING → APPROVED → PROCESSING → READY → DISPATCHED, or REJECTED
 - Client review/approve/reject prescriptions, and approve/reject progressive orders
+- Progressive order workflow: PENDING → APPROVED → PROCESSING → READY → DISPATCHED
+- Client review/approve/reject prescriptions
 - Estimated receive date calculation (based on lens type, stock, lab time)
 - Discount engine: create/edit/end rules, bulk apply, history log
 - New stock intake: record quantity, cost, supplier, auto-increment stock
@@ -280,6 +288,25 @@ honour when the remaining endpoints are built:
   storefront page, against that seam and its own `/api/frames` and `/api/lenses`.
 
 **Database Tables:** `prescription`, `progressive_order`, `order_notification`, `discount`, `stock_update`
+**API Endpoints (Planned):**
+```
+POST   /api/prescriptions                  # Submit prescription (customer)
+GET    /api/prescriptions/{id}             # View prescription
+PUT    /api/prescriptions/{id}/verify      # Client verify/reject
+POST   /api/orders/progressive             # Create progressive order
+GET    /api/orders/progressive             # List (client: all; customer: own)
+GET    /api/orders/progressive/{id}        # Detail
+PUT    /api/orders/progressive/{id}/status # Update status (client)
+GET    /api/orders/progressive/{id}/receive-date # Estimated date
+POST   /api/discounts                      # Create discount (client)
+GET    /api/discounts                      # List (with active filter)
+PUT    /api/discounts/{id}                 # Update discount
+DELETE /api/discounts/{id}                 # End early
+POST   /api/stock/updates                  # Record new stock (client)
+GET    /api/stock/updates                  # History
+```
+
+**Database Tables:** `prescription`, `progressive_order`, `discount`, `stock_update`
 
 ---
 
@@ -415,6 +442,29 @@ PUT    /api/shop/questions/{id}/answer   # Answer a question; emails the custome
 The shop's two Q&A endpoints sit under `/api/shop/**` rather than on `/api/questions`
 so they inherit the existing `ROLE_CLIENT` rule that every shop route carries; the
 customer's `GET /api/questions` stays scoped to the session's own questions.
+
+- JWT-based authentication
+- Role-based access control (CUSTOMER vs CLIENT)
+- Registration with email/phone verification (OTP)
+- Login/logout, password reset
+- Profile management
+- Q&A: customers ask, clients answer, FAQ marking
+- Global exception handling, validation, audit logging
+
+**API Endpoints (Planned):**
+```
+POST   /api/auth/register                # Register (customer/client)
+POST   /api/auth/login                   # Login
+POST   /api/auth/refresh                 # Refresh token
+POST   /api/auth/forgot-password         # Request reset
+POST   /api/auth/reset-password          # Reset with token
+GET    /api/auth/me                      # Current user profile
+PUT    /api/auth/me                      # Update profile
+POST   /api/questions                    # Ask question (customer)
+GET    /api/questions                    # List (customer: own; client: all)
+PUT    /api/questions/{id}/answer        # Answer question (client)
+GET    /api/questions/faq                # Public FAQ
+```
 
 **Database Tables:** `app_user`, `client_profile`, `customer_profile`, `question`
 
@@ -589,6 +639,9 @@ colliding on `V3__`:
 ## API Design Guidelines
 
 - RESTful, plural nouns: `/api/frames`, `/api/orders`
+## API Design Guidelines
+
+- RESTful, plural nouns: `/api/frames`, `/api/orders/progressive`
 - Version in URL if breaking: `/api/v1/...`
 - Standard responses:
   ```json
@@ -610,6 +663,7 @@ colliding on `V3__`:
 | Build | Maven Wrapper (`./mvnw`) |
 | Container | Docker Compose |
 | Frontend | Next.js 16 (App Router, TypeScript, Tailwind CSS) |
+| Frontend | *To be decided* |
 
 ---
 
@@ -623,6 +677,10 @@ colliding on `V3__`:
 - Node.js 24 (pinned in `.node-version`)
 - Docker & Docker Compose v2 (for MySQL and Mailpit)
 - Maven comes from the wrapper (`./mvnw`) — do not install Maven
+### Prerequisites
+- Java 26
+- Docker & Docker Compose (for MySQL)
+- Maven (or use `./mvnw`)
 
 ### Backend
 
@@ -633,6 +691,10 @@ cd backend
 docker compose up -d
 
 # Flyway applies migrations automatically on startup
+# Start MySQL via Docker Compose
+docker compose up -d
+
+# Run Flyway migrations (auto on startup)
 ./mvnw spring-boot:run
 ```
 
@@ -649,6 +711,9 @@ npm run dev
 
 Next.js 16 App Router on `http://localhost:3000`, calling the API on `:8080`.
 
+# Instructions TBD once framework is chosen
+```
+
 ---
 
 ## Testing
@@ -662,6 +727,11 @@ Next.js 16 App Router on `http://localhost:3000`, calling the API on `:8080`.
 
 # Specific module, from backend/
 ./mvnw test -pl catalog -Dtest='*Catalog*'
+# Unit + integration tests
+./mvnw test
+
+# Specific module
+./mvnw test -pl backend -Dtest=*Catalog*
 ```
 
 ---
@@ -695,6 +765,14 @@ cd backend && docker compose -f compose.yaml -f compose.prod.yaml down
 Images are built by `backend/Dockerfile` and `frontend/Dockerfile`; the dev workflow
 (`docker compose up -d`, `./mvnw spring-boot:run`, `npm run dev`) is unchanged.
 
+```bash
+# Build Docker image
+./mvnw spring-boot:build-image
+
+# Or use compose for full stack
+docker compose -f compose.yaml -f compose.prod.yaml up -d
+```
+
 ---
 
 ## Documentation
@@ -702,6 +780,9 @@ Images are built by `backend/Dockerfile` and `frontend/Dockerfile`; the dev work
 - **Project Plan & Diagrams:** this file, from [the project plan section](#project-plan-epics-user-stories--diagrams) down
 - **System Architecture (this file):** `README.md`
 - **Contribution Guide:** `CONTRIBUTING.md`
+- **Project Plan & Diagrams:** `MyOpty_Project_Plan.md`
+- **System Architecture (this file):** `README.md`
+- **Contribution Guide:** `CONTRIBUTION.md`
 - **API Docs (running):** `http://localhost:8080/swagger-ui.html`
 
 ---
