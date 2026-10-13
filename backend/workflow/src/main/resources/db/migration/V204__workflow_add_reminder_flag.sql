@@ -1,0 +1,2 @@
+
+ALTER TABLE todo_task ADD COLUMN reminder_sent BOOLEAN NOT NULL DEFAULT FALSE;

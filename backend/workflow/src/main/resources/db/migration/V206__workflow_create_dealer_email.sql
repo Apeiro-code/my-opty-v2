@@ -1,15 +1,4 @@
--- Dealer stock-request emails
--- Band: V200-V299
---
--- Flyway is the only thing that writes DDL. Never edit a merged migration: the
--- database has already run it, so add a new one instead.
---
--- Conventions: InnoDB, utf8mb4, id BIGINT AUTO_INCREMENT, created_at/updated_at on
--- DATETIME(6), money DECIMAL(12,2), foreign keys ON DELETE RESTRICT unless stated.
 
--- The client approves before anything is sent, so the row is created as DRAFT and
--- `approved_at` records that it happened. An auto-generated email is kept, flagged
--- and rewritable, because the client is the one who sends it.
 
 CREATE TABLE dealer_email (
     id             BIGINT       NOT NULL AUTO_INCREMENT,

@@ -3,7 +3,7 @@ package com.myopty.workflow.model;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
-@Table("DEALER")
+@Table("dealer")
 public class Dealer {
 
     @Id

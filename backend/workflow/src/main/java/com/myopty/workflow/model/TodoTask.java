@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
-@Table("TODO_TASK")
+@Table("todo_task")
 public class TodoTask {
 
     @Id

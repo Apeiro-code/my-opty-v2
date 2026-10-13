@@ -10,20 +10,21 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
-@Configuration
+@Configuration("appSecurityConfig")
 @EnableWebSecurity
-public class SecurityConfig {
+public class AppSecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        http.securityMatcher("/api/**") // මෙන්න මෙතැනට නිශ්චිත පාත් එකක් දෙන්න (උදා: /api/** හෝ ඔයාට අවශ්‍ය රූට් එක)
+            .cors(cors -> cors.configurationSource(appCorsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
         return http.build();
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
+    public CorsConfigurationSource appCorsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of("http://localhost:3000"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));

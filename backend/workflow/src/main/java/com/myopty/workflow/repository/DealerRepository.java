@@ -10,9 +10,9 @@ import java.util.Optional;
 @Repository
 public interface DealerRepository extends ListCrudRepository<Dealer, Integer> {
 
-    @Query("SELECT * FROM DEALER WHERE email = :email")
+    @Query("SELECT * FROM dealer WHERE email = :email")
     Optional<Dealer> findByEmail(String email);
 
-    @Query("SELECT * FROM DEALER WHERE active = true")
+    @Query("SELECT * FROM dealer WHERE active = true")
     List<Dealer> findAllActive();
 }

@@ -3,7 +3,7 @@ package com.myopty.workflow.model;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
-@Table("DASHBOARD_SUMMARY")
+@Table("dashboard_summary")
 public class DashboardSummary {
 
     @Id

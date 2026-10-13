@@ -9,9 +9,9 @@ import java.util.List;
 @Repository
 public interface ReportInventoryMonthlyRepository extends ListCrudRepository<ReportInventoryMonthly, Integer> {
 
-    @Query("SELECT * FROM REPORT_INVENTORY_MONTHLY WHERE client_id = :clientId AND month = :month AND year = :year")
+    @Query("SELECT * FROM report_inventory_monthly WHERE client_id = :clientId AND month = :month AND year = :year")
     ReportInventoryMonthly findByClientIdAndMonthAndYear(Integer clientId, Integer month, Integer year);
 
-    @Query("SELECT * FROM REPORT_INVENTORY_MONTHLY WHERE client_id = :clientId ORDER BY year DESC, month DESC")
+    @Query("SELECT * FROM report_inventory_monthly WHERE client_id = :clientId ORDER BY year DESC, month DESC")
     List<ReportInventoryMonthly> findAllByClientIdOrderByYearDescMonthDesc(Integer clientId);
 }
