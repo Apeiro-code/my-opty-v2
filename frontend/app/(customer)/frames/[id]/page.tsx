@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { computeBestDiscount, useDiscounts } from "@/features/discounts/hooks";
 import Link from "next/link";
 import { getStorefrontFrame } from "@/features/catalog/api";
 

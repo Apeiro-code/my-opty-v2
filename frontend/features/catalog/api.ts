@@ -1,4 +1,8 @@
-import type { StorefrontFrame, StorefrontLens, StorefrontLensDetail } from "./types";
+import type {
+  StorefrontFrame,
+  StorefrontLens,
+  StorefrontLensDetail,
+} from "./types";
 import {
   apiDelete,
   apiDownload,
@@ -103,15 +107,21 @@ export function listStorefrontLenses(params?: {
   return apiGet<StorefrontLens[]>("/api/lenses", clean);
 }
 
-export function getStorefrontLens(id: number): Promise<ApiResult<StorefrontLensDetail>> {
+export function getStorefrontLens(
+  id: number,
+): Promise<ApiResult<StorefrontLensDetail>> {
   return apiGet<StorefrontLensDetail>(`/api/lenses/${id}`);
 }
 
-export function listNewArrivalsFrames(limit = 8): Promise<ApiResult<StorefrontFrame[]>> {
+export function listNewArrivalsFrames(
+  limit = 8,
+): Promise<ApiResult<StorefrontFrame[]>> {
   return apiGet<StorefrontFrame[]>("/api/frames/new-arrivals", { limit });
 }
 
-export function listNewArrivalsLenses(limit = 8): Promise<ApiResult<StorefrontLens[]>> {
+export function listNewArrivalsLenses(
+  limit = 8,
+): Promise<ApiResult<StorefrontLens[]>> {
   return apiGet<StorefrontLens[]>("/api/lenses/new-arrivals", { limit });
 }
 

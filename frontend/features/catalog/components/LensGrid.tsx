@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { listStorefrontLenses } from "../api";
 import type { StorefrontLens } from "../types";
+import { computeBestDiscount, useDiscounts } from "@/features/discounts/hooks";
 
 const PRICE_FORMAT = new Intl.NumberFormat("en-LK", {
   minimumFractionDigits: 2,
@@ -21,7 +22,9 @@ const IMAGE_SIZES = "(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 90vw";
 export default function LensGrid() {
   const [lenses, setLenses] = useState<StorefrontLens[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [type, setType] = useState("");
+  const [type] = useState("");
+
+  const { discounts } = useDiscounts();
 
   useEffect(() => {
     let active = true;
@@ -75,19 +78,32 @@ export default function LensGrid() {
   return (
     <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {lenses.map((lens) => (
-        <LensCard key={lens.id} lens={lens} />
+        <LensCard key={lens.id} lens={lens} discounts={discounts} />
       ))}
     </ul>
   );
 }
 
-function LensCard({ lens }: { lens: StorefrontLens }) {
+function LensCard({
+  lens,
+  discounts,
+}: {
+  lens: StorefrontLens;
+  discounts: import("@/features/discounts/types").Discount[];
+}) {
   const [imageFailed, setImageFailed] = useState(false);
   const image = lens.imageUrl;
+  const best = computeBestDiscount(lens.price, lens.id, discounts);
+  const base = typeof lens.price === "number" ? lens.price : Number(lens.price);
 
   return (
     <li className="flex flex-col overflow-hidden rounded-lg border border-black/10 dark:border-white/15">
       <div className="relative aspect-[4/3] w-full bg-black/5 dark:bg-white/10">
+        {best.hasDiscount && (
+          <span className="absolute left-2 top-2 z-10 rounded bg-red-600 px-2 py-0.5 text-xs font-medium text-white">
+            -{best.percentage}%
+          </span>
+        )}
         {image === null || imageFailed ? (
           <Image
             src={PLACEHOLDER_IMAGE}
@@ -128,12 +144,20 @@ function LensCard({ lens }: { lens: StorefrontLens }) {
         <p className="text-sm opacity-80">
           {[lens.type, lens.coating].filter(Boolean).join(" · ")}
         </p>
-        <p className="mt-2 text-sm font-medium">
-          Rs{" "}
-          {PRICE_FORMAT.format(
-            typeof lens.price === "number" ? lens.price : Number(lens.price),
-          )}
-        </p>
+        {best.hasDiscount ? (
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-sm font-medium">
+              Rs {PRICE_FORMAT.format(best.effectivePrice)}
+            </span>
+            <span className="text-xs opacity-60 line-through">
+              Rs {PRICE_FORMAT.format(base)}
+            </span>
+          </div>
+        ) : (
+          <p className="mt-2 text-sm font-medium">
+            Rs {PRICE_FORMAT.format(base)}
+          </p>
+        )}
       </div>
     </li>
   );

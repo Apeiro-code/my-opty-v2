@@ -1,21 +1,25 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { getStorefrontLens } from "@/features/catalog/api";
+import { computeBestDiscount, useDiscounts } from "@/features/discounts/hooks";
 
-const PLACEHOLDER_IMAGE = "/images/frames/placeholder.svg";
-const IMAGE_SIZES = "(min-width: 1024px) 40vw, 90vw";
 const PRICE_FORMAT = new Intl.NumberFormat("en-LK", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
 
-interface LensDetailPageProps {
-  params: {
-    id: string;
-  };
-}
+const PLACEHOLDER_IMAGE = "/images/frames/placeholder.svg";
 
-export default async function LensDetailPage({ params }: LensDetailPageProps) {
+const IMAGE_SIZES = "(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 90vw";
+export default async function LensDetailPage({
+  params,
+}: {
+  params: { id: string };
+}) {
   const id = Number(params.id);
   const result = await getStorefrontLens(id);
 

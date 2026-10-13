@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { listStorefrontFrames } from "../api";
 import type { StorefrontFrame } from "../types";
+import { computeBestDiscount, useDiscounts } from "@/features/discounts/hooks";
 
 const PRICE_FORMAT = new Intl.NumberFormat("en-LK", {
   minimumFractionDigits: 2,
@@ -45,6 +46,8 @@ export default function FrameGrid() {
     const timer = setTimeout(() => setDebouncedMaterial(material), 300);
     return () => clearTimeout(timer);
   }, [material]);
+
+  const { discounts } = useDiscounts();
 
   useEffect(() => {
     let active = true;
@@ -171,20 +174,34 @@ export default function FrameGrid() {
       />
       <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {frames.map((frame) => (
-          <FrameCard key={frame.id} frame={frame} />
+          <FrameCard key={frame.id} frame={frame} discounts={discounts} />
         ))}
       </ul>
     </>
   );
 }
 
-function FrameCard({ frame }: { frame: StorefrontFrame }) {
+function FrameCard({
+  frame,
+  discounts,
+}: {
+  frame: StorefrontFrame;
+  discounts: import("@/features/discounts/types").Discount[];
+}) {
   const [imageFailed, setImageFailed] = useState(false);
   const image = frame.imageUrl;
+  const best = computeBestDiscount(frame.price, frame.id, discounts);
+  const base =
+    typeof frame.price === "number" ? frame.price : Number(frame.price);
 
   return (
     <li className="flex flex-col overflow-hidden rounded-lg border border-black/10 dark:border-white/15">
       <div className="relative aspect-[4/3] w-full bg-black/5 dark:bg-white/10">
+        {best.hasDiscount && (
+          <span className="absolute left-2 top-2 z-10 rounded bg-red-600 px-2 py-0.5 text-xs font-medium text-white">
+            -{best.percentage}%
+          </span>
+        )}
         {image === null || imageFailed ? (
           <Image
             src={PLACEHOLDER_IMAGE}
@@ -225,12 +242,20 @@ function FrameCard({ frame }: { frame: StorefrontFrame }) {
         <p className="text-sm opacity-75">
           {[frame.color, frame.material].filter(Boolean).join(" · ")}
         </p>
-        <p className="mt-2 text-sm font-medium">
-          Rs{" "}
-          {PRICE_FORMAT.format(
-            typeof frame.price === "number" ? frame.price : Number(frame.price),
-          )}
-        </p>
+        {best.hasDiscount ? (
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-sm font-medium">
+              Rs {PRICE_FORMAT.format(best.effectivePrice)}
+            </span>
+            <span className="text-xs opacity-60 line-through">
+              Rs {PRICE_FORMAT.format(base)}
+            </span>
+          </div>
+        ) : (
+          <p className="mt-2 text-sm font-medium">
+            Rs {PRICE_FORMAT.format(base)}
+          </p>
+        )}
       </div>
     </li>
   );
