@@ -14,18 +14,21 @@ npm run build    # production build + type check
 The skeleton, plus the first feature: the customer prescription submission form. There is no
 other data fetching in any component.
 
-| Path                                    | What it is                                           |
-| --------------------------------------- | ---------------------------------------------------- |
-| `app/layout.tsx`                        | Root HTML/body, metadata, `globals.css`              |
-| `app/(customer)/page.tsx`               | Public storefront landing page                       |
-| `app/(customer)/prescriptions/page.tsx` | Prescription submission page (thin server component) |
-| `app/(customer)/layout.tsx`             | Storefront header and nav                            |
-| `app/(client)/layout.tsx`               | Shop-owner nav                                       |
-| `features/order/`                       | Prescription form, API call, and types               |
-| `lib/api/client.ts`                     | The single `fetch` wrapper                           |
-| `types/api.ts`                          | `ApiResult` / `ApiError` / `ApiMeta`                 |
+| Path                                    | What it is                                             |
+| --------------------------------------- | ------------------------------------------------------ |
+| `app/layout.tsx`                        | Root HTML/body, metadata, `globals.css`                |
+| `app/(customer)/page.tsx`               | Public storefront landing page                         |
+| `app/(customer)/prescriptions/page.tsx` | Prescription submission page (thin server component)   |
+| `app/(customer)/layout.tsx`             | Storefront header and nav                              |
+| `app/(client)/layout.tsx`               | Shop-owner nav                                         |
+| `features/order/`                       | Prescription form, API call, and types                 |
+| `features/qa/`                          | Customer Q&A: ask form, own questions, public FAQ      |
+| `features/shared/`                      | Auth UI: login form, header session controls, account  |
+| `lib/api/client.ts`                     | The single `fetch` wrapper                             |
+| `lib/auth/`                             | Session context, auth API, and the `RequireAuth` guard |
+| `types/api.ts`                          | `ApiResult` / `ApiError` / `ApiMeta`                   |
 
-Everything else — `app/api/`, the other `features/`, `components/ui/`, `lib/auth/`, and the
+Everything else — `app/api/`, the other `features/`, `components/ui/`, and the
 remaining `(customer)` and `(client)` subdirectories — is an empty directory holding a `.gitkeep`.
 
 ## Three rules this skeleton exists to enforce
@@ -48,22 +51,28 @@ The two route groups are **not** namespaced in the URL — that is deliberate, b
 address should read like a shopfront rather than like a dashboard. A customer sees `/orders`; the shop
 owner sees `/shop/orders`. The `/shop` segment is what separates them.
 
-| URL               | Directory                       | Audience                        |
-| ----------------- | ------------------------------- | ------------------------------- |
-| `/`               | `app/(customer)/page.tsx`       | Anyone                          |
-| `/frames`         | `app/(customer)/frames/`        | Anyone                          |
-| `/lenses`         | `app/(customer)/lenses/`        | Anyone                          |
-| `/questions`      | `app/(customer)/questions/`     | Anyone                          |
-| `/prescriptions`  | `app/(customer)/prescriptions/` | Customer                        |
-| `/orders`         | `app/(customer)/orders/`        | Customer — their own orders     |
-| `/account`        | `app/(customer)/account/`       | Customer                        |
-| `/shop/orders`    | `app/(client)/shop/orders/`     | Shop owner — the approval queue |
-| `/shop/inventory` | `app/(client)/shop/inventory/`  | Shop owner                      |
-| `/shop/tasks`     | `app/(client)/shop/tasks/`      | Shop owner                      |
-| `/shop/billing`   | `app/(client)/shop/billing/`    | Shop owner                      |
-| `/api/*`          | `app/api/`                      | BFF route handlers              |
+| URL               | Directory                       | Audience                            |
+| ----------------- | ------------------------------- | ----------------------------------- |
+| `/`               | `app/(customer)/page.tsx`       | Anyone                              |
+| `/login`          | `app/login/page.tsx`            | Anyone — signs in both roles        |
+| `/frames`         | `app/(customer)/frames/`        | Anyone                              |
+| `/lenses`         | `app/(customer)/lenses/`        | Anyone                              |
+| `/questions`      | `app/(customer)/questions/`     | Anyone — public FAQ; sign in to ask |
+| `/prescriptions`  | `app/(customer)/prescriptions/` | Customer                            |
+| `/orders`         | `app/(customer)/orders/`        | Customer — their own orders         |
+| `/account`        | `app/(customer)/account/`       | Customer — behind `RequireAuth`     |
+| `/shop/orders`    | `app/(client)/shop/orders/`     | Shop owner — the approval queue     |
+| `/shop/inventory` | `app/(client)/shop/inventory/`  | Shop owner                          |
+| `/shop/tasks`     | `app/(client)/shop/tasks/`      | Shop owner                          |
+| `/shop/billing`   | `app/(client)/shop/billing/`    | Shop owner                          |
+| `/api/*`          | `app/api/`                      | BFF route handlers                  |
 
-Only `/` and `/prescriptions` have a page. Every other directory holds a `.gitkeep` and nothing else.
+The pages built so far include `/`, `/prescriptions`, `/orders`, `/notifications`, `/frames`,
+`/lenses` and the `/shop/*` owner screens. `/account` edits the signed-in customer's profile
+(name, phone, address, preferred contact; the email is read-only) behind `lib/auth/RequireAuth`,
+and `/login` signs either role in. `/questions` shows the public FAQ to anyone and, once signed
+in as a customer, a form to ask a new question and the list of that customer's own questions and
+their answers; the FAQ itself never needs a session.
 
 ### Why `/shop` and not `/admin`, and why on every route
 

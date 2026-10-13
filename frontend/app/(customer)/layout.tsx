@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AuthNav from "@/features/shared/components/AuthNav";
 
 /**
  * Layout for everything a customer or logged-out visitor sees.
@@ -37,9 +38,7 @@ export default function CustomerLayout({ children }: LayoutProps<"/">) {
           <Link href="/questions" className="text-sm hover:underline">
             Q&amp;A
           </Link>
-          <Link href="/account" className="text-sm hover:underline">
-            Account
-          </Link>
+          <AuthNav />
         </nav>
       </header>
 

@@ -196,8 +196,60 @@ class StockServiceTest {
         }
 
         @Override
+        public Optional<Frame> findByIdAndActiveTrue(Long id) {
+            return findById(id).filter(Frame::isActive);
+        }
+
+        @Override
         public List<Frame> findAllByOrderByIdAsc() {
             return frames.values().stream()
+                    .sorted(Comparator.comparing(Frame::getId))
+                    .toList();
+        }
+
+        @Override
+        public List<Frame> findAllByActiveTrueOrderByIdAsc() {
+            return frames.values().stream()
+                    .filter(Frame::isActive)
+                    .sorted(Comparator.comparing(Frame::getId))
+                    .toList();
+        }
+
+        @Override
+        public List<Frame> findActiveForStorefront(
+                String categorySlug,
+                java.math.BigDecimal minPrice,
+                java.math.BigDecimal maxPrice,
+                String color,
+                String material,
+                String q) {
+            return frames.values().stream()
+                    .filter(Frame::isActive)
+                    .filter(frame -> {
+                        if (minPrice != null
+                                && frame.getPrice() != null
+                                && frame.getPrice().compareTo(minPrice) < 0) {
+                            return false;
+                        }
+                        if (maxPrice != null
+                                && frame.getPrice() != null
+                                && frame.getPrice().compareTo(maxPrice) > 0) {
+                            return false;
+                        }
+                        if (color != null && !color.isBlank()) {
+                            String c = frame.getColor();
+                            if (c == null || !c.toLowerCase().contains(color.toLowerCase())) {
+                                return false;
+                            }
+                        }
+                        if (material != null && !material.isBlank()) {
+                            String m = frame.getMaterial();
+                            if (m == null || !m.toLowerCase().contains(material.toLowerCase())) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    })
                     .sorted(Comparator.comparing(Frame::getId))
                     .toList();
         }
@@ -275,6 +327,14 @@ class StockServiceTest {
             }
             lens.setStockQty(lens.getStockQty() + quantity);
             return 1;
+        }
+
+        @Override
+        public List<Lens> findAllByActiveTrueOrderByIdAsc() {
+            return lenses.values().stream()
+                    .filter(Lens::isActive)
+                    .sorted(Comparator.comparing(Lens::getId))
+                    .toList();
         }
     }
 

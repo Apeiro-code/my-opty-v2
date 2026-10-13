@@ -27,6 +27,11 @@ public class Lens {
     private String coating;
     private BigDecimal price;
     private int stockQty;
+    private String description;
+
+    /** Thumbnail path or URL for the storefront; may be null. */
+    @Column("image_url")
+    private String imageUrl;
 
     /** Named explicitly: the property is {@code active} but the column is {@code is_active}. */
     @Column("is_active")
@@ -74,6 +79,22 @@ public class Lens {
 
     public BigDecimal getPrice() {
         return price;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public void setPrice(BigDecimal price) {
