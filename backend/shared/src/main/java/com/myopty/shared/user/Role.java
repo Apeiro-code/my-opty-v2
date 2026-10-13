@@ -10,5 +10,6 @@ package com.myopty.shared.user;
  */
 public enum Role {
     CUSTOMER,
-    CLIENT
+    CLIENT,
+    ADMIN
 }

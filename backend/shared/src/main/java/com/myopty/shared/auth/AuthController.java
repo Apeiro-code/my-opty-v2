@@ -4,6 +4,9 @@ import com.myopty.shared.auth.dto.ApiError;
 import com.myopty.shared.auth.dto.AuthResponse;
 import com.myopty.shared.auth.dto.AuthenticatedUser;
 import com.myopty.shared.auth.dto.LoginRequest;
+import com.myopty.shared.auth.dto.RegisterRequest;
+import com.myopty.shared.auth.dto.ResendVerificationRequest;
+import com.myopty.shared.auth.dto.VerifyEmailRequest;
 import com.myopty.shared.user.AppUser;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -27,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 /**
  * The session's lifecycle: establish it, report it, end it.
@@ -49,11 +53,15 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final SecurityContextRepository securityContextRepository;
+    private final AuthService authService;
 
     public AuthController(
-            AuthenticationManager authenticationManager, SecurityContextRepository securityContextRepository) {
+            AuthenticationManager authenticationManager,
+            SecurityContextRepository securityContextRepository,
+            AuthService authService) {
         this.authenticationManager = authenticationManager;
         this.securityContextRepository = securityContextRepository;
+        this.authService = authService;
     }
 
     /**
@@ -86,6 +94,25 @@ public class AuthController {
         AppUser user = (AppUser) authenticated.getPrincipal();
         return AuthResponse.of(AuthenticatedUser.from(user));
     }
+    @PostMapping("/register")
+    @ResponseStatus(HttpStatus.CREATED)
+    public AuthResponse register(
+            @Valid @RequestBody RegisterRequest request,
+            HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse) {
+        return authService.register(request, httpRequest, httpResponse);
+    }
+
+    @PostMapping("/verify-email")
+    public void verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
+        authService.verifyEmail(request);
+    }
+
+    @PostMapping("/resend-verification")
+    public void resendVerification(@Valid @RequestBody ResendVerificationRequest request) {
+        authService.resendVerification(request);
+    }
+
 
     /**
      * Who the current session says the caller is. Anonymous callers never reach
@@ -126,4 +153,23 @@ public class AuthController {
     public ApiError unreadableBody(HttpMessageNotReadableException exception) {
         return ApiError.of("MALFORMED_REQUEST", "The request body is not valid JSON.");
     }
+    @ExceptionHandler(ResponseStatusException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiError conflict(ResponseStatusException exception) {
+        String reason = exception.getReason();
+        if ("EMAIL_EXISTS".equals(reason)) {
+            return ApiError.of("EMAIL_EXISTS", "Email is already registered.");
+        }
+        if ("PHONE_EXISTS".equals(reason)) {
+            return ApiError.of("PHONE_EXISTS", "Phone number is already registered.");
+        }
+        if ("USER_NOT_FOUND".equals(reason)) {
+            return ApiError.of("USER_NOT_FOUND", "User not found.");
+        }
+        if ("INVALID_OTP".equals(reason) || "OTP_EXPIRED".equals(reason) || "OTP_ATTEMPTS_EXCEEDED".equals(reason)) {
+            return ApiError.of(reason, reason);
+        }
+        return ApiError.of("CONFLICT", reason == null ? "Conflict" : reason);
+    }
+
 }
