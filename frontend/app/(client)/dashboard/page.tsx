@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { api } from "@/lib/api";
-import { ApiResponse } from "@/types/workflow";
 
 interface DashboardMetrics {
   totalSales: number;
@@ -26,40 +24,30 @@ export default function DashboardPage() {
     const loadDashboard = async () => {
       setLoading(true);
       try {
-        // Fetch dashboard summary metrics
-        const summaryResult: ApiResponse<{
-          total_sales: number;
-          total_orders: number;
-          low_stock_items: number;
-          pending_tasks: number;
-        }> = await api.fetchWrapper("/dashboard/summary", {
-          method: "GET",
-        });
+        const [summaryRes, salesRes, inventoryRes] = await Promise.all([
+          fetch("http://localhost:8080/api/reports/dashboard/summary?clientId=1"),
+          fetch("http://localhost:8080/api/reports/sales/monthly/history?clientId=1"),
+          fetch("http://localhost:8080/api/reports/inventory/monthly/history?clientId=1")
+        ]);
 
-        // Fetch recent sales
-        const salesResult: ApiResponse<any[]> = await api.fetchWrapper("/reports/sales/monthly/history", {
-          method: "GET",
-        });
-
-        // Fetch recent inventory
-        const inventoryResult: ApiResponse<any[]> = await api.fetchWrapper("/reports/inventory/monthly/history", {
-          method: "GET",
-        });
-
-        if (summaryResult.success && salesResult.success && inventoryResult.success) {
-          setData({
-            metrics: {
-              totalSales: summaryResult.data?.total_sales || 0,
-              totalOrders: summaryResult.data?.total_orders || 0,
-              lowStockItems: summaryResult.data?.low_stock_items || 0,
-              pendingTasks: summaryResult.data?.pending_tasks || 0,
-            },
-            recentSales: salesResult.data || [],
-            recentInventory: inventoryResult.data || [],
-          });
-        } else {
-          setError("Failed to load dashboard data");
+        if (!summaryRes.ok || !salesRes.ok || !inventoryRes.ok) {
+          throw new Error("Failed to load dashboard data");
         }
+
+        const summaryData = await summaryRes.json();
+        const salesData = await salesRes.json();
+        const inventoryData = await inventoryRes.json();
+
+        setData({
+          metrics: {
+            totalSales: summaryData.totalSales || 0,
+            totalOrders: summaryData.totalOrders || 0,
+            lowStockItems: summaryData.lowStockItems || 0,
+            pendingTasks: summaryData.pendingTasks || 0,
+          },
+          recentSales: Array.isArray(salesData) ? salesData : [],
+          recentInventory: Array.isArray(inventoryData) ? inventoryData : [],
+        });
       } catch (err: any) {
         setError(err.message || "Failed to load dashboard");
       } finally {
@@ -67,8 +55,9 @@ export default function DashboardPage() {
       }
     };
 
-    loadDashboard();
+    void loadDashboard();
   }, []);
+
 
   if (loading) {
     return (
@@ -96,8 +85,6 @@ export default function DashboardPage() {
 
   const { metrics, recentSales, recentInventory } = data;
 
-  // Color palette for cards
-  const colors = ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFE65B", "#FF8C42"];
 
   return (
     <div className="p-4">

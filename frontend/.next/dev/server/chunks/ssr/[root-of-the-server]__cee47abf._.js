@@ -434,7 +434,6 @@ const TaskForm = ({ onSubmit, isLoading = false })=>{
                             }, ("TURBOPACK compile-time value", void 0)),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
                                 value: "MEDIUM",
-                                selected: true,
                                 children: "Medium"
                             }, void 0, false, {
                                 fileName: "[project]/features/workflow/components/TaskForm.tsx",
@@ -661,6 +660,7 @@ const fetchWrapper = async (endpoint, options = {})=>{
     return data;
 };
 const api = {
+    fetchWrapper,
     // Todo Task endpoints
     todoTasks: {
         create: (data)=>fetchWrapper("/tasks", {
@@ -668,7 +668,7 @@ const api = {
                 body: JSON.stringify(data)
             }),
         getAll: (clientId)=>fetchWrapper(`/tasks?clientId=${clientId}`),
-        getStatus: (id)=>fetchTasks(`/tasks/${id}/status`),
+        getStatus: (id)=>fetchWrapper(`/tasks/${id}/status`),
         updateStatus: (id, status)=>fetchWrapper(`/tasks/${id}/status`, {
                 method: "PUT",
                 body: JSON.stringify({
@@ -702,7 +702,7 @@ const todoTasks = {
 const dealerApi = {
     // Get all active dealers
     getAllActive: async ()=>{
-        return __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2f$index$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["api"].todoTasks.getTaskQueue(0);
+        return __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2f$index$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["api"].todoTasks.getTaskQueue(1);
     },
     // Create a new dealer
     createDealer: async (name, email, itemType)=>{
@@ -711,31 +711,31 @@ const dealerApi = {
             description: email,
             dueDate: "",
             priority: itemType
-        }, 0);
+        }, 1);
     },
     // Get dealer by email
     getDealerByEmail: async (email)=>{
-        return __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2f$index$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["api"].todoTasks.getStatus(0);
+        return __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2f$index$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["api"].todoTasks.getStatus(1);
     },
     // Update an existing dealer
     updateDealer: async (dealerId, name, email, itemType)=>{
-        return __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2f$index$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["api"].todoTasks.getTaskQueue(0);
+        return __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2f$index$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["api"].todoTasks.getTaskQueue(1);
     },
     // Delete a dealer
     deleteDealer: async (dealerId)=>{
-        return __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2f$index$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["api"].todoTasks.getTaskQueue(0);
+        return __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2f$index$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["api"].todoTasks.getTaskQueue(1);
     },
     // Calculate low stock items
     calculateLowStock: async ()=>{
-        return __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2f$index$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["api"].todoTasks.getOverdue(0);
+        return __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2f$index$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["api"].todoTasks.getOverdue(1);
     },
     // Generate stock request email
     generateStockRequestEmail: async (dealerId)=>{
-        return __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2f$index$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["api"].todoTasks.getTaskQueue(0);
+        return __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2f$index$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["api"].todoTasks.getTaskQueue(1);
     },
     // Get active dealers for sent emails dashboard
     getActiveDealers: async ()=>{
-        return __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2f$index$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["api"].todoTasks.getTaskQueue(0);
+        return __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2f$index$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["api"].todoTasks.getTaskQueue(1);
     }
 };
 }),
@@ -763,38 +763,39 @@ function ClientWorkflowPage() {
     const [tasks, setTasks] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])([]);
     const [queueTasks, setQueueTasks] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])([]);
     const [overdueTasks, setOverdueTasks] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])([]);
-    const [clientId, setClientId] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(0);
+    const [clientId, setClientId] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(1); // 0 වෙනුවට 1 දාලා ටෙස්ට් කරන්න පුළුවන්
     const [loading, setLoading] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(true);
     const [error, setError] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
-    // Fetch client ID from localStorage or session - in production this would come from auth
+    // Client ID ලබාගැනීම
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
         const storedClientId = localStorage.getItem("clientId");
         if (storedClientId) {
             setClientId(Number(storedClientId));
         }
     }, []);
-    // Fetch initial data
+    // ඩේටා ලෝඩ් කිරීම
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
         if (clientId > 0) {
             const loadData = async ()=>{
                 setLoading(true);
                 try {
-                    // Fetch all tasks
-                    const tasksResult = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$features$2f$workflow$2f$api$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getTasks"])(clientId);
+                    const tasksResult = await __TURBOPACK__imported__module__$5b$project$5d2f$features$2f$workflow$2f$api$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["todoTasks"].getAll(clientId);
                     if (tasksResult.success && tasksResult.data) {
                         setTasks(tasksResult.data);
-                    } else {
-                        setError(tasksResult.error?.message);
+                    } else if (Array.isArray(tasksResult)) {
+                        setTasks(tasksResult);
                     }
-                    // Fetch queue tasks
-                    const queueResult = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$features$2f$workflow$2f$api$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getTaskQueue"])(clientId);
+                    const queueResult = await __TURBOPACK__imported__module__$5b$project$5d2f$features$2f$workflow$2f$api$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["todoTasks"].getQueue(clientId);
                     if (queueResult.success && queueResult.data) {
                         setQueueTasks(queueResult.data);
+                    } else if (Array.isArray(queueResult)) {
+                        setQueueTasks(queueResult);
                     }
-                    // Fetch overdue tasks
-                    const overdueResult = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$features$2f$workflow$2f$api$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["getOverdueTasks"])(clientId);
+                    const overdueResult = await __TURBOPACK__imported__module__$5b$project$5d2f$features$2f$workflow$2f$api$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["todoTasks"].getOverdue(clientId);
                     if (overdueResult.success && overdueResult.data) {
                         setOverdueTasks(overdueResult.data);
+                    } else if (Array.isArray(overdueResult)) {
+                        setOverdueTasks(overdueResult);
                     }
                 } catch (err) {
                     setError(err.message || "Failed to load data");
@@ -802,18 +803,43 @@ function ClientWorkflowPage() {
                     setLoading(false);
                 }
             };
-            loadData();
+            void loadData();
         }
     }, [
         clientId
     ]);
+    // අලුත් ටාස්ක් එකක් සෑදීම
+    const handleCreateTask = async (data)=>{
+        try {
+            const response = await __TURBOPACK__imported__module__$5b$project$5d2f$features$2f$workflow$2f$api$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["todoTasks"].create(clientId, data);
+            const newTask = response.data || response;
+            setTasks([
+                ...tasks,
+                newTask
+            ]);
+        } catch (err) {
+            console.error("Failed to create task", err);
+        }
+    };
+    // ටාස්ක් එකක ස්ටේටස් එක වෙනස් කිරීම
+    const handleStatusChange = async (taskId, newStatus)=>{
+        try {
+            await __TURBOPACK__imported__module__$5b$project$5d2f$features$2f$workflow$2f$api$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["todoTasks"].updateStatus(taskId, newStatus);
+            setTasks(tasks.map((task)=>task.taskId === taskId ? {
+                    ...task,
+                    status: newStatus
+                } : task));
+        } catch (err) {
+            console.error("Failed to update status", err);
+        }
+    };
     if (loading) {
         return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
             className: "min-h-80 flex items-center justify-center",
             children: "Loading..."
         }, void 0, false, {
             fileName: "[project]/app/(client)/tasks/page.tsx",
-            lineNumber: 63,
+            lineNumber: 100,
             columnNumber: 12
         }, this);
     }
@@ -826,7 +852,7 @@ function ClientWorkflowPage() {
             ]
         }, void 0, true, {
             fileName: "[project]/app/(client)/tasks/page.tsx",
-            lineNumber: 67,
+            lineNumber: 104,
             columnNumber: 12
         }, this);
     }
@@ -841,8 +867,8 @@ function ClientWorkflowPage() {
                         children: "My Tasks"
                     }, void 0, false, {
                         fileName: "[project]/app/(client)/tasks/page.tsx",
-                        lineNumber: 73,
-                        columnNumber: 9
+                        lineNumber: 110,
+                        columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "flex items-center space-x-2",
@@ -854,43 +880,41 @@ function ClientWorkflowPage() {
                             ]
                         }, void 0, true, {
                             fileName: "[project]/app/(client)/tasks/page.tsx",
-                            lineNumber: 75,
-                            columnNumber: 11
+                            lineNumber: 112,
+                            columnNumber: 13
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/app/(client)/tasks/page.tsx",
-                        lineNumber: 74,
-                        columnNumber: 9
+                        lineNumber: 111,
+                        columnNumber: 11
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/app/(client)/tasks/page.tsx",
-                lineNumber: 72,
-                columnNumber: 7
+                lineNumber: 109,
+                columnNumber: 9
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$features$2f$workflow$2f$components$2f$TaskForm$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["TaskForm"], {
-                onSubmit: (data)=>handleCreateTask(data)
+                onSubmit: handleCreateTask
             }, void 0, false, {
                 fileName: "[project]/app/(client)/tasks/page.tsx",
-                lineNumber: 79,
-                columnNumber: 7
+                lineNumber: 116,
+                columnNumber: 9
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$features$2f$workflow$2f$components$2f$TaskBoard$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["TaskBoard"], {
                 tasks: tasks,
-                onStatusChange: (id, status)=>handleStatusChange(id, status)
+                onStatusChange: handleStatusChange
             }, void 0, false, {
                 fileName: "[project]/app/(client)/tasks/page.tsx",
-                lineNumber: 81,
-                columnNumber: 7
+                lineNumber: 118,
+                columnNumber: 9
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$features$2f$workflow$2f$components$2f$TaskQueue$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["TaskQueue"], {
-                clientId: clientId,
-                tasks: queueTasks,
-                onStatusChange: (id, status)=>handleStatusChange(id, status)
+                clientId: clientId
             }, void 0, false, {
                 fileName: "[project]/app/(client)/tasks/page.tsx",
-                lineNumber: 83,
-                columnNumber: 7
+                lineNumber: 120,
+                columnNumber: 9
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 children: [
@@ -903,16 +927,16 @@ function ClientWorkflowPage() {
                         ]
                     }, void 0, true, {
                         fileName: "[project]/app/(client)/tasks/page.tsx",
-                        lineNumber: 91,
-                        columnNumber: 9
+                        lineNumber: 125,
+                        columnNumber: 11
                     }, this),
                     overdueTasks.length === 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                         className: "text-sm text-gray-500",
                         children: "No overdue tasks"
                     }, void 0, false, {
                         fileName: "[project]/app/(client)/tasks/page.tsx",
-                        lineNumber: 96,
-                        columnNumber: 11
+                        lineNumber: 130,
+                        columnNumber: 15
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3",
@@ -924,8 +948,8 @@ function ClientWorkflowPage() {
                                         children: task.title
                                     }, void 0, false, {
                                         fileName: "[project]/app/(client)/tasks/page.tsx",
-                                        lineNumber: 105,
-                                        columnNumber: 15
+                                        lineNumber: 139,
+                                        columnNumber: 19
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                         className: "text-sm text-red-600",
@@ -935,8 +959,8 @@ function ClientWorkflowPage() {
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/app/(client)/tasks/page.tsx",
-                                        lineNumber: 106,
-                                        columnNumber: 15
+                                        lineNumber: 140,
+                                        columnNumber: 19
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                                         className: "text-xs text-red-500",
@@ -946,40 +970,32 @@ function ClientWorkflowPage() {
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/app/(client)/tasks/page.tsx",
-                                        lineNumber: 107,
-                                        columnNumber: 15
+                                        lineNumber: 141,
+                                        columnNumber: 19
                                     }, this)
                                 ]
                             }, task.taskId, true, {
                                 fileName: "[project]/app/(client)/tasks/page.tsx",
-                                lineNumber: 101,
-                                columnNumber: 13
+                                lineNumber: 135,
+                                columnNumber: 17
                             }, this))
                     }, void 0, false, {
                         fileName: "[project]/app/(client)/tasks/page.tsx",
-                        lineNumber: 99,
-                        columnNumber: 9
+                        lineNumber: 133,
+                        columnNumber: 11
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/app/(client)/tasks/page.tsx",
-                lineNumber: 90,
-                columnNumber: 7
+                lineNumber: 124,
+                columnNumber: 9
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/app/(client)/tasks/page.tsx",
-        lineNumber: 71,
-        columnNumber: 5
+        lineNumber: 108,
+        columnNumber: 7
     }, this);
-}
-function handleCreateTask(data) {
-    // Form submission handler - would call API
-    console.log("Creating task:", data);
-}
-function handleStatusChange(taskId, newStatus) {
-    // Status change handler - would call API
-    console.log(`Task ${taskId} status changed to ${newStatus}`);
 }
 }),
 "[project]/node_modules/next/dist/server/route-modules/app-page/module.compiled.js [app-ssr] (ecmascript)", ((__turbopack_context__, module, exports) => {

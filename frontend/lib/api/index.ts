@@ -1,4 +1,4 @@
-import { ApiResponse } from "../types/workflow";
+import { ApiResponse } from "../../types/workflow";
 
 const baseUrl = "http://localhost:8080";
 
@@ -22,7 +22,7 @@ const fetchWrapper = async (endpoint: string, options: RequestInit = {}) => {
 
   if (!response.ok) {
     throw new Error(
-      (data as ApiResponse<any>).error?.message || "Request failed"
+        (data as ApiResponse).error?.message || "Request failed"
     );
   }
 
@@ -30,6 +30,8 @@ const fetchWrapper = async (endpoint: string, options: RequestInit = {}) => {
 };
 
 export const api = {
+  fetchWrapper,
+
   // Todo Task endpoints
   todoTasks: {
     create: (data: any) => fetchWrapper("/tasks", {
@@ -37,15 +39,15 @@ export const api = {
       body: JSON.stringify(data),
     }),
     getAll: (clientId: number) => fetchWrapper(`/tasks?clientId=${clientId}`),
-    getStatus: (id: number) => fetchTasks(`/tasks/${id}/status`),
+    getStatus: (id: number) => fetchWrapper(`/tasks/${id}/status`),
     updateStatus: (id: number, status: string) =>
-      fetchWrapper(`/tasks/${id}/status`, {
-        method: "PUT",
-        body: JSON.stringify({ status }),
-      }),
+        fetchWrapper(`/tasks/${id}/status`, {
+          method: "PUT",
+          body: JSON.stringify({ status }),
+        }),
     getQueue: (clientId: number) =>
-      fetchWrapper(`/tasks/queue?clientId=${clientId}`),
+        fetchWrapper(`/tasks/queue?clientId=${clientId}`),
     getOverdue: (clientId: number) =>
-      fetchWrapper(`/tasks/overdue?clientId=${clientId}`),
+        fetchWrapper(`/tasks/overdue?clientId=${clientId}`),
   },
 };

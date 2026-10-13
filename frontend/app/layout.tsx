@@ -1,13 +1,15 @@
-import "@/app/globals.css";
+import React from "react";
+// @ts-ignore
+import "./globals.css";
 
 export const metadata = {
     title: "MyOpty Application",
-    description: "Epic 8 - Dealer Workflow",
+    description: "Epic B - Dealer Workflow",
 };
 
 export default function RootLayout({
-   children,
-}: {
+                                       children,
+                                   }: {
     children: React.ReactNode;
 }) {
     return (

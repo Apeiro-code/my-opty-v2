@@ -53,6 +53,7 @@ const fetchWrapper = async (endpoint, options = {})=>{
     return data;
 };
 const api = {
+    fetchWrapper,
     // Todo Task endpoints
     todoTasks: {
         create: (data)=>fetchWrapper("/tasks", {
@@ -60,7 +61,7 @@ const api = {
                 body: JSON.stringify(data)
             }),
         getAll: (clientId)=>fetchWrapper(`/tasks?clientId=${clientId}`),
-        getStatus: (id)=>fetchTasks(`/tasks/${id}/status`),
+        getStatus: (id)=>fetchWrapper(`/tasks/${id}/status`),
         updateStatus: (id, status)=>fetchWrapper(`/tasks/${id}/status`, {
                 method: "PUT",
                 body: JSON.stringify({
@@ -94,7 +95,7 @@ const todoTasks = {
 const dealerApi = {
     // Get all active dealers
     getAllActive: async ()=>{
-        return __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2f$index$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["api"].todoTasks.getTaskQueue(0);
+        return __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2f$index$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["api"].todoTasks.getTaskQueue(1);
     },
     // Create a new dealer
     createDealer: async (name, email, itemType)=>{
@@ -103,31 +104,31 @@ const dealerApi = {
             description: email,
             dueDate: "",
             priority: itemType
-        }, 0);
+        }, 1);
     },
     // Get dealer by email
     getDealerByEmail: async (email)=>{
-        return __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2f$index$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["api"].todoTasks.getStatus(0);
+        return __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2f$index$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["api"].todoTasks.getStatus(1);
     },
     // Update an existing dealer
     updateDealer: async (dealerId, name, email, itemType)=>{
-        return __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2f$index$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["api"].todoTasks.getTaskQueue(0);
+        return __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2f$index$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["api"].todoTasks.getTaskQueue(1);
     },
     // Delete a dealer
     deleteDealer: async (dealerId)=>{
-        return __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2f$index$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["api"].todoTasks.getTaskQueue(0);
+        return __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2f$index$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["api"].todoTasks.getTaskQueue(1);
     },
     // Calculate low stock items
     calculateLowStock: async ()=>{
-        return __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2f$index$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["api"].todoTasks.getOverdue(0);
+        return __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2f$index$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["api"].todoTasks.getOverdue(1);
     },
     // Generate stock request email
     generateStockRequestEmail: async (dealerId)=>{
-        return __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2f$index$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["api"].todoTasks.getTaskQueue(0);
+        return __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2f$index$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["api"].todoTasks.getTaskQueue(1);
     },
     // Get active dealers for sent emails dashboard
     getActiveDealers: async ()=>{
-        return __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2f$index$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["api"].todoTasks.getTaskQueue(0);
+        return __TURBOPACK__imported__module__$5b$project$5d2f$lib$2f$api$2f$index$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["api"].todoTasks.getTaskQueue(1);
     }
 };
 }),
@@ -149,7 +150,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$features$2f$workflow$2f$api$
 ;
 function DealerContactsPage() {
     const router = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRouter"])();
-    const [dealers1, setDealers1] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])([]);
+    const [dealers, setDealers] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])([]);
     const [form, setForm] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])({
         name: "",
         email: "",
@@ -164,7 +165,7 @@ function DealerContactsPage() {
             try {
                 const result = await __TURBOPACK__imported__module__$5b$project$5d2f$features$2f$workflow$2f$api$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["dealerApi"].getAllActive();
                 if (result.success && result.data) {
-                    setDealers1(result.data);
+                    setDealers(result.data);
                 } else {
                     setError(result.error?.message || "Failed to load dealers");
                 }
@@ -188,8 +189,8 @@ function DealerContactsPage() {
                 itemType: form.itemType
             });
             if (result.success) {
-                setDealers1([
-                    ...dealers1,
+                setDealers([
+                    ...dealers,
                     result.data
                 ]);
                 setForm({
@@ -197,9 +198,7 @@ function DealerContactsPage() {
                     email: "",
                     itemType: "FRAME"
                 });
-                router.push("/client/dealers", {
-                    replace: true
-                });
+                router.replace("/client/dealers"); // Router push error fixed
             } else {
                 setError(result.error?.message || "Failed to create dealer");
             }
@@ -222,15 +221,13 @@ function DealerContactsPage() {
             });
             if (result.success) {
                 // Update dealer in local state
-                setDealers1(dealers1.map((d)=>d.dealerId === dealerId ? result.data : d));
+                setDealers(dealers.map((d)=>d.dealerId === dealerId ? result.data : d));
                 setForm({
                     name: "",
                     email: "",
                     itemType: "FRAME"
                 });
-                router.push("/client/dealers", {
-                    replace: true
-                });
+                router.replace("/client/dealers"); // Router push error fixed
             } else {
                 setError(result.error?.message || "Failed to update dealer");
             }
@@ -238,6 +235,17 @@ function DealerContactsPage() {
             setError(err.message || "Failed to update dealer");
         } finally{
             setLoading(false);
+        }
+    };
+    // Delete dealer function (Moved INSIDE component)
+    const deleteDealer = async (dealerId)=>{
+        if (window.confirm("Are you sure you want to delete this dealer?")) {
+            try {
+                await __TURBOPACK__imported__module__$5b$project$5d2f$features$2f$workflow$2f$api$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["dealerApi"].deleteDealer(dealerId);
+                setDealers(dealers.filter((d)=>d.dealerId !== dealerId));
+            } catch (err) {
+                console.error("Delete failed", err);
+            }
         }
     };
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -251,32 +259,32 @@ function DealerContactsPage() {
                         children: "Dealer Contacts"
                     }, void 0, false, {
                         fileName: "[project]/app/(client)/dealers/page.tsx",
-                        lineNumber: 118,
-                        columnNumber: 9
+                        lineNumber: 130,
+                        columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "flex items-center space-x-2",
                         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                             className: "text-sm text-gray-600",
                             children: [
-                                dealers1.length,
+                                dealers.length,
                                 " dealer(s)"
                             ]
                         }, void 0, true, {
                             fileName: "[project]/app/(client)/dealers/page.tsx",
-                            lineNumber: 120,
+                            lineNumber: 132,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/app/(client)/dealers/page.tsx",
-                        lineNumber: 119,
-                        columnNumber: 9
+                        lineNumber: 131,
+                        columnNumber: 11
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/app/(client)/dealers/page.tsx",
-                lineNumber: 117,
-                columnNumber: 7
+                lineNumber: 129,
+                columnNumber: 9
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "bg-white rounded p-4 shadow-sm mb-6",
@@ -286,8 +294,8 @@ function DealerContactsPage() {
                         children: form.dealerId ? "Edit Dealer" : "Add New Dealer"
                     }, void 0, false, {
                         fileName: "[project]/app/(client)/dealers/page.tsx",
-                        lineNumber: 128,
-                        columnNumber: 9
+                        lineNumber: 140,
+                        columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
                         onSubmit: handleAddDealer,
@@ -300,8 +308,8 @@ function DealerContactsPage() {
                                         children: "Name"
                                     }, void 0, false, {
                                         fileName: "[project]/app/(client)/dealers/page.tsx",
-                                        lineNumber: 133,
-                                        columnNumber: 13
+                                        lineNumber: 145,
+                                        columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                         type: "text",
@@ -316,14 +324,14 @@ function DealerContactsPage() {
                                         placeholder: "Dealer name"
                                     }, void 0, false, {
                                         fileName: "[project]/app/(client)/dealers/page.tsx",
-                                        lineNumber: 136,
-                                        columnNumber: 13
+                                        lineNumber: 148,
+                                        columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/(client)/dealers/page.tsx",
-                                lineNumber: 132,
-                                columnNumber: 11
+                                lineNumber: 144,
+                                columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                 children: [
@@ -332,8 +340,8 @@ function DealerContactsPage() {
                                         children: "Email"
                                     }, void 0, false, {
                                         fileName: "[project]/app/(client)/dealers/page.tsx",
-                                        lineNumber: 148,
-                                        columnNumber: 13
+                                        lineNumber: 160,
+                                        columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                         type: "email",
@@ -348,14 +356,14 @@ function DealerContactsPage() {
                                         placeholder: "dealer@email.com"
                                     }, void 0, false, {
                                         fileName: "[project]/app/(client)/dealers/page.tsx",
-                                        lineNumber: 151,
-                                        columnNumber: 13
+                                        lineNumber: 163,
+                                        columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/(client)/dealers/page.tsx",
-                                lineNumber: 147,
-                                columnNumber: 11
+                                lineNumber: 159,
+                                columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                 className: "flex space-x-2",
@@ -374,30 +382,30 @@ function DealerContactsPage() {
                                                 children: "Frames"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/(client)/dealers/page.tsx",
-                                                lineNumber: 169,
-                                                columnNumber: 15
+                                                lineNumber: 181,
+                                                columnNumber: 17
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
                                                 value: "LENS",
                                                 children: "Lenses"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/(client)/dealers/page.tsx",
-                                                lineNumber: 170,
-                                                columnNumber: 15
+                                                lineNumber: 182,
+                                                columnNumber: 17
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
                                                 value: "BOTH",
                                                 children: "Frames & Lenses"
                                             }, void 0, false, {
                                                 fileName: "[project]/app/(client)/dealers/page.tsx",
-                                                lineNumber: 171,
-                                                columnNumber: 15
+                                                lineNumber: 183,
+                                                columnNumber: 17
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/app/(client)/dealers/page.tsx",
-                                        lineNumber: 163,
-                                        columnNumber: 13
+                                        lineNumber: 175,
+                                        columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                                         type: "submit",
@@ -406,26 +414,26 @@ function DealerContactsPage() {
                                         children: form.dealerId ? "Update Dealer" : "Add Dealer"
                                     }, void 0, false, {
                                         fileName: "[project]/app/(client)/dealers/page.tsx",
-                                        lineNumber: 174,
-                                        columnNumber: 13
+                                        lineNumber: 186,
+                                        columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/(client)/dealers/page.tsx",
-                                lineNumber: 162,
-                                columnNumber: 11
+                                lineNumber: 174,
+                                columnNumber: 13
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/app/(client)/dealers/page.tsx",
-                        lineNumber: 131,
-                        columnNumber: 9
+                        lineNumber: 143,
+                        columnNumber: 11
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/app/(client)/dealers/page.tsx",
-                lineNumber: 127,
-                columnNumber: 7
+                lineNumber: 139,
+                columnNumber: 9
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "overflow-x-auto",
@@ -441,7 +449,7 @@ function DealerContactsPage() {
                                         children: "Name"
                                     }, void 0, false, {
                                         fileName: "[project]/app/(client)/dealers/page.tsx",
-                                        lineNumber: 190,
+                                        lineNumber: 202,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("th", {
@@ -449,7 +457,7 @@ function DealerContactsPage() {
                                         children: "Email"
                                     }, void 0, false, {
                                         fileName: "[project]/app/(client)/dealers/page.tsx",
-                                        lineNumber: 191,
+                                        lineNumber: 203,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("th", {
@@ -457,7 +465,7 @@ function DealerContactsPage() {
                                         children: "Item Type"
                                     }, void 0, false, {
                                         fileName: "[project]/app/(client)/dealers/page.tsx",
-                                        lineNumber: 192,
+                                        lineNumber: 204,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("th", {
@@ -465,7 +473,7 @@ function DealerContactsPage() {
                                         children: "Status"
                                     }, void 0, false, {
                                         fileName: "[project]/app/(client)/dealers/page.tsx",
-                                        lineNumber: 193,
+                                        lineNumber: 205,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("th", {
@@ -473,23 +481,23 @@ function DealerContactsPage() {
                                         children: "Actions"
                                     }, void 0, false, {
                                         fileName: "[project]/app/(client)/dealers/page.tsx",
-                                        lineNumber: 194,
+                                        lineNumber: 206,
                                         columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/app/(client)/dealers/page.tsx",
-                                lineNumber: 189,
+                                lineNumber: 201,
                                 columnNumber: 13
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/app/(client)/dealers/page.tsx",
-                            lineNumber: 188,
-                            columnNumber: 11
+                            lineNumber: 200,
+                            columnNumber: 13
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("tbody", {
                             children: [
-                                dealers1.map((dealer)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("tr", {
+                                dealers.map((dealer)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("tr", {
                                         className: "border-b",
                                         children: [
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("td", {
@@ -497,16 +505,16 @@ function DealerContactsPage() {
                                                 children: dealer.name
                                             }, void 0, false, {
                                                 fileName: "[project]/app/(client)/dealers/page.tsx",
-                                                lineNumber: 200,
-                                                columnNumber: 17
+                                                lineNumber: 212,
+                                                columnNumber: 19
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("td", {
                                                 className: "p-3",
                                                 children: dealer.email
                                             }, void 0, false, {
                                                 fileName: "[project]/app/(client)/dealers/page.tsx",
-                                                lineNumber: 201,
-                                                columnNumber: 17
+                                                lineNumber: 213,
+                                                columnNumber: 19
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("td", {
                                                 className: "p-3",
@@ -515,13 +523,13 @@ function DealerContactsPage() {
                                                     children: dealer.itemType
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/(client)/dealers/page.tsx",
-                                                    lineNumber: 203,
+                                                    lineNumber: 215,
                                                     columnNumber: 19
                                                 }, this)
                                             }, void 0, false, {
                                                 fileName: "[project]/app/(client)/dealers/page.tsx",
-                                                lineNumber: 202,
-                                                columnNumber: 17
+                                                lineNumber: 214,
+                                                columnNumber: 19
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("td", {
                                                 className: "p-3",
@@ -530,13 +538,13 @@ function DealerContactsPage() {
                                                     children: dealer.status === "ACTIVE" ? "Active" : "Inactive"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/(client)/dealers/page.tsx",
-                                                    lineNumber: 208,
+                                                    lineNumber: 220,
                                                     columnNumber: 19
                                                 }, this)
                                             }, void 0, false, {
                                                 fileName: "[project]/app/(client)/dealers/page.tsx",
-                                                lineNumber: 207,
-                                                columnNumber: 17
+                                                lineNumber: 219,
+                                                columnNumber: 19
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("td", {
                                                 className: "p-3",
@@ -544,15 +552,13 @@ function DealerContactsPage() {
                                                     className: "flex space-x-2",
                                                     children: [
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
-                                                            onClick: ()=>router.push(`/client/dealers/${dealer.dealerId}/edit`, {
-                                                                    replace: true
-                                                                }),
+                                                            onClick: ()=>router.replace(`/client/dealers/${dealer.dealerId}/edit`),
                                                             className: "text-sm text-blue-600 hover:text-blue-800",
                                                             children: "Edit"
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/(client)/dealers/page.tsx",
-                                                            lineNumber: 214,
-                                                            columnNumber: 21
+                                                            lineNumber: 226,
+                                                            columnNumber: 23
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                                                             onClick: ()=>deleteDealer(dealer.dealerId),
@@ -560,72 +566,64 @@ function DealerContactsPage() {
                                                             children: "Delete"
                                                         }, void 0, false, {
                                                             fileName: "[project]/app/(client)/dealers/page.tsx",
-                                                            lineNumber: 220,
-                                                            columnNumber: 21
+                                                            lineNumber: 232,
+                                                            columnNumber: 23
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/app/(client)/dealers/page.tsx",
-                                                    lineNumber: 213,
-                                                    columnNumber: 19
+                                                    lineNumber: 225,
+                                                    columnNumber: 21
                                                 }, this)
                                             }, void 0, false, {
                                                 fileName: "[project]/app/(client)/dealers/page.tsx",
-                                                lineNumber: 212,
-                                                columnNumber: 17
+                                                lineNumber: 224,
+                                                columnNumber: 19
                                             }, this)
                                         ]
                                     }, dealer.dealerId, true, {
                                         fileName: "[project]/app/(client)/dealers/page.tsx",
-                                        lineNumber: 199,
-                                        columnNumber: 15
+                                        lineNumber: 211,
+                                        columnNumber: 17
                                     }, this)),
-                                dealers1.length === 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("tr", {
+                                dealers.length === 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("tr", {
                                     children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("td", {
-                                        colSpan: "5",
+                                        colSpan: 5,
                                         className: "p-4 text-center text-gray-500",
                                         children: "No dealers found"
                                     }, void 0, false, {
                                         fileName: "[project]/app/(client)/dealers/page.tsx",
-                                        lineNumber: 232,
-                                        columnNumber: 17
+                                        lineNumber: 244,
+                                        columnNumber: 19
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/app/(client)/dealers/page.tsx",
-                                    lineNumber: 231,
-                                    columnNumber: 15
+                                    lineNumber: 243,
+                                    columnNumber: 17
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/app/(client)/dealers/page.tsx",
-                            lineNumber: 197,
-                            columnNumber: 11
+                            lineNumber: 209,
+                            columnNumber: 13
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/app/(client)/dealers/page.tsx",
-                    lineNumber: 187,
-                    columnNumber: 9
+                    lineNumber: 199,
+                    columnNumber: 11
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/app/(client)/dealers/page.tsx",
-                lineNumber: 186,
-                columnNumber: 7
+                lineNumber: 198,
+                columnNumber: 9
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/app/(client)/dealers/page.tsx",
-        lineNumber: 116,
-        columnNumber: 5
+        lineNumber: 128,
+        columnNumber: 7
     }, this);
-}
-// Delete dealer function
-function deleteDealer(dealerId) {
-    if (confirm("Are you sure you want to delete this dealer?")) {
-        __TURBOPACK__imported__module__$5b$project$5d2f$features$2f$workflow$2f$api$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["dealerApi"].deleteDealer(dealerId).then(()=>{
-            setDealers(dealers.filter((d)=>d.dealerId !== dealerId));
-        });
-    }
 }
 }),
 "[project]/node_modules/next/dist/server/route-modules/app-page/module.compiled.js [app-ssr] (ecmascript)", ((__turbopack_context__, module, exports) => {

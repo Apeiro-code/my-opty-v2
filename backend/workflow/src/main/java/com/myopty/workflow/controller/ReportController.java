@@ -40,7 +40,7 @@ public class ReportController {
         return service.generateMonthlySalesReport(request);
     }
 
-    // ===== Monthly Inventory Report =====
+// ===== Monthly Inventory Report =====
 
     @GetMapping("/inventory/monthly")
     public ReportInventoryMonthlyResponse getMonthlyInventoryReport(

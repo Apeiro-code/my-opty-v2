@@ -53,3 +53,11 @@ export interface SentEmailsDashboard {
     FULFILLED: number;
   };
 }
+
+export interface ApiResponse<T = any> {
+  success: boolean;
+  data?: T;
+  error?: {
+    message: string;
+  };
+}
