@@ -27,24 +27,59 @@ public class ReportHistorical {
         this.recordedAt = java.time.LocalDate.now();
     }
 
-    public Integer getHistoricalId() { return historicalId; }
-    public void setHistoricalId(Integer historicalId) { this.historicalId = historicalId; }
+    public Integer getHistoricalId() {
+        return historicalId;
+    }
 
-    public Integer getClientId() { return clientId; }
-    public void setClientId(Integer clientId) { this.clientId = clientId; }
+    public void setHistoricalId(Integer historicalId) {
+        this.historicalId = historicalId;
+    }
 
-    public Integer getMonth() { return month; }
-    public void setMonth(Integer month) { this.month = month; }
+    public Integer getClientId() {
+        return clientId;
+    }
 
-    public Integer getYear() { return year; }
-    public void setYear(Integer year) { this.year = year; }
+    public void setClientId(Integer clientId) {
+        this.clientId = clientId;
+    }
 
-    public String getMetricType() { return metricType; }
-    public void setMetricType(String metricType) { this.metricType = metricType; }
+    public Integer getMonth() {
+        return month;
+    }
 
-    public Double getMetricValue() { return metricValue; }
-    public void setMetricValue(Double metricValue) { this.metricValue = metricValue; }
+    public void setMonth(Integer month) {
+        this.month = month;
+    }
 
-    public java.time.LocalDate getRecordedAt() { return recordedAt; }
-    public void setRecordedAt(java.time.LocalDate recordedAt) { this.recordedAt = recordedAt; }
+    public Integer getYear() {
+        return year;
+    }
+
+    public void setYear(Integer year) {
+        this.year = year;
+    }
+
+    public String getMetricType() {
+        return metricType;
+    }
+
+    public void setMetricType(String metricType) {
+        this.metricType = metricType;
+    }
+
+    public Double getMetricValue() {
+        return metricValue;
+    }
+
+    public void setMetricValue(Double metricValue) {
+        this.metricValue = metricValue;
+    }
+
+    public java.time.LocalDate getRecordedAt() {
+        return recordedAt;
+    }
+
+    public void setRecordedAt(java.time.LocalDate recordedAt) {
+        this.recordedAt = recordedAt;
+    }
 }

@@ -34,30 +34,75 @@ public class DashboardSummary {
         this.updatedAt = java.time.LocalDate.now();
     }
 
-    public Integer getSummaryId() { return summaryId; }
-    public void setSummaryId(Integer summaryId) { this.summaryId = summaryId; }
+    public Integer getSummaryId() {
+        return summaryId;
+    }
 
-    public Integer getClientId() { return clientId; }
-    public void setClientId(Integer clientId) { this.clientId = clientId; }
+    public void setSummaryId(Integer summaryId) {
+        this.summaryId = summaryId;
+    }
 
-    public java.time.LocalDate getDate() { return date; }
-    public void setDate(java.time.LocalDate date) { this.date = date; }
+    public Integer getClientId() {
+        return clientId;
+    }
 
-    public Double getTotalSales() { return totalSales; }
-    public void setTotalSales(Double totalSales) { this.totalSales = totalSales; }
+    public void setClientId(Integer clientId) {
+        this.clientId = clientId;
+    }
 
-    public Integer getTotalOrders() { return totalOrders; }
-    public void setTotalOrders(Integer totalOrders) { this.totalOrders = totalOrders; }
+    public java.time.LocalDate getDate() {
+        return date;
+    }
 
-    public Integer getLowStockItems() { return lowStockItems; }
-    public void setLowStockItems(Integer lowStockItems) { this.lowStockItems = lowStockItems; }
+    public void setDate(java.time.LocalDate date) {
+        this.date = date;
+    }
 
-    public Integer getPendingTasks() { return pendingTasks; }
-    public void setPendingTasks(Integer pendingTasks) { this.pendingTasks = pendingTasks; }
+    public Double getTotalSales() {
+        return totalSales;
+    }
 
-    public java.time.LocalDate getCreatedAt() { return createdAt; }
-    public void setCreatedAt(java.time.LocalDate createdAt) { this.createdAt = createdAt; }
+    public void setTotalSales(Double totalSales) {
+        this.totalSales = totalSales;
+    }
 
-    public java.time.LocalDate getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(java.time.LocalDate updatedAt) { this.updatedAt = updatedAt; }
+    public Integer getTotalOrders() {
+        return totalOrders;
+    }
+
+    public void setTotalOrders(Integer totalOrders) {
+        this.totalOrders = totalOrders;
+    }
+
+    public Integer getLowStockItems() {
+        return lowStockItems;
+    }
+
+    public void setLowStockItems(Integer lowStockItems) {
+        this.lowStockItems = lowStockItems;
+    }
+
+    public Integer getPendingTasks() {
+        return pendingTasks;
+    }
+
+    public void setPendingTasks(Integer pendingTasks) {
+        this.pendingTasks = pendingTasks;
+    }
+
+    public java.time.LocalDate getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(java.time.LocalDate createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public java.time.LocalDate getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(java.time.LocalDate updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }

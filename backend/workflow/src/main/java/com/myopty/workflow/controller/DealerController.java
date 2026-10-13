@@ -2,10 +2,9 @@ package com.myopty.workflow.controller;
 
 import com.myopty.workflow.model.Dealer;
 import com.myopty.workflow.service.DealerService;
+import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/dealers")

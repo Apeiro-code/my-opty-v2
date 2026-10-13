@@ -1,9 +1,9 @@
 package com.myopty.billing;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/reports")
@@ -16,7 +16,6 @@ public class BillingReportController {
     @GetMapping("/summary")
     public Map<String, Object> getMonthlyReportSummary() {
         Map<String, Object> reportData = new HashMap<>();
-
 
         Double dbTotalRevenue = paymentRepository.findAll().stream()
                 .mapToDouble(Payment::getAmount)

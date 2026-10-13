@@ -30,27 +30,67 @@ public class ReportSalesMonthly {
         this.updatedAt = java.time.LocalDate.now();
     }
 
-    public Integer getReportId() { return reportId; }
-    public void setReportId(Integer reportId) { this.reportId = reportId; }
+    public Integer getReportId() {
+        return reportId;
+    }
 
-    public Integer getClientId() { return clientId; }
-    public void setClientId(Integer clientId) { this.clientId = clientId; }
+    public void setReportId(Integer reportId) {
+        this.reportId = reportId;
+    }
 
-    public Integer getMonth() { return month; }
-    public void setMonth(Integer month) { this.month = month; }
+    public Integer getClientId() {
+        return clientId;
+    }
 
-    public Integer getYear() { return year; }
-    public void setYear(Integer year) { this.year = year; }
+    public void setClientId(Integer clientId) {
+        this.clientId = clientId;
+    }
 
-    public Integer getTotalOrders() { return totalOrders; }
-    public void setTotalOrders(Integer totalOrders) { this.totalOrders = totalOrders; }
+    public Integer getMonth() {
+        return month;
+    }
 
-    public Double getTotalRevenue() { return totalRevenue; }
-    public void setTotalRevenue(Double totalRevenue) { this.totalRevenue = totalRevenue; }
+    public void setMonth(Integer month) {
+        this.month = month;
+    }
 
-    public java.time.LocalDate getCreatedAt() { return createdAt; }
-    public void setCreatedAt(java.time.LocalDate createdAt) { this.createdAt = createdAt; }
+    public Integer getYear() {
+        return year;
+    }
 
-    public java.time.LocalDate getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(java.time.LocalDate updatedAt) { this.updatedAt = updatedAt; }
+    public void setYear(Integer year) {
+        this.year = year;
+    }
+
+    public Integer getTotalOrders() {
+        return totalOrders;
+    }
+
+    public void setTotalOrders(Integer totalOrders) {
+        this.totalOrders = totalOrders;
+    }
+
+    public Double getTotalRevenue() {
+        return totalRevenue;
+    }
+
+    public void setTotalRevenue(Double totalRevenue) {
+        this.totalRevenue = totalRevenue;
+    }
+
+    public java.time.LocalDate getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(java.time.LocalDate createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public java.time.LocalDate getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(java.time.LocalDate updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }

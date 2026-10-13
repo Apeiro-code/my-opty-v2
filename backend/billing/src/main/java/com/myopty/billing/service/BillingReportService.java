@@ -1,9 +1,8 @@
 package com.myopty.billing;
 
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public class BillingReportService {
@@ -14,11 +13,9 @@ public class BillingReportService {
     @Autowired
     private InvoiceRepository invoiceRepository;
 
-
     public List<BillingReport> getAllReports() {
         return billingReportRepository.findAll();
     }
-
 
     public BillingReport generateMonthlyReport(String month) {
 

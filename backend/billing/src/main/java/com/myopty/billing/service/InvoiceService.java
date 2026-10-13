@@ -1,14 +1,13 @@
 package com.myopty.billing;
 
-import com.lowagie.text.Document;
-import com.lowagie.text.DocumentException;
-import com.lowagie.text.Paragraph;
-import com.lowagie.text.pdf.PdfWriter;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import java.io.ByteArrayOutputStream;
 import java.util.List;
+import org.openpdf.text.Document;
+import org.openpdf.text.DocumentException;
+import org.openpdf.text.Paragraph;
+import org.openpdf.text.pdf.PdfWriter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 @Service
 public class InvoiceService {
@@ -24,9 +23,9 @@ public class InvoiceService {
         return invoiceRepository.findById(id).orElse(null);
     }
 
-
     public byte[] generateInvoicePdf(int invoiceId) {
-        Invoice invoice = invoiceRepository.findById(invoiceId)
+        Invoice invoice = invoiceRepository
+                .findById(invoiceId)
                 .orElseThrow(() -> new RuntimeException("Invoice not found with id: " + invoiceId));
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();

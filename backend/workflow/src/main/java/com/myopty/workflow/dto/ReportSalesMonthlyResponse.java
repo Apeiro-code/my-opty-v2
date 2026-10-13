@@ -17,8 +17,15 @@ public class ReportSalesMonthlyResponse {
     public ReportSalesMonthlyResponse() {}
 
     // Constructor from Entity
-    public ReportSalesMonthlyResponse(Integer reportId, Integer clientId, Integer month, Integer year,
-                                      Integer totalOrders, Double totalRevenue, LocalDate createdAt, LocalDateTime createdAtTime) {
+    public ReportSalesMonthlyResponse(
+            Integer reportId,
+            Integer clientId,
+            Integer month,
+            Integer year,
+            Integer totalOrders,
+            Double totalRevenue,
+            LocalDate createdAt,
+            LocalDateTime createdAtTime) {
         this.reportId = reportId;
         this.clientId = clientId;
         this.month = month;
@@ -30,27 +37,67 @@ public class ReportSalesMonthlyResponse {
     }
 
     // Getters and Setters
-    public Integer getReportId() { return reportId; }
-    public void setReportId(Integer reportId) { this.reportId = reportId; }
+    public Integer getReportId() {
+        return reportId;
+    }
 
-    public Integer getClientId() { return clientId; }
-    public void setClientId(Integer clientId) { this.clientId = clientId; }
+    public void setReportId(Integer reportId) {
+        this.reportId = reportId;
+    }
 
-    public Integer getMonth() { return month; }
-    public void setMonth(Integer month) { this.month = month; }
+    public Integer getClientId() {
+        return clientId;
+    }
 
-    public Integer getYear() { return year; }
-    public void setYear(Integer year) { this.year = year; }
+    public void setClientId(Integer clientId) {
+        this.clientId = clientId;
+    }
 
-    public Integer getTotalOrders() { return totalOrders; }
-    public void setTotalOrders(Integer totalOrders) { this.totalOrders = totalOrders; }
+    public Integer getMonth() {
+        return month;
+    }
 
-    public Double getTotalRevenue() { return totalRevenue; }
-    public void setTotalRevenue(Double totalRevenue) { this.totalRevenue = totalRevenue; }
+    public void setMonth(Integer month) {
+        this.month = month;
+    }
 
-    public LocalDate getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDate createdAt) { this.createdAt = createdAt; }
+    public Integer getYear() {
+        return year;
+    }
 
-    public LocalDateTime getCreatedAtTime() { return createdAtTime; }
-    public void setCreatedAtTime(LocalDateTime createdAtTime) { this.createdAtTime = createdAtTime; }
+    public void setYear(Integer year) {
+        this.year = year;
+    }
+
+    public Integer getTotalOrders() {
+        return totalOrders;
+    }
+
+    public void setTotalOrders(Integer totalOrders) {
+        this.totalOrders = totalOrders;
+    }
+
+    public Double getTotalRevenue() {
+        return totalRevenue;
+    }
+
+    public void setTotalRevenue(Double totalRevenue) {
+        this.totalRevenue = totalRevenue;
+    }
+
+    public LocalDate getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDate createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getCreatedAtTime() {
+        return createdAtTime;
+    }
+
+    public void setCreatedAtTime(LocalDateTime createdAtTime) {
+        this.createdAtTime = createdAtTime;
+    }
 }

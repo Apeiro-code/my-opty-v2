@@ -21,8 +21,6 @@ public class BillingReport {
         return reportId;
     }
 
-
-
     public void setReportId(int reportId) {
         this.reportId = reportId;
     }

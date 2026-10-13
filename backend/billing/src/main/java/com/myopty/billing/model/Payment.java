@@ -20,21 +20,51 @@ public class Payment {
     private Date paymentDate;
 
     // Getters and Setters
-    public int getPaymentId() { return paymentId; }
-    public void setPaymentId(int paymentId) { this.paymentId = paymentId; }
+    public int getPaymentId() {
+        return paymentId;
+    }
 
-    public int getOrderId() { return orderId; }
-    public void setOrderId(int orderId) { this.orderId = orderId; }
+    public void setPaymentId(int paymentId) {
+        this.paymentId = paymentId;
+    }
 
-    public int getMethodId() { return methodId; }
-    public void setMethodId(int methodId) { this.methodId = methodId; }
+    public int getOrderId() {
+        return orderId;
+    }
 
-    public double getAmount() { return amount; }
-    public void setAmount(double amount) { this.amount = amount; }
+    public void setOrderId(int orderId) {
+        this.orderId = orderId;
+    }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public int getMethodId() {
+        return methodId;
+    }
 
-    public Date getPaymentDate() { return paymentDate; }
-    public void setPaymentDate(Date paymentDate) { this.paymentDate = paymentDate; }
+    public void setMethodId(int methodId) {
+        this.methodId = methodId;
+    }
+
+    public double getAmount() {
+        return amount;
+    }
+
+    public void setAmount(double amount) {
+        this.amount = amount;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public Date getPaymentDate() {
+        return paymentDate;
+    }
+
+    public void setPaymentDate(Date paymentDate) {
+        this.paymentDate = paymentDate;
+    }
 }

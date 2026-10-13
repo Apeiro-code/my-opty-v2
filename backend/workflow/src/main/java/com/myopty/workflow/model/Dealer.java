@@ -27,27 +27,67 @@ public class Dealer {
         this.active = true;
     }
 
-    public Integer getDealerId() { return dealerId; }
-    public void setDealerId(Integer dealerId) { this.dealerId = dealerId; }
+    public Integer getDealerId() {
+        return dealerId;
+    }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public void setDealerId(Integer dealerId) {
+        this.dealerId = dealerId;
+    }
 
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
+    public String getName() {
+        return name;
+    }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public void setName(String name) {
+        this.name = name;
+    }
 
-    public String getPhone() { return phone; }
-    public void setPhone(String phone) { this.phone = phone; }
+    public String getType() {
+        return type;
+    }
 
-    public boolean isActive() { return active; }
-    public void setActive(boolean active) { this.active = active; }
+    public void setType(String type) {
+        this.type = type;
+    }
 
-    public java.time.LocalDate getCreatedAt() { return createdAt; }
-    public void setCreatedAt(java.time.LocalDate createdAt) { this.createdAt = createdAt; }
+    public String getEmail() {
+        return email;
+    }
 
-    public java.time.LocalDate getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(java.time.LocalDate updatedAt) { this.updatedAt = updatedAt; }
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public java.time.LocalDate getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(java.time.LocalDate createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public java.time.LocalDate getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(java.time.LocalDate updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }

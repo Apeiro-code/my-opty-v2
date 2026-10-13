@@ -18,8 +18,16 @@ public class TodoTaskResponse {
     public TodoTaskResponse() {}
 
     // Constructor from Entity
-    public TodoTaskResponse(Integer taskId, Integer clientId, String title, String description,
-                            String status, LocalDate dueDate, String priority, Boolean reminderSent, LocalDateTime createdAt) {
+    public TodoTaskResponse(
+            Integer taskId,
+            Integer clientId,
+            String title,
+            String description,
+            String status,
+            LocalDate dueDate,
+            String priority,
+            Boolean reminderSent,
+            LocalDateTime createdAt) {
         this.taskId = taskId;
         this.clientId = clientId;
         this.title = title;
@@ -32,30 +40,75 @@ public class TodoTaskResponse {
     }
 
     // Getters and Setters
-    public Integer getTaskId() { return taskId; }
-    public void setTaskId(Integer taskId) { this.taskId = taskId; }
+    public Integer getTaskId() {
+        return taskId;
+    }
 
-    public Integer getClientId() { return clientId; }
-    public void setClientId(Integer clientId) { this.clientId = clientId; }
+    public void setTaskId(Integer taskId) {
+        this.taskId = taskId;
+    }
 
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
+    public Integer getClientId() {
+        return clientId;
+    }
 
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+    public void setClientId(Integer clientId) {
+        this.clientId = clientId;
+    }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public String getTitle() {
+        return title;
+    }
 
-    public LocalDate getDueDate() { return dueDate; }
-    public void setDueDate(LocalDate dueDate) { this.dueDate = dueDate; }
+    public void setTitle(String title) {
+        this.title = title;
+    }
 
-    public String getPriority() { return priority; }
-    public void setPriority(String priority) { this.priority = priority; }
+    public String getDescription() {
+        return description;
+    }
 
-    public Boolean getReminderSent() { return reminderSent; }
-    public void setReminderSent(Boolean reminderSent) { this.reminderSent = reminderSent; }
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public LocalDate getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(LocalDate dueDate) {
+        this.dueDate = dueDate;
+    }
+
+    public String getPriority() {
+        return priority;
+    }
+
+    public void setPriority(String priority) {
+        this.priority = priority;
+    }
+
+    public Boolean getReminderSent() {
+        return reminderSent;
+    }
+
+    public void setReminderSent(Boolean reminderSent) {
+        this.reminderSent = reminderSent;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
 }

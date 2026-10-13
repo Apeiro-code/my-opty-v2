@@ -3,6 +3,7 @@ package com.myopty.shared.user;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,8 +20,13 @@ import org.springframework.security.core.userdetails.UserDetails;
  *
  * <p>Field names follow the camelCase the schema already uses ({@code
  * passwordHash} → {@code password_hash}): Spring Data JDBC's default naming
- * strategy converts both ways, so no annotations are needed for anything except
- * the id.
+ * strategy converts both ways, so no column annotations are needed beyond the
+ * table name. The explicit {@link Table} is not decorative: billing brought
+ * Spring Data JPA onto the classpath, and with more than one store present
+ * Spring runs in strict mode, where a JDBC repository is only claimed when its
+ * aggregate carries a relational mapping annotation. Without it this entity's
+ * repository is not a bean and the security chain cannot resolve it. Every other
+ * JDBC entity in the project carries the same annotation for the same reason.
  *
  * <p>Timestamps are absent on purpose. The columns carry
  * {@code DEFAULT CURRENT_TIMESTAMP}, so an insert that does not mention them is
@@ -28,6 +34,7 @@ import org.springframework.security.core.userdetails.UserDetails;
  * reason to care. The auditing config in {@code shared.config} remains the
  * right place to attach them when an entity needs them.
  */
+@Table("app_user")
 public class AppUser implements UserDetails {
 
     @Id

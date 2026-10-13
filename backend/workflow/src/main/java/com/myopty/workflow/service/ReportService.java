@@ -2,9 +2,9 @@ package com.myopty.workflow.service;
 
 import com.myopty.workflow.dto.*;
 import com.myopty.workflow.model.*;
-import org.springframework.stereotype.Service;
 import java.time.*;
 import java.util.*;
+import org.springframework.stereotype.Service;
 
 @Service
 public class ReportService {
@@ -14,10 +14,11 @@ public class ReportService {
     private final com.myopty.workflow.repository.ReportHistoricalRepository historicalRepo;
     private final com.myopty.workflow.repository.DashboardSummaryRepository dashboardRepo;
 
-    public ReportService(com.myopty.workflow.repository.ReportSalesMonthlyRepository salesRepo,
-                         com.myopty.workflow.repository.ReportInventoryMonthlyRepository inventoryRepo,
-                         com.myopty.workflow.repository.ReportHistoricalRepository historicalRepo,
-                         com.myopty.workflow.repository.DashboardSummaryRepository dashboardRepo) {
+    public ReportService(
+            com.myopty.workflow.repository.ReportSalesMonthlyRepository salesRepo,
+            com.myopty.workflow.repository.ReportInventoryMonthlyRepository inventoryRepo,
+            com.myopty.workflow.repository.ReportHistoricalRepository historicalRepo,
+            com.myopty.workflow.repository.DashboardSummaryRepository dashboardRepo) {
         this.salesRepo = salesRepo;
         this.inventoryRepo = inventoryRepo;
         this.historicalRepo = historicalRepo;
@@ -28,8 +29,8 @@ public class ReportService {
 
     public ReportSalesMonthlyResponse generateMonthlySalesReport(ReportSalesMonthlyRequest request) {
         // Check if report already exists for this client/month/year
-        ReportSalesMonthly existing = salesRepo.findByClientIdAndMonthAndYear(
-                request.getClientId(), request.getMonth(), request.getYear());
+        ReportSalesMonthly existing =
+                salesRepo.findByClientIdAndMonthAndYear(request.getClientId(), request.getMonth(), request.getYear());
 
         if (existing == null) {
             existing = new ReportSalesMonthly();
@@ -45,13 +46,18 @@ public class ReportService {
     }
 
     public List<ReportHistoricalResponse> getMonthlySalesHistory(ReportHistoricalRequest request) {
-        List<ReportHistorical> history = historicalRepo.findAllByClientIdOrderByRecordedAtDesc(
-                request.getClientId());
+        List<ReportHistorical> history = historicalRepo.findAllByClientIdOrderByRecordedAtDesc(request.getClientId());
         List<ReportHistoricalResponse> responses = new ArrayList<>();
         for (ReportHistorical h : history) {
             responses.add(new ReportHistoricalResponse(
-                    h.getHistoricalId(), h.getClientId(), h.getMonth(), h.getYear(),
-                    h.getMetricType(), h.getMetricValue(), h.getRecordedAt(), null));
+                    h.getHistoricalId(),
+                    h.getClientId(),
+                    h.getMonth(),
+                    h.getYear(),
+                    h.getMetricType(),
+                    h.getMetricValue(),
+                    h.getRecordedAt(),
+                    null));
         }
         return responses;
     }
@@ -79,13 +85,18 @@ public class ReportService {
     // ===== Historical Reports ( unified return type) =====
 
     public List<ReportHistoricalResponse> getInventoryReportHistory(ReportHistoricalRequest request) {
-        List<ReportHistorical> history = historicalRepo.findAllByClientIdOrderByRecordedAtDesc(
-                request.getClientId());
+        List<ReportHistorical> history = historicalRepo.findAllByClientIdOrderByRecordedAtDesc(request.getClientId());
         List<ReportHistoricalResponse> historyResponses = new ArrayList<>();
         for (ReportHistorical h : history) {
             historyResponses.add(new ReportHistoricalResponse(
-                    h.getHistoricalId(), h.getClientId(), h.getMonth(), h.getYear(),
-                    h.getMetricType(), h.getMetricValue(), h.getRecordedAt(), null));
+                    h.getHistoricalId(),
+                    h.getClientId(),
+                    h.getMonth(),
+                    h.getYear(),
+                    h.getMetricType(),
+                    h.getMetricValue(),
+                    h.getRecordedAt(),
+                    null));
         }
         return historyResponses;
     }
@@ -93,13 +104,18 @@ public class ReportService {
     // ===== Historical Reports =====
 
     public List<ReportHistoricalResponse> getHistoricalReports(ReportHistoricalRequest request) {
-        List<ReportHistorical> history = historicalRepo.findAllByClientIdOrderByRecordedAtDesc(
-                request.getClientId());
+        List<ReportHistorical> history = historicalRepo.findAllByClientIdOrderByRecordedAtDesc(request.getClientId());
         List<ReportHistoricalResponse> responses = new ArrayList<>();
         for (ReportHistorical h : history) {
             responses.add(new ReportHistoricalResponse(
-                    h.getHistoricalId(), h.getClientId(), h.getMonth(), h.getYear(),
-                    h.getMetricType(), h.getMetricValue(), h.getRecordedAt(), null));
+                    h.getHistoricalId(),
+                    h.getClientId(),
+                    h.getMonth(),
+                    h.getYear(),
+                    h.getMetricType(),
+                    h.getMetricValue(),
+                    h.getRecordedAt(),
+                    null));
         }
         return responses;
     }

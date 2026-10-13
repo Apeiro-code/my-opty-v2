@@ -5,46 +5,6 @@ Four distinct business systems, each owned by a team member.
 
 ---
 
-## Status
-
-**Epic 0 is partially landed. No endpoints exist yet.**
-
-What is built and working:
-
-| Piece | State |
-|---|---|
-| Maven reactor, 7 modules | Builds on Java 25; `./mvnw verify` is green |
-| Database | MySQL 8 on **:3307** via Docker Compose, Flyway applies 24 migrations creating **22 tables** |
-| Seed data | V7/V105 insert sample categories, frames, lenses and discounts; V1_3 seeds the two demo accounts |
-| API docs | springdoc serves `/swagger-ui.html`; Actuator `/actuator/health` reports the datasource |
-| Frontend | Next.js 16 App Router, TypeScript, Tailwind v4; `npm run lint` and `npm run build` pass |
-| Mail | Mailpit catches outgoing mail at <http://localhost:8025> |
-| Coding standard | Spotless (Palantir format) bound to `./mvnw verify`, ESLint + Prettier on the frontend; `./scripts/lint.sh` runs all three |
-| CI | `.github/workflows/ci.yml` on every push and PR: gitleaks secret scan, `./mvnw verify` (Spotless + Testcontainers), ESLint + Prettier + `next build` |
-| Authentication | Session login/logout with `CUSTOMER` vs `CLIENT` roles (Spring Security, deny-by-default on `/api/**`); `AuthFlowTest` proves the whole flow |
-| Customer Q&A | Customers ask, read their own questions and the public FAQ; the shop lists the unanswered queue and answers a question, emailing the customer; `QuestionFlowTest` and `QuestionAnswerFlowTest` prove both halves |
-| Staging preview | `compose.prod.yaml` builds API + web images behind one nginx proxy on **:8088** |
-| Payment config | PayHere sandbox runbook in `docs/DEPLOYMENT.md`; bad `PAYMENT_GATEWAY_*` config fails startup naming the variable |
-| Email | `spring.mail` wired from `MAIL_*`; low-stock emails to `LOW_STOCK_ALERT_EMAIL` (Mailpit in development); `MailSendingTest` proves a real send |
-
-What is **not** built: most feature endpoints listed in this file, and a real object
-store. The API answers `/actuator/health`, the auth endpoints, the customer Q&A (ask,
-own list, public FAQ, and the shop's answering queue), and the order module's
-prescription and progressive-order surface — submission, own-prescription and
-own-order reads, the shop's review and approval queues, the production line
-(`processing`/`ready`/`dispatched`), the receive-date correction, the customer
-notification list, and the shop's discount management endpoints; every other route
-returns 401 until the module that owns it builds it.
-Prescription documents are written to a filesystem-backed `ObjectStore` (a development stand-in
-for MinIO, which is still not wired).
-
-Where a section below describes endpoint behaviour in detail, read it as the specification those
-features are built against, not as a description of running software. Two places say as much
-explicitly: the note under the Order module, and the warning about which role its approval
-endpoints must require.
-
----
-
 ## System Architecture (4 Modules)
 
 | Module | Package | Owner | Student ID | Epics |
@@ -90,38 +50,12 @@ GET    /api/lenses/{id}               # Detail
 POST   /api/lenses                    # Create (client only)
 PUT    /api/lenses/{id}               # Update (client only)
 GET    /api/categories                # All categories
+GET    /api/inventory/report          # Availability report
+GET    /api/inventory/alerts          # Low-stock alerts
+POST   /api/inventory/report/export   # Export PDF/Excel
 ```
 
-The shop owner's frame and lens stories are **implemented** at `/api/shop/frames`
-and `/api/shop/lenses` — `GET /api/shop/frames` (the inventory list),
-`POST /api/shop/frames` (add), `PUT /api/shop/frames/{id}` (edit),
-`DELETE /api/shop/frames/{id}` (discontinue, a soft hide that keeps the record so
-old orders still resolve), `GET`/`POST /api/shop/lenses` (list and add),
-`PUT /api/shop/lenses/{id}` (edit), and `GET /api/shop/categories` (the filing
-categories a frame or lens may be assigned to; `categoryId` on a frame or lens is
-optional). They all sit behind the existing `ROLE_CLIENT` rule that every
-`/api/shop/**` endpoint already carries.
-
-The customer-facing frame browse is **implemented**: `GET /api/frames` is the
-anonymous shop wall. It is public (no session), returns only active frames, oldest
-first, and exposes only the visitor-safe fields — model, colour, material, price,
-thumbnail and a friendly in-stock flag — never the exact stock count, the active
-flag or the category. The storefront's `/frames` page renders it as a grid. The
-matching `/api/lenses` and `/api/categories` reads are not built yet, because
-nothing serves the storefront's `/lenses` page.
-
-The inventory stories are **implemented** too: stock auto-decrements when an order
-is placed and comes back when one is rejected, and the shop reads a real-time
-availability report at `GET /api/shop/inventory/report` (in-stock / low-stock /
-out-of-stock counts plus the per-item rows). Stock moves across the module
-boundary through the `contracts.catalog.StockManager` interface, so `order` books
-stock on placement and releases it on rejection without reading catalog's tables;
-an order the shelf cannot fill is refused with `409 OUT_OF_STOCK`. `catalog`'s
-report is computed live and does not write the `availability_report` snapshot
-table. Also built are the two inventory additions: `GET /api/shop/inventory/alerts` (non-IN_STOCK items, worst first) and `GET /api/shop/inventory/report/export?format=pdf|xlsx` (export to PDF/Excel, computed live). A low-stock alert email is sent to the configured recipient after a sale that crosses a threshold (disabled if the address is blank or alerts are off).
-
-
-**Database Tables:** `category`, `frame`, `lens`, `stock_entry`, `availability_report` (snapshot, unused)
+**Database Tables:** `category`, `frame`, `lens`, `stock_entry`, `availability_report`
 
 ---
 
@@ -136,150 +70,32 @@ table. Also built are the two inventory additions: `GET /api/shop/inventory/aler
 
 **Key Features:**
 - Prescription form with all optical fields + document upload
-- Progressive order workflow: PENDING → APPROVED → PROCESSING → READY → DISPATCHED, or REJECTED
-- Client review/approve/reject prescriptions, and approve/reject progressive orders
+- Progressive order workflow: PENDING → APPROVED → PROCESSING → READY → DISPATCHED
+- Client review/approve/reject prescriptions
 - Estimated receive date calculation (based on lens type, stock, lab time)
 - Discount engine: create/edit/end rules, bulk apply, history log
 - New stock intake: record quantity, cost, supplier, auto-increment stock
 - Customer notifications on status changes
 
-**API Endpoints:**
-`POST /api/prescriptions`, `GET /api/prescriptions` (own list), `POST /api/orders`,
-the customer's own order list and detail, and the shop's `/api/shop/prescriptions`
-and `/api/shop/orders` review, approval and production endpoints are **implemented**,
-along with the notification list and the discount management and storefront-read
-endpoints. The rest are the planned surface: `GET /api/orders?prescriptionId=`,
-the stock endpoints, and the rest.
-Anything not marked BUILT below is not running code.
-
+**API Endpoints (Planned):**
 ```
-POST   /api/prescriptions                  # Submit prescription, multipart (customer) — BUILT
-GET    /api/prescriptions                  # Own prescriptions, newest first (customer) — BUILT
+POST   /api/prescriptions                  # Submit prescription (customer)
 GET    /api/prescriptions/{id}             # View prescription
-GET    /api/prescriptions/{id}/document    # Download uploaded document
-POST   /api/orders                         # Create order against a prescription (customer) — BUILT
-GET    /api/orders                         # Own orders, newest first (customer) — BUILT
-GET    /api/orders/{id}                    # Own order detail (customer) — BUILT
-GET    /api/shop/prescriptions?status=      # Review queue (client), defaults to PENDING_REVIEW — BUILT
-PUT    /api/shop/prescriptions/{id}/verify  # Client verify — BUILT
-PUT    /api/shop/prescriptions/{id}/reject  # Client reject, body: { "reason": "..." } — BUILT
-GET    /api/shop/orders?status=             # Approval queue (client), defaults to PENDING — BUILT
-GET    /api/shop/orders/active              # Production line: APPROVED/PROCESSING/READY, oldest first (client) — BUILT
-PUT    /api/shop/orders/{id}/approve        # Client approve, only if the prescription is VERIFIED — BUILT
-PUT    /api/shop/orders/{id}/reject         # Client reject, body: { "reason": "..." } — BUILT
-PUT    /api/shop/orders/{id}/processing     # Client: now in the lab — BUILT
-PUT    /api/shop/orders/{id}/ready          # Client: ready to collect — BUILT
-PUT    /api/shop/orders/{id}/dispatched     # Client: handed over or sent — BUILT
-PUT    /api/shop/orders/{id}/receive-date   # Set or withdraw the estimate, body: { "receiveDate": "YYYY-MM-DD" } — BUILT
-GET    /api/shop/orders/{id}/notifications  # One order's notification history (client) — BUILT
-GET    /api/notifications                   # The session customer's notifications, newest first — BUILT
-GET    /api/notifications?orderId=          # ...narrowed to one order — BUILT
-GET    /api/orders?prescriptionId=          # Order built from a prescription
-POST   /api/shop/discounts                  # Create discount: percentage, targets, window (client) — BUILT
-GET    /api/shop/discounts?active=&state=   # History, newest first; ?state= narrows it to one state (client) — BUILT
-PUT    /api/shop/discounts/{id}             # Edit ('ended' discounts are frozen) (client) — BUILT
-DELETE /api/shop/discounts/{id}             # End early, a soft end that keeps the record (client) — BUILT
-GET    /api/discounts/active                # Storefront's read of the running promotions (public) — BUILT
-POST   /api/stock/updates                   # Record new stock (client)
-GET    /api/stock/updates                   # History
+PUT    /api/prescriptions/{id}/verify      # Client verify/reject
+POST   /api/orders/progressive             # Create progressive order
+GET    /api/orders/progressive             # List (client: all; customer: own)
+GET    /api/orders/progressive/{id}        # Detail
+PUT    /api/orders/progressive/{id}/status # Update status (client)
+GET    /api/orders/progressive/{id}/receive-date # Estimated date
+POST   /api/discounts                      # Create discount (client)
+GET    /api/discounts                      # List (with active filter)
+PUT    /api/discounts/{id}                 # Update discount
+DELETE /api/discounts/{id}                 # End early
+POST   /api/stock/updates                  # Record new stock (client)
+GET    /api/stock/updates                  # History
 ```
 
-Notes on this module's endpoints — some describe built behaviour and some are decisions to
-honour when the remaining endpoints are built:
-
-- `POST /api/prescriptions` is `multipart/form-data`, not JSON: the `prescription`
-  part carries the optical values as a JSON object, the `document` part carries the
-  scan or photo. Any other `Content-Type` is refused with 415 before the request
-  reaches the controller. **This endpoint is built.** The document is optional; when
-  present it must be a PDF, JPEG or PNG up to 10 MB
-  (`myopty.object-storage.max-file-size`), and `spring.servlet.multipart` is capped
-  at 15 MB so a file between the two gets the error envelope rather than Tomcat's.
-  The customer id comes from the session, never the body. V106 adds per-eye cylinder,
-  axis and add-power columns (V100 had all three shared across both eyes) and drops
-  the three shared columns, which held no data because no endpoint existed before
-  this one. Documents are written through an `ObjectStore`; the only implementation
-  is filesystem-backed and MinIO is still to come.
-- The order endpoints are mounted at `/api/orders` rather than the originally
-  planned `/api/orders/progressive`, because the order type is something the
-  customer selects and a path segment would fix the value the URL left open.
-- **`POST /api/orders` is built.** A customer links one of their own prescriptions
-  to a lens (and, optionally, a frame) under a selected order type. The order type
-  is snapshotted onto `progressive_order.order_type` (V107, values mirroring
-  `lens.type`) so the workflow and reports route on it without reading the catalog
-  module's tables. The customer id comes from the session, and the prescription is
-  loaded with that id in the query, so an order can only be built from the caller's
-  own prescription (a non-owner gets 404, not 403, so the response cannot confirm
-  that another customer's id exists). A `REJECTED` prescription is refused with 409.
-  The frame and lens are persisted as given; the V101 foreign keys are the check
-  that they exist, and a bad id comes back as 400 rather than a 500. `total_amount`
-  stays null — pricing is the billing module's job and needs catalog prices this
-  module must not read. `GET /api/orders/{id}` reads one order back for its owner.
-- The shop's queues (`GET /api/shop/prescriptions`, `GET /api/shop/orders`) accept an
-  optional `status` filter and default to the queue the shop works from
-  (`PENDING_REVIEW` and `PENDING`); an unknown value is `INVALID_FILTER`. They always
-  return an array, oldest first, at most 100 rows. `GET /api/shop/orders/active` is
-  the production line — the orders whose status is `APPROVED`, `PROCESSING` or
-  `READY`, oldest first — and the customer-side `GET /api/orders?prescriptionId=`
-  remains planned.
-- **Review and approval are built.** An order can only be approved once its
-  prescription is `VERIFIED`, so nothing unreviewed reaches production (an
-  unverified prescription gives `PRESCRIPTION_NOT_VERIFIED`, 409). Reviewing is
-  one-way: a decided prescription or order cannot be decided again (`INVALID_STATE`,
-  409). A rejection stores its reason, which is what "flag missing details" means.
-- **Approving quotes an estimated receive date and is built.** The date is
-  `today + myopty.lab.lead-days.<orderType>` (3 days single vision, 5 bifocal, 7
-  progressive by default), and the client can correct or withdraw it afterwards
-  with `PUT /api/shop/orders/{id}/receive-date` (`{"receiveDate": "YYYY-MM-DD"}`,
-  or `null` to withdraw), since only the shop knows its real queue. A correction
-  updates the date without emailing the customer; it is not a status change.
-- **The client moves an approved order along with
-  `PUT /api/shop/orders/{id}/processing`, `/ready` and `/dispatched`.** The workflow
-  is forward-only and a step may be skipped (a frame already in stock never gets
-  processed); `DISPATCHED` and `REJECTED` are terminal, and a backwards or repeated
-  move is `INVALID_STATE` (409). A generic "set status" endpoint is deliberately
-  absent, so a client cannot name a state the workflow has not reached. These live
-  under `/api/shop/**` like the rest of the shop's surface.
-- **Every status change (approve, reject, processing, ready, dispatched) writes a
-  notification and emails the customer.** The row records the message as it was
-  written — so rewording the templates never changes what past notifications claim
-  was said — and its status is `SENT` or `FAILED`. Sending goes through a pluggable
-  `NotificationSender`; the implementation in use builds a message and hands it to
-  the `JavaMailSender` configured from `MAIL_*` (Mailpit in development,
-  `MailSendingTest` proves a real send). The status change is committed *before*
-  the send: a failed send marks the row `FAILED` and never rolls back the move,
-  because the glasses really did move. `myopty.notifications.fail-on-error` (from
-  `MAIL_FAIL_ON_ERROR`) decides whether that failure is also surfaced as `502
-  NOTIFICATION_FAILED` after the commit.
-- **`GET /api/notifications` is built.** It takes the customer from the session,
-  never a `customerId` parameter — a parameter a caller sets on their own request
-  is not a security boundary. An optional `orderId` narrows the list, scoped by the
-  same session id so one customer's order id cannot read another's history. The
-  shop reads one order's history through `GET /api/shop/orders/{id}/notifications`.
-- **The review, approval and production endpoints are the role rule, by where they
-  are mounted.** They live under `/api/shop/**`, which the shared filter chain
-  already restricts to `ROLE_CLIENT`, so `SecurityConfig` needs no per-path rule and
-  a logged-in customer cannot approve or move production work. Keeping them off
-  `/api/prescriptions` and `/api/orders` is what lets the customer's own endpoints
-  there stay open to any authenticated session. Auth belongs to the shared module;
-  see CONTRIBUTING.md.
-- **The discount management endpoints are built, and follow the same mount rule.**
-  `POST`/`GET`/`PUT`/`DELETE /api/shop/discounts` create, list, edit and end a
-  promotion; all four sit behind the `/api/shop/**` `ROLE_CLIENT` rule. `delete` is
-  a soft end — the row is kept with `is_active` false and an `ended_at`, so an
-  ended promotion is frozen and cannot be edited back to life. The target frame and
-  lens ids are stored, not validated against the catalog (the JSON column has no
-  foreign key and this module cannot read catalog's tables), and each returned
-  discount carries a derived state (`ACTIVE`/`SCHEDULED`/`EXPIRED`/`ENDED`), its
-  `createdAt`, and `endedAt`. Multi-item promotions are picked in bulk in the UI
-  (select all, or pull in a category); the page fetches the list once and splits
-  it into a Running and a History tab, while `?active=` and `?state=` are there for
-  a caller that wants the server to narrow it.
-  `GET /api/discounts/active` is the public storefront read, and the
-  `contracts.order.DiscountQuery` seam (`bestDiscountFor`) lets catalog price an
-  item — the "discounted price next to the original" figure is drawn on catalog's
-  storefront page, against that seam and its own `/api/frames` and `/api/lenses`.
-
-**Database Tables:** `prescription`, `progressive_order`, `order_notification`, `discount`, `stock_update`
+**Database Tables:** `prescription`, `progressive_order`, `discount`, `stock_update`
 
 ---
 
@@ -383,38 +199,28 @@ POST   /api/billing/reports/{id}/export  # Export PDF/Excel
 - **Question** - Q&A/FAQ system
 
 **Key Features:**
-- Session-based authentication — **built**: login/logout/current-user endpoints, server-side
-  session in a `SameSite=Lax` cookie, `AuthFlowTest` proves it
-- Role-based access control (CUSTOMER vs CLIENT) — **built**: deny-by-default on `/api/**`,
-  `CLIENT` required on `/api/shop/**`
-- Registration with email/phone verification (OTP) — planned
-- Password reset — planned
-- Profile management — planned
-- Q&A — **built**: customers ask, read their own questions and the public FAQ; the shop lists
-  the unanswered queue and posts an answer, which emails the customer. FAQ marking is still
-  planned. Both halves are proven by `QuestionFlowTest` and `QuestionAnswerFlowTest`.
-- Global exception handling, validation, audit logging — partial (validation and auditing
-  are in; global handlers are per module)
+- JWT-based authentication
+- Role-based access control (CUSTOMER vs CLIENT)
+- Registration with email/phone verification (OTP)
+- Login/logout, password reset
+- Profile management
+- Q&A: customers ask, clients answer, FAQ marking
+- Global exception handling, validation, audit logging
 
-**API Endpoints:**
+**API Endpoints (Planned):**
 ```
-POST   /api/auth/login                   # Login (built) — returns the session cookie
-GET    /api/auth/me                      # Current user (built)
-POST   /api/auth/logout                  # Logout (built)
-POST   /api/auth/register                # Register (customer/client) — planned
-POST   /api/auth/forgot-password         # Request reset — planned
-POST   /api/auth/reset-password          # Reset with token — planned
-PUT    /api/auth/me                      # Update profile — planned
-POST   /api/questions                    # Ask question (customer) — built
-GET    /api/questions                    # The customer's own questions (customer) — built
-GET    /api/questions/faq                # Public FAQ (anonymous) — built
-GET    /api/shop/questions               # Unanswered queue (client) — built
-PUT    /api/shop/questions/{id}/answer   # Answer a question; emails the customer (client) — built
+POST   /api/auth/register                # Register (customer/client)
+POST   /api/auth/login                   # Login
+POST   /api/auth/refresh                 # Refresh token
+POST   /api/auth/forgot-password         # Request reset
+POST   /api/auth/reset-password          # Reset with token
+GET    /api/auth/me                      # Current user profile
+PUT    /api/auth/me                      # Update profile
+POST   /api/questions                    # Ask question (customer)
+GET    /api/questions                    # List (customer: own; client: all)
+PUT    /api/questions/{id}/answer        # Answer question (client)
+GET    /api/questions/faq                # Public FAQ
 ```
-
-The shop's two Q&A endpoints sit under `/api/shop/**` rather than on `/api/questions`
-so they inherit the existing `ROLE_CLIENT` rule that every shop route carries; the
-customer's `GET /api/questions` stays scoped to the session's own questions.
 
 **Database Tables:** `app_user`, `client_profile`, `customer_profile`, `question`
 
@@ -438,25 +244,9 @@ customer's `GET /api/questions` stays scoped to the session's own questions.
 - Events for async: `OrderPlacedEvent`, `StockChangedEvent`, `PaymentCompletedEvent`
 - No circular dependencies between feature modules
 
-The Order → Catalog row is the first one built: `order` books and releases stock
-through the synchronous `contracts.catalog.StockManager` interface, implemented by
-catalog's `StockService`, so the decrement is part of the order's transaction
-(and rolls back with it) rather than an eventual event. See
-[`backend/contracts/README.md`](backend/contracts/README.md).
-
 ---
 
 ## Development Workflow
-
-### Branching Strategy
-
-`main` is the source of truth and is kept stable (shippable) at all times.
-
-- **Never** commit directly to `main`.
-- All work happens on short-lived **feature branches** created from `main`.
-- Each branch fixes `main` back to a single Pull Request; release happens from `main`.
-- **Branch lifecycle:** create from `main` → work + commit → open PR → review (≥1 approval, and the module owner must approve changes to their module) → lint + build green locally → squash-merge → **delete the branch**. CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs the gitleaks secret scan, `./mvnw verify` and the frontend lint/build on every push and on the PR's merge commit; run `./scripts/lint.sh` locally first anyway, because a red check discovered after review costs a round trip a local run would have saved.
-- Full review rules, ownership boundaries, and migration conventions: see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ### Branch Naming
 ```
@@ -487,108 +277,9 @@ Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`
 
 ---
 
-## Repository Structure
-
-```
-my-opty/
-├── backend/                     # Spring Boot API (Java 25, Maven Wrapper) — a reactor of 7 modules
-│   ├── pom.xml                  # Parent: Spring Boot BOM, dependency & plugin management
-│   ├── mvnw                     # Maven Wrapper 3.9.16 — no local Maven install needed
-│   ├── compose.yaml             # Local MySQL (:3307) + Mailpit via Docker Compose
-│   ├── compose.prod.yaml        # Staging preview: API + web behind nginx on :8088
-│   ├── Dockerfile               # API image (JDK build stage → JRE runtime)
-│   ├── nginx/preview.conf       # The proxy: /api and docs → API, everything else → web
-│   ├── myopty-app/              # The only runnable module; @SpringBootApplication + config
-│   ├── contracts/               # com.myopty.contracts — cross-module interfaces & events only
-│   ├── shared/                  # com.myopty.shared — Auth, Users, Q&A, Config (team-wide)
-│   ├── catalog/                 # com.myopty.catalog   (Amarasekara)
-│   ├── order/                   # com.myopty.order     (Welikuburawatta)
-│   ├── workflow/                # com.myopty.workflow  (Karunarathna)
-│   └── billing/                 # com.myopty.billing   (Kankanamge)
-├── frontend/                    # Next.js 16 web app (TypeScript, Tailwind v4)
-│   ├── Dockerfile               # Production bundle for the staging preview
-│   ├── app/                     # App Router: routing + thin server components only
-│   │   ├── (customer)/          # Route group — storefront: /, /frames, /lenses, /orders, /account, …
-│   │   ├── (client)/shop/       # Route group — shop owner: /shop/orders, /shop/inventory, …
-│   │   └── api/                 # Route handlers (BFF: auth cookie → :8080)  [empty]
-│   ├── features/                # Per-module code: catalog, order, workflow, billing, shared [empty]
-│   ├── components/ui/           # Shared presentational primitives [empty]
-│   ├── lib/
-│   │   ├── api/client.ts        # The one fetch wrapper: base URL + envelope unwrapping
-│   │   └── auth/                # Session & role guards [empty]
-│   ├── types/api.ts             # Mirrors backend/contracts
-│   └── public/
-├── docs/            # Project documentation (setup guide, deployment plan, API specs)
-│   ├── SETUP.md     # Local dev environment: pinned versions, install, preflight check
-│   └── DEPLOYMENT.md # PayHere sandbox + staging SMTP runbooks
-├── scripts/
-│   ├── check-env.sh # Preflight: verifies toolchain + .env before you blame the code
-│   └── lint.sh      # Every linter, one command: Spotless + ESLint + Prettier
-├── .node-version    # Node 24 — read by fnm
-├── .sdkmanrc        # Java 25 — read by SDKMAN
-├── .env.example     # The committed configuration contract (.env itself is ignored)
-├── .editorconfig    # Indentation and line endings
-├── .gitattributes   # Forces LF so Windows and Linux do not fight over diffs
-├── CONTRIBUTING.md  # Contribution, branch & PR conventions
-└── README.md        # Project plan, epics, user stories, diagrams
-```
-
-Marked `[empty]` means the directory exists with a `.gitkeep` and nothing else, so the shape is agreed
-but the code is not written. MinIO is deliberately absent from `compose.yaml`; see the "Status" section
-at the top.
-
-### Backend module layout
-
-`backend/` is a Maven reactor: a parent `pom.xml` plus six jars and one runnable app. Each business module
-owns its own tables, its own Flyway migrations, and its own `src/`, arranged in the layers the team agreed
-on (`controller` → `service` → `repository` → `migration`):
-
-```
-backend/<module>/
-├── pom.xml
-├── README.md                      # Owns which tables / endpoints
-└── src/
-    ├── main/
-    │   ├── java/com/myopty/<module>/
-    │   │   ├── controller/  service/  repository/
-    │   │   └── model/  dto/  exception/  config/
-    │   └── resources/
-    │       ├── application.yml    # module-local properties only
-    │       └── db/migration/      # this module's Flyway migrations
-    └── test/
-```
-
-`shared` is organised by **feature** instead (`auth/`, `user/`, `question/`, `config/`), because those are
-four separate concerns rather than four layers of one.
-
-**Why a reactor rather than one package tree:** because the modules are separate jars, `order` cannot
-compile an `import com.myopty.catalog.model.Frame`. The "service interfaces, not direct entity access"
-rule below stops being a review comment and becomes a build error.
-
-### Frontend layout
-
-Ownership maps 1:1 onto `features/<module>/`, enforced the same way as the backend: by review,
-until `.github/CODEOWNERS` exists (still open — the CI story landed without it). Pages live in `app/` and stay thin — a route
-handler or a server component that fetches data and delegates to `features/<module>/` is the shape
-to aim for.
-
-### Flyway version bands
-
-Each module writes its own migrations into its own `db/migration/`, but all jars share one classpath, so
-Flyway sees them all. Version numbers are therefore allocated per module to keep four developers from
-colliding on `V3__`:
-
-| Module | Band | | Module | Band |
-|---|---|---|---|---|
-| `shared` | V1 | | `order` | V100 – V199 |
-| `catalog` | V2 – V99 | | `workflow` | V200 – V299 |
-| | | | `billing` | V300 – V399 |
-
----
-
 ## API Design Guidelines
 
-- RESTful, plural nouns: `/api/frames`, `/api/orders`
+- RESTful, plural nouns: `/api/frames`, `/api/orders/progressive`
 - Version in URL if breaking: `/api/v1/...`
 - Standard responses:
   ```json
@@ -609,30 +300,26 @@ colliding on `V3__`:
 | API Docs | SpringDoc OpenAPI 3 (Swagger UI) |
 | Build | Maven Wrapper (`./mvnw`) |
 | Container | Docker Compose |
-| Frontend | Next.js 16 (App Router, TypeScript, Tailwind CSS) |
+| Frontend | *To be decided* |
 
 ---
 
 ## Getting Started
 
-**See [docs/SETUP.md](docs/SETUP.md) for the full local setup, and run
-[`./scripts/check-env.sh`](scripts/check-env.sh) to confirm your machine is ready.**
-
 ### Prerequisites
-- Java 25 (pinned in `.sdkmanrc`)
-- Node.js 24 (pinned in `.node-version`)
-- Docker & Docker Compose v2 (for MySQL and Mailpit)
-- Maven comes from the wrapper (`./mvnw`) — do not install Maven
+- Java 26
+- Docker & Docker Compose (for MySQL)
+- Maven (or use `./mvnw`)
 
 ### Backend
 
 ```bash
 cd backend
 
-# Start MySQL and Mailpit via Docker Compose
+# Start MySQL via Docker Compose
 docker compose up -d
 
-# Flyway applies migrations automatically on startup
+# Run Flyway migrations (auto on startup)
 ./mvnw spring-boot:run
 ```
 
@@ -643,65 +330,40 @@ Swagger UI at `http://localhost:8080/swagger-ui.html`
 
 ```bash
 cd frontend
-npm install
-npm run dev
+# Instructions TBD once framework is chosen
 ```
-
-Next.js 16 App Router on `http://localhost:3000`, calling the API on `:8080`.
 
 ---
 
 ## Testing
 
 ```bash
-# Style — Spotless (Java), ESLint + Prettier (frontend), from the repo root
-./scripts/lint.sh
+# Unit + integration tests
+./mvnw test
 
-# Unit + integration tests (also runs spotless:check)
-./mvnw verify
-
-# Specific module, from backend/
-./mvnw test -pl catalog -Dtest='*Catalog*'
+# Specific module
+./mvnw test -pl backend -Dtest=*Catalog*
 ```
 
 ---
 
 ## Deployment
 
-The whole stack — MySQL, Mailpit, API and storefront — comes up behind one nginx
-proxy with a single command:
-
 ```bash
-cd backend
-docker compose -f compose.yaml -f compose.prod.yaml up -d --build
+# Build Docker image
+./mvnw spring-boot:build-image
+
+# Or use compose for full stack
+docker compose -f compose.yaml -f compose.prod.yaml up -d
 ```
-
-Preview at **<http://localhost:8088>** (change the port with `PREVIEW_PORT` in `.env`).
-The proxy sends `/api`, `/actuator`, `/swagger` and `/v3/api-docs` to the API and
-everything else to Next.js, all on **one origin** — so the preview needs no CORS and
-the web image is built with an empty `NEXT_PUBLIC_API_BASE_URL`. Nothing is published
-on a routable address, and until staging has real accounts and TLS behind it, nothing
-should be. The deployment plan proper — hosting provider (a small VPS running this same
-Compose stack), domain + TLS, and the staging → live rollout checklist — lives in
-[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
-
-Re-running the command rebuilds only what changed. To stop the preview while keeping
-the databases:
-
-```bash
-cd backend && docker compose -f compose.yaml -f compose.prod.yaml down
-```
-
-Images are built by `backend/Dockerfile` and `frontend/Dockerfile`; the dev workflow
-(`docker compose up -d`, `./mvnw spring-boot:run`, `npm run dev`) is unchanged.
 
 ---
 
 ## Documentation
 
-- **Project Plan & Diagrams:** this file, from [the project plan section](#project-plan-epics-user-stories--diagrams) down
+- **Project Plan & Diagrams:** `MyOpty_Project_Plan.md`
 - **System Architecture (this file):** `README.md`
-- **Contribution Guide:** `CONTRIBUTING.md`
+- **Contribution Guide:** `CONTRIBUTION.md`
 - **API Docs (running):** `http://localhost:8080/swagger-ui.html`
 
 ---
@@ -1320,7 +982,6 @@ erDiagram
         int order_id PK
         int customer_id FK
         int lens_id FK
-        string order_type
         date order_date
         date receive_date
         string status

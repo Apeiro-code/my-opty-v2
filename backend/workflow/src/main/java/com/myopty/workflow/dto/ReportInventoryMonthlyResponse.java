@@ -18,8 +18,16 @@ public class ReportInventoryMonthlyResponse {
     public ReportInventoryMonthlyResponse() {}
 
     // Constructor from Entity
-    public ReportInventoryMonthlyResponse(Integer reportId, Integer clientId, Integer month, Integer year,
-                                          Integer stockAdded, Integer stockSold, Integer currentStock, LocalDate createdAt, LocalDateTime createdAtTime) {
+    public ReportInventoryMonthlyResponse(
+            Integer reportId,
+            Integer clientId,
+            Integer month,
+            Integer year,
+            Integer stockAdded,
+            Integer stockSold,
+            Integer currentStock,
+            LocalDate createdAt,
+            LocalDateTime createdAtTime) {
         this.reportId = reportId;
         this.clientId = clientId;
         this.month = month;
@@ -32,30 +40,75 @@ public class ReportInventoryMonthlyResponse {
     }
 
     // Getters and Setters
-    public Integer getReportId() { return reportId; }
-    public void setReportId(Integer reportId) { this.reportId = reportId; }
+    public Integer getReportId() {
+        return reportId;
+    }
 
-    public Integer getClientId() { return clientId; }
-    public void setClientId(Integer clientId) { this.clientId = clientId; }
+    public void setReportId(Integer reportId) {
+        this.reportId = reportId;
+    }
 
-    public Integer getMonth() { return month; }
-    public void setMonth(Integer month) { this.month = month; }
+    public Integer getClientId() {
+        return clientId;
+    }
 
-    public Integer getYear() { return year; }
-    public void setYear(Integer year) { this.year = year; }
+    public void setClientId(Integer clientId) {
+        this.clientId = clientId;
+    }
 
-    public Integer getStockAdded() { return stockAdded; }
-    public void setStockAdded(Integer stockAdded) { this.stockAdded = stockAdded; }
+    public Integer getMonth() {
+        return month;
+    }
 
-    public Integer getStockSold() { return stockSold; }
-    public void setStockSold(Integer stockSold) { this.stockSold = stockSold; }
+    public void setMonth(Integer month) {
+        this.month = month;
+    }
 
-    public Integer getCurrentStock() { return currentStock; }
-    public void setCurrentStock(Integer currentStock) { this.currentStock = currentStock; }
+    public Integer getYear() {
+        return year;
+    }
 
-    public LocalDate getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDate createdAt) { this.createdAt = createdAt; }
+    public void setYear(Integer year) {
+        this.year = year;
+    }
 
-    public LocalDateTime getCreatedAtTime() { return createdAtTime; }
-    public void setCreatedAtTime(LocalDateTime createdAtTime) { this.createdAtTime = createdAtTime; }
+    public Integer getStockAdded() {
+        return stockAdded;
+    }
+
+    public void setStockAdded(Integer stockAdded) {
+        this.stockAdded = stockAdded;
+    }
+
+    public Integer getStockSold() {
+        return stockSold;
+    }
+
+    public void setStockSold(Integer stockSold) {
+        this.stockSold = stockSold;
+    }
+
+    public Integer getCurrentStock() {
+        return currentStock;
+    }
+
+    public void setCurrentStock(Integer currentStock) {
+        this.currentStock = currentStock;
+    }
+
+    public LocalDate getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDate createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getCreatedAtTime() {
+        return createdAtTime;
+    }
+
+    public void setCreatedAtTime(LocalDateTime createdAtTime) {
+        this.createdAtTime = createdAtTime;
+    }
 }
