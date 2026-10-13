@@ -2,6 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -20,10 +21,6 @@
             <groupId>com.myopty</groupId>
             <artifactId>contracts</artifactId>
         </dependency>
-        <!-- The error envelope for a refused write is shared's ApiError, so this
-             module speaks the same { success, error } shape the filter chain and
-             the auth endpoints already do. shared is the one module every other
-             module may depend on; it carries no domain of its own. -->
         <dependency>
             <groupId>com.myopty</groupId>
             <artifactId>shared</artifactId>
@@ -54,7 +51,6 @@
             <artifactId>mysql-connector-j</artifactId>
             <scope>runtime</scope>
         </dependency>
-
         <!-- The availability report's PDF and Excel export. OpenPDF builds the PDF
              from a table; POI builds the .xlsx. Both are catalog-local: only the
              report export needs them, so no other module pays for the jars. -->
@@ -66,7 +62,6 @@
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webmvc-test</artifactId>
