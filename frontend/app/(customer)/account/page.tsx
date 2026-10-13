@@ -14,8 +14,9 @@ export default function AccountPage() {
       <div>
         <h1 className="text-2xl font-semibold">Your account</h1>
         <p className="mt-2 max-w-prose text-sm opacity-80">
-          The details you signed in with. Use Log out in the header to end your
-          session on this device.
+          The details you signed in with. Update the ones the shop needs to
+          reach you, or use Log out in the header to end your session on this
+          device.
         </p>
       </div>
       <RequireAuth>

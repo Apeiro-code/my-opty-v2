@@ -1,6 +1,6 @@
-import { apiGet, apiPost } from "@/lib/api/client";
+import { apiGet, apiPost, apiPut } from "@/lib/api/client";
 import type { ApiResult } from "@/types/api";
-import type { AuthenticatedUser } from "./types";
+import type { AuthenticatedUser, UpdateProfileInput } from "./types";
 
 /**
  * The auth surface, as three calls against the shared module's endpoints.
@@ -32,4 +32,16 @@ export function getCurrentUser(): Promise<ApiResult<AuthenticatedUser>> {
 /** Ends the session server-side and clears the session cookie. */
 export function logout(): Promise<ApiResult<Record<string, never>>> {
   return apiPost<Record<string, never>>("/api/auth/logout", {});
+}
+
+/**
+ * Saves the customer's editable profile fields and returns the updated identity,
+ * in the same shape `getCurrentUser` does. The response is the source of truth
+ * for what to display: the server may normalise a blank phone or address to null,
+ * so the caller stores what came back rather than what was typed.
+ */
+export function updateProfile(
+  input: UpdateProfileInput,
+): Promise<ApiResult<AuthenticatedUser>> {
+  return apiPut<AuthenticatedUser>("/api/auth/me", input);
 }

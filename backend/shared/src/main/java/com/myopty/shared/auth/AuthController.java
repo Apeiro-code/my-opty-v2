@@ -2,12 +2,13 @@ package com.myopty.shared.auth;
 
 import com.myopty.shared.auth.dto.ApiError;
 import com.myopty.shared.auth.dto.AuthResponse;
-import com.myopty.shared.auth.dto.AuthenticatedUser;
 import com.myopty.shared.auth.dto.LoginRequest;
 import com.myopty.shared.auth.dto.RegisterRequest;
 import com.myopty.shared.auth.dto.ResendVerificationRequest;
 import com.myopty.shared.auth.dto.VerifyEmailRequest;
 import com.myopty.shared.user.AppUser;
+import com.myopty.shared.user.ProfileService;
+import com.myopty.shared.user.dto.UpdateProfileRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -54,14 +56,17 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final SecurityContextRepository securityContextRepository;
     private final AuthService authService;
+    private final ProfileService profileService;
 
     public AuthController(
             AuthenticationManager authenticationManager,
             SecurityContextRepository securityContextRepository,
-            AuthService authService) {
+            AuthService authService,
+            ProfileService profileService) {
         this.authenticationManager = authenticationManager;
         this.securityContextRepository = securityContextRepository;
         this.authService = authService;
+        this.profileService = profileService;
     }
 
     /**
@@ -92,8 +97,9 @@ public class AuthController {
         securityContextRepository.saveContext(SecurityContextHolder.getContext(), httpRequest, httpResponse);
 
         AppUser user = (AppUser) authenticated.getPrincipal();
-        return AuthResponse.of(AuthenticatedUser.from(user));
+        return AuthResponse.of(profileService.read(user.getId()));
     }
+
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public AuthResponse register(
@@ -113,7 +119,6 @@ public class AuthController {
         authService.resendVerification(request);
     }
 
-
     /**
      * Who the current session says the caller is. Anonymous callers never reach
      * this method — the filter chain answers them first with a 401 — so the
@@ -121,7 +126,23 @@ public class AuthController {
      */
     @GetMapping("/me")
     public AuthResponse me(@AuthenticationPrincipal AppUser user) {
-        return AuthResponse.of(AuthenticatedUser.from(user));
+        return AuthResponse.of(profileService.read(user.getId()));
+    }
+
+    /**
+     * Edits the signed-in customer's profile and answers with the same shape
+     * {@code GET /api/auth/me} does, so the account page can render the result
+     * without a second round trip. Email is not editable here and the password is
+     * a separate story; see {@link ProfileService} for why the session identity is
+     * rebuilt on the way out.
+     */
+    @PutMapping("/me")
+    public AuthResponse updateMe(
+            @Valid @RequestBody UpdateProfileRequest request,
+            @AuthenticationPrincipal AppUser user,
+            HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse) {
+        return AuthResponse.of(profileService.update(user.getId(), request, httpRequest, httpResponse));
     }
 
     @ExceptionHandler(BadCredentialsException.class)
@@ -145,7 +166,11 @@ public class AuthController {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError invalidBody(MethodArgumentNotValidException exception) {
-        return ApiError.of("VALIDATION_FAILED", "Email and password are required.");
+        String message = exception.getBindingResult().getFieldErrors().stream()
+                .map(fieldError -> fieldError.getField() + " " + fieldError.getDefaultMessage())
+                .distinct()
+                .collect(java.util.stream.Collectors.joining("; "));
+        return ApiError.of("VALIDATION_FAILED", message.isBlank() ? "The request body is not valid." : message);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
@@ -153,6 +178,7 @@ public class AuthController {
     public ApiError unreadableBody(HttpMessageNotReadableException exception) {
         return ApiError.of("MALFORMED_REQUEST", "The request body is not valid JSON.");
     }
+
     @ExceptionHandler(ResponseStatusException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiError conflict(ResponseStatusException exception) {
@@ -171,5 +197,4 @@ public class AuthController {
         }
         return ApiError.of("CONFLICT", reason == null ? "Conflict" : reason);
     }
-
 }

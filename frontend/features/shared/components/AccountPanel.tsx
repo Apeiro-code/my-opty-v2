@@ -1,15 +1,16 @@
 "use client";
 
-import type { ReactNode } from "react";
 import { useAuth } from "@/lib/auth/AuthContext";
+import ProfileForm from "./ProfileForm";
 
 /**
- * The account page's content: who the session says you are.
+ * The account page's content: who the session says you are, and the form that
+ * edits those details.
  *
- * <p>Small on purpose — editing profile details and changing a password are
- * separate stories. What this proves is the thing the logout story is about: the
- * customer reached a page that only a session can show, and it names the right
- * person.
+ * <p>The form is the whole point of this story; the heading above it names the
+ * account so the visitor knows whose profile they are editing. A `CLIENT` sees
+ * the same form but the backend refuses the save — the account page is a
+ * customer's, and the shop's own profile is a different story.
  */
 export default function AccountPanel() {
   const { user } = useAuth();
@@ -19,21 +20,14 @@ export default function AccountPanel() {
   }
 
   return (
-    <dl className="max-w-prose divide-y divide-black/10 rounded-lg border border-black/10 dark:divide-white/15 dark:border-white/15">
-      <Row label="Name">{user.fullName}</Row>
-      <Row label="Email">{user.email}</Row>
-      <Row label="Account type">
-        {user.role === "CLIENT" ? "Shop owner" : "Customer"}
-      </Row>
-    </dl>
-  );
-}
-
-function Row({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="flex flex-wrap justify-between gap-2 px-4 py-3 text-sm">
-      <dt className="opacity-70">{label}</dt>
-      <dd className="font-medium">{children}</dd>
-    </div>
+    <section className="flex flex-col gap-4">
+      <h2 className="text-lg font-medium">Profile details</h2>
+      <p className="max-w-prose text-sm opacity-80">
+        Keep your name, phone number and address up to date so the shop can
+        reach you about an order. Your email is the address you sign in with and
+        cannot be changed here.
+      </p>
+      <ProfileForm />
+    </section>
   );
 }

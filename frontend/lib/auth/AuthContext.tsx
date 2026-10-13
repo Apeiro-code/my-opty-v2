@@ -13,8 +13,9 @@ import {
   getCurrentUser,
   login as loginRequest,
   logout as logoutRequest,
+  updateProfile as updateProfileRequest,
 } from "./api";
-import type { AuthenticatedUser } from "./types";
+import type { AuthenticatedUser, UpdateProfileInput } from "./types";
 
 /**
  * The one place the browser knows who is signed in.
@@ -36,6 +37,7 @@ type AuthContextValue = {
   loading: boolean;
   login: (email: string, password: string) => Promise<AuthenticatedUser>;
   logout: () => Promise<void>;
+  updateProfile: (input: UpdateProfileInput) => Promise<AuthenticatedUser>;
   refresh: () => Promise<void>;
 };
 
@@ -82,9 +84,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
+  /**
+   * Saves the profile and stores the server's answer, not the form's. The API
+   * rebuilds the session identity from the saved row, so adopting its response
+   * keeps the header and the form showing the same thing for the rest of the
+   * session.
+   */
+  const updateProfile = useCallback(async (input: UpdateProfileInput) => {
+    const result = await updateProfileRequest(input);
+    if (!result.ok) {
+      throw result.error;
+    }
+    setUser(result.data);
+    return result.data;
+  }, []);
+
   const value = useMemo(
-    () => ({ user, loading, login, logout, refresh }),
-    [user, loading, login, logout, refresh],
+    () => ({ user, loading, login, logout, updateProfile, refresh }),
+    [user, loading, login, logout, updateProfile, refresh],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

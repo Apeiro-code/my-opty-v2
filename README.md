@@ -22,12 +22,14 @@ What is built and working:
 | Coding standard | Spotless (Palantir format) bound to `./mvnw verify`, ESLint + Prettier on the frontend; `./scripts/lint.sh` runs all three |
 | CI | `.github/workflows/ci.yml` on every push and PR: gitleaks secret scan, `./mvnw verify` (Spotless + Testcontainers), ESLint + Prettier + `next build` |
 | Authentication | Session login/logout with `CUSTOMER` vs `CLIENT` roles (Spring Security, deny-by-default on `/api/**`); `AuthFlowTest` proves the whole flow |
+| Customer Q&A | Customers ask, read their own questions and the public FAQ; the shop lists the unanswered queue and answers a question, emailing the customer; `QuestionFlowTest` and `QuestionAnswerFlowTest` prove both halves |
 | Staging preview | `compose.prod.yaml` builds API + web images behind one nginx proxy on **:8088** |
 | Payment config | PayHere sandbox runbook in `docs/DEPLOYMENT.md`; bad `PAYMENT_GATEWAY_*` config fails startup naming the variable |
 | Email | `spring.mail` wired from `MAIL_*`; low-stock emails to `LOW_STOCK_ALERT_EMAIL` (Mailpit in development); `MailSendingTest` proves a real send |
 
 What is **not** built: most feature endpoints listed in this file, and a real object
-store. The API answers `/actuator/health`, the auth endpoints, and the order module's
+store. The API answers `/actuator/health`, the auth endpoints, the customer Q&A (ask,
+own list, public FAQ, and the shop's answering queue), and the order module's
 prescription and progressive-order surface — submission, own-prescription and
 own-order reads, the shop's review and approval queues, the production line
 (`processing`/`ready`/`dispatched`), the receive-date correction, the customer
@@ -388,7 +390,9 @@ POST   /api/billing/reports/{id}/export  # Export PDF/Excel
 - Registration with email/phone verification (OTP) — planned
 - Password reset — planned
 - Profile management — planned
-- Q&A: customers ask, clients answer, FAQ marking — planned
+- Q&A — **built**: customers ask, read their own questions and the public FAQ; the shop lists
+  the unanswered queue and posts an answer, which emails the customer. FAQ marking is still
+  planned. Both halves are proven by `QuestionFlowTest` and `QuestionAnswerFlowTest`.
 - Global exception handling, validation, audit logging — partial (validation and auditing
   are in; global handlers are per module)
 
@@ -401,11 +405,16 @@ POST   /api/auth/register                # Register (customer/client) — planne
 POST   /api/auth/forgot-password         # Request reset — planned
 POST   /api/auth/reset-password          # Reset with token — planned
 PUT    /api/auth/me                      # Update profile — planned
-POST   /api/questions                    # Ask question (customer) — planned
-GET    /api/questions                    # List (customer: own; client: all) — planned
-PUT    /api/questions/{id}/answer        # Answer question (client) — planned
-GET    /api/questions/faq                # Public FAQ — planned
+POST   /api/questions                    # Ask question (customer) — built
+GET    /api/questions                    # The customer's own questions (customer) — built
+GET    /api/questions/faq                # Public FAQ (anonymous) — built
+GET    /api/shop/questions               # Unanswered queue (client) — built
+PUT    /api/shop/questions/{id}/answer   # Answer a question; emails the customer (client) — built
 ```
+
+The shop's two Q&A endpoints sit under `/api/shop/**` rather than on `/api/questions`
+so they inherit the existing `ROLE_CLIENT` rule that every shop route carries; the
+customer's `GET /api/questions` stays scoped to the session's own questions.
 
 **Database Tables:** `app_user`, `client_profile`, `customer_profile`, `question`
 

@@ -89,7 +89,7 @@ public class AuthService {
 
         emailService.sendVerificationEmail(user.getEmail(), code);
         authenticate(user.getEmail(), request.password(), httpRequest, httpResponse);
-        return AuthResponse.of(AuthenticatedUser.from(user));
+        return AuthResponse.of(AuthenticatedUser.from(user, null));
     }
 
     @Transactional
@@ -143,16 +143,13 @@ public class AuthService {
     }
 
     private void authenticate(
-            String email,
-            String password,
-            HttpServletRequest httpRequest,
-            HttpServletResponse httpResponse) {
+            String email, String password, HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
         HttpSession existing = httpRequest.getSession(false);
         if (existing != null) {
             existing.invalidate();
         }
-        Authentication authenticated = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(email, password));
+        Authentication authenticated =
+                authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, password));
         SecurityContextHolder.getContext().setAuthentication(authenticated);
         securityContextRepository.saveContext(SecurityContextHolder.getContext(), httpRequest, httpResponse);
     }

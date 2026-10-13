@@ -1,7 +1,6 @@
 package com.myopty.shared.user;
 
 import java.util.Optional;
-import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.CrudRepository;
 
 /**
