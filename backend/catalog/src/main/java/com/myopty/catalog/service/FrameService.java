@@ -118,15 +118,25 @@ public class FrameService {
             java.math.BigDecimal minPrice,
             java.math.BigDecimal maxPrice,
             String color,
-            String material) {
+            String material,
+            String q) {
         String normalizedCategory = normalize(categorySlug);
         String normalizedColor = normalize(color);
         String normalizedMaterial = normalize(material);
+        String normalizedQ = normalize(q);
         return frames
-                .findActiveForStorefront(normalizedCategory, minPrice, maxPrice, normalizedColor, normalizedMaterial)
+                .findActiveForStorefront(
+                        normalizedCategory, minPrice, maxPrice, normalizedColor, normalizedMaterial, normalizedQ)
                 .stream()
                 .map(StorefrontFrameResponse::from)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public StorefrontFrameResponse getActiveForStorefront(long id) {
+        return frames.findByIdAndActiveTrue(id)
+                .map(StorefrontFrameResponse::from)
+                .orElseThrow(() -> new ResourceNotFoundException("Frame not found."));
     }
 
     private static String normalize(String value) {

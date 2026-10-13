@@ -69,7 +69,10 @@ public class SecurityConfig {
         "/v3/api-docs/**",
         "/api/auth/login",
         "/api/discounts/active",
-        "/api/frames"
+        "/api/frames",
+        "/api/frames/**",
+        "/api/lenses",
+        "/api/lenses/**"
     };
 
     private final List<String> allowedOrigins;

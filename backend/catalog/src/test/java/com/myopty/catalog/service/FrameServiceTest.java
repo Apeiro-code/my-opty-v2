@@ -184,7 +184,7 @@ class FrameServiceTest {
                 service.create(request("Astra 2100", "Matte Black", "Acetate", "4500.00", 12, null, men));
         service.create(request("Meridian", "Champagne", "Titanium", "9200.00", 6, null, women));
 
-        assertThat(service.listActiveForStorefrontFiltered("men", null, null, null, null))
+        assertThat(service.listActiveForStorefrontFiltered("men", null, null, null, null, null))
                 .extracting(StorefrontFrameResponse::id)
                 .containsExactly(menFrame.id());
     }
@@ -196,7 +196,7 @@ class FrameServiceTest {
         service.create(request("Meridian", "Champagne", "Titanium", "9200.00", 6, null));
 
         assertThat(service.listActiveForStorefrontFiltered(
-                        null, new BigDecimal("5000.00"), new BigDecimal("8000.00"), null, null))
+                        null, new BigDecimal("5000.00"), new BigDecimal("8000.00"), null, null, null))
                 .extracting(StorefrontFrameResponse::id)
                 .containsExactly(mid.id());
     }
@@ -207,10 +207,10 @@ class FrameServiceTest {
         service.create(request("Willow 08", "Plum", "TR-90", "3800.00", 15, null));
         FrameResponse titanium = service.create(request("Meridian", "Rose Gold", "Titanium", "9200.00", 6, null));
 
-        assertThat(service.listActiveForStorefrontFiltered(null, null, null, "black", null))
+        assertThat(service.listActiveForStorefrontFiltered(null, null, null, "black", null, null))
                 .extracting(StorefrontFrameResponse::id)
                 .containsExactly(black.id());
-        assertThat(service.listActiveForStorefrontFiltered(null, null, null, null, "titanium"))
+        assertThat(service.listActiveForStorefrontFiltered(null, null, null, null, "titanium", null))
                 .extracting(StorefrontFrameResponse::id)
                 .containsExactly(titanium.id());
     }
@@ -223,7 +223,7 @@ class FrameServiceTest {
         service.create(request("Meridian", "Champagne", "Titanium", "9200.00", 6, null, men));
 
         assertThat(service.listActiveForStorefrontFiltered(
-                        "men", new BigDecimal("5000.00"), new BigDecimal("8000.00"), "gunmetal", "steel"))
+                        "men", new BigDecimal("5000.00"), new BigDecimal("8000.00"), "gunmetal", "steel", null))
                 .extracting(StorefrontFrameResponse::id)
                 .containsExactly(match.id());
     }
@@ -231,7 +231,7 @@ class FrameServiceTest {
     @Test
     void theStorefrontReturnsEmptyWhenNoFramesMatchFilters() {
         service.create(request("Astra 2100", "Matte Black", "Acetate", "4500.00", 12, null));
-        assertThat(service.listActiveForStorefrontFiltered("women", null, null, null, null))
+        assertThat(service.listActiveForStorefrontFiltered("women", null, null, null, null, null))
                 .isEmpty();
     }
 
@@ -287,6 +287,11 @@ class FrameServiceTest {
         }
 
         @Override
+        public Optional<Frame> findByIdAndActiveTrue(Long id) {
+            return findById(id).filter(Frame::isActive);
+        }
+
+        @Override
         public List<Frame> findAllByOrderByIdAsc() {
             return byId.values().stream()
                     .sorted(Comparator.comparing(Frame::getId))
@@ -307,7 +312,8 @@ class FrameServiceTest {
                 java.math.BigDecimal minPrice,
                 java.math.BigDecimal maxPrice,
                 String color,
-                String material) {
+                String material,
+                String q) {
             return byId.values().stream()
                     .filter(Frame::isActive)
                     .filter(frame -> {
@@ -339,6 +345,13 @@ class FrameServiceTest {
                         if (material != null && !material.isBlank()) {
                             String m = frame.getMaterial();
                             if (m == null || !m.toLowerCase().contains(material.toLowerCase())) {
+                                return false;
+                            }
+                        }
+                        if (q != null && !q.trim().isEmpty()) {
+                            String model = frame.getModel();
+                            if (model == null
+                                    || !model.toLowerCase().contains(q.trim().toLowerCase())) {
                                 return false;
                             }
                         }

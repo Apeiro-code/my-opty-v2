@@ -45,8 +45,18 @@ export type StorefrontFrame = {
   id: number;
   model: string;
   color: string | null;
-  material: string;
-  price: number;
+  material: string | null;
+  price: string | number;
+  imageUrl: string | null;
+  inStock: boolean;
+};
+
+export type StorefrontLens = {
+  id: number;
+  name: string;
+  type: "SINGLE_VISION" | "BIFOCAL" | "PROGRESSIVE";
+  coating: string | null;
+  price: string | number;
   imageUrl: string | null;
   inStock: boolean;
 };

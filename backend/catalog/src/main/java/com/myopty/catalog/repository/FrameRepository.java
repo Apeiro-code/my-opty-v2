@@ -32,6 +32,8 @@ public interface FrameRepository extends Repository<Frame, Long> {
 
     Optional<Frame> findById(Long id);
 
+    Optional<Frame> findByIdAndActiveTrue(Long id);
+
     List<Frame> findAllByOrderByIdAsc();
 
     /**
@@ -56,6 +58,7 @@ public interface FrameRepository extends Repository<Frame, Long> {
               AND (:maxPrice IS NULL OR f.price <= :maxPrice)
               AND (:color IS NULL OR f.color IS NULL OR LOWER(f.color) LIKE LOWER(CONCAT('%', :color, '%')))
               AND (:material IS NULL OR LOWER(f.material) LIKE LOWER(CONCAT('%', :material, '%')))
+              AND (:q IS NULL OR LOWER(f.model) LIKE LOWER(CONCAT('%', :q, '%')))
             ORDER BY f.id ASC
             """)
     List<Frame> findActiveForStorefront(
@@ -63,7 +66,8 @@ public interface FrameRepository extends Repository<Frame, Long> {
             @Param("minPrice") java.math.BigDecimal minPrice,
             @Param("maxPrice") java.math.BigDecimal maxPrice,
             @Param("color") String color,
-            @Param("material") String material);
+            @Param("material") String material,
+            @Param("q") String q);
 
     /**
      * Takes {@code quantity} off a frame in one statement. Returns the number of

@@ -27,6 +27,9 @@ public interface LensRepository extends Repository<Lens, Long> {
 
     List<Lens> findAllByOrderByIdAsc();
 
+    /** Active lenses for storefront, oldest first. */
+    List<Lens> findAllByActiveTrueOrderByIdAsc();
+
     /**
      * Takes {@code quantity} off a lens in one statement. Returns the number of
      * rows changed, which is zero — and nothing is modified — when the lens

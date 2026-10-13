@@ -37,8 +37,14 @@ public class CatalogFrameController {
             @org.springframework.web.bind.annotation.RequestParam(value = "maxPrice", required = false)
                     java.math.BigDecimal maxPrice,
             @org.springframework.web.bind.annotation.RequestParam(value = "color", required = false) String color,
-            @org.springframework.web.bind.annotation.RequestParam(value = "material", required = false)
-                    String material) {
-        return ApiResponse.of(service.listActiveForStorefrontFiltered(category, minPrice, maxPrice, color, material));
+            @org.springframework.web.bind.annotation.RequestParam(value = "material", required = false) String material,
+            @org.springframework.web.bind.annotation.RequestParam(value = "q", required = false) String q) {
+        return ApiResponse.of(
+                service.listActiveForStorefrontFiltered(category, minPrice, maxPrice, color, material, q));
+    }
+
+    @GetMapping("/{id}")
+    public ApiResponse<StorefrontFrameResponse> get(@org.springframework.web.bind.annotation.PathVariable long id) {
+        return ApiResponse.of(service.getActiveForStorefront(id));
     }
 }

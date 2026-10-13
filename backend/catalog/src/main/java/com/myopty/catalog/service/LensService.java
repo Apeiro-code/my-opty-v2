@@ -75,6 +75,13 @@ public class LensService {
         return lenses.findAllByOrderByIdAsc().stream().map(LensResponse::from).toList();
     }
 
+    @Transactional(readOnly = true)
+    public java.util.List<com.myopty.catalog.dto.StorefrontLensResponse> listActiveForStorefront() {
+        return lenses.findAllByActiveTrueOrderByIdAsc().stream()
+                .map(com.myopty.catalog.dto.StorefrontLensResponse::from)
+                .toList();
+    }
+
     private static void apply(
             Lens lens, String name, LensType type, String coating, BigDecimal price, int stockQty, Long categoryId) {
         lens.setName(name);

@@ -1,3 +1,4 @@
+import type { StorefrontFrame, StorefrontLens } from "./types";
 import {
   apiDelete,
   apiDownload,
@@ -14,7 +15,6 @@ import type {
   FrameInput,
   Lens,
   LensInput,
-  StorefrontFrame,
 } from "./types";
 
 /**
@@ -47,6 +47,7 @@ export function listStorefrontFrames(params?: {
   maxPrice?: string | number | null;
   color?: string | null;
   material?: string | null;
+  q?: string | null;
 }): Promise<ApiResult<StorefrontFrame[]>> {
   const clean: Record<string, string | number | boolean | undefined> = {};
   if (params?.category) {
@@ -80,7 +81,20 @@ export function listStorefrontFrames(params?: {
   ) {
     clean.material = params.material.trim();
   }
+  if (params?.q && params.q.trim() !== "") {
+    clean.q = params.q.trim();
+  }
   return apiGet<StorefrontFrame[]>("/api/frames", clean);
+}
+
+export function getStorefrontFrame(
+  id: number,
+): Promise<ApiResult<StorefrontFrame>> {
+  return apiGet<StorefrontFrame>(`/api/frames/${id}`);
+}
+
+export function listStorefrontLenses(): Promise<ApiResult<StorefrontLens[]>> {
+  return apiGet<StorefrontLens[]>("/api/lenses");
 }
 
 /** Adds a frame so it appears on the site. */

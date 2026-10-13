@@ -196,6 +196,11 @@ class StockServiceTest {
         }
 
         @Override
+        public Optional<Frame> findByIdAndActiveTrue(Long id) {
+            return findById(id).filter(Frame::isActive);
+        }
+
+        @Override
         public List<Frame> findAllByOrderByIdAsc() {
             return frames.values().stream()
                     .sorted(Comparator.comparing(Frame::getId))
@@ -216,7 +221,8 @@ class StockServiceTest {
                 java.math.BigDecimal minPrice,
                 java.math.BigDecimal maxPrice,
                 String color,
-                String material) {
+                String material,
+                String q) {
             return frames.values().stream()
                     .filter(Frame::isActive)
                     .filter(frame -> {
@@ -321,6 +327,14 @@ class StockServiceTest {
             }
             lens.setStockQty(lens.getStockQty() + quantity);
             return 1;
+        }
+
+        @Override
+        public List<Lens> findAllByActiveTrueOrderByIdAsc() {
+            return lenses.values().stream()
+                    .filter(Lens::isActive)
+                    .sorted(Comparator.comparing(Lens::getId))
+                    .toList();
         }
     }
 

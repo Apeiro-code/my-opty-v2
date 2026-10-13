@@ -28,6 +28,10 @@ public class Lens {
     private BigDecimal price;
     private int stockQty;
 
+    /** Thumbnail path or URL for the storefront; may be null. */
+    @Column("image_url")
+    private String imageUrl;
+
     /** Named explicitly: the property is {@code active} but the column is {@code is_active}. */
     @Column("is_active")
     private boolean active;
@@ -74,6 +78,14 @@ public class Lens {
 
     public BigDecimal getPrice() {
         return price;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     public void setPrice(BigDecimal price) {

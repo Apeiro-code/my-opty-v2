@@ -34,6 +34,8 @@ export default function FrameGrid() {
   const [material, setMaterial] = useState("");
   const [debouncedColor, setDebouncedColor] = useState("");
   const [debouncedMaterial, setDebouncedMaterial] = useState("");
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedColor(color), 300);
     return () => clearTimeout(timer);
@@ -52,6 +54,7 @@ export default function FrameGrid() {
       maxPrice: maxPrice || undefined,
       color: debouncedColor || undefined,
       material: debouncedMaterial || undefined,
+      q: debouncedSearch || undefined,
     }).then((result) => {
       if (!active) {
         return;
@@ -66,7 +69,14 @@ export default function FrameGrid() {
     return () => {
       active = false;
     };
-  }, [category, minPrice, maxPrice, debouncedColor, debouncedMaterial]);
+  }, [
+    category,
+    minPrice,
+    maxPrice,
+    debouncedColor,
+    debouncedMaterial,
+    debouncedSearch,
+  ]);
 
   function clearFilters() {
     setCategory("");
@@ -74,8 +84,10 @@ export default function FrameGrid() {
     setMaxPrice("");
     setColor("");
     setMaterial("");
+    setSearch("");
     setDebouncedColor("");
     setDebouncedMaterial("");
+    setDebouncedSearch("");
   }
 
   if (loadError) {
@@ -104,18 +116,28 @@ export default function FrameGrid() {
           onMaxPriceChange={setMaxPrice}
           onColorChange={setColor}
           onMaterialChange={setMaterial}
+          search={search}
+          onSearchChange={setSearch}
           onClear={clearFilters}
           hasFilters={Boolean(
             category ||
             minPrice ||
             maxPrice ||
             debouncedColor ||
-            debouncedMaterial,
+            debouncedMaterial ||
+            debouncedSearch,
           )}
         />
         <p className="text-sm opacity-70">
-          {Boolean(category || minPrice || maxPrice || debouncedColor || debouncedMaterial)
-            ? "No frames match your filters. Try adjusting them."
+          {Boolean(
+            category ||
+            minPrice ||
+            maxPrice ||
+            debouncedColor ||
+            debouncedMaterial ||
+            debouncedSearch,
+          )
+            ? "No frames match your filters or search. Try adjusting them."
             : "No frames are on the wall yet. Check back soon."}
         </p>
       </>
@@ -135,13 +157,16 @@ export default function FrameGrid() {
         onMaxPriceChange={setMaxPrice}
         onColorChange={setColor}
         onMaterialChange={setMaterial}
+        search={search}
+        onSearchChange={setSearch}
         onClear={clearFilters}
         hasFilters={Boolean(
           category ||
           minPrice ||
           maxPrice ||
           debouncedColor ||
-          debouncedMaterial,
+          debouncedMaterial ||
+          debouncedSearch,
         )}
       />
       <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -182,7 +207,11 @@ function FrameCard({ frame }: { frame: StorefrontFrame }) {
       </div>
       <div className="flex flex-1 flex-col gap-1 p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="font-medium">{frame.model}</h2>
+          <h2 className="font-medium">
+            <a href={`/frames/${frame.id}`} className="hover:underline">
+              {frame.model}
+            </a>
+          </h2>
           <span
             className={
               frame.inStock
@@ -197,7 +226,10 @@ function FrameCard({ frame }: { frame: StorefrontFrame }) {
           {[frame.color, frame.material].filter(Boolean).join(" · ")}
         </p>
         <p className="mt-2 text-sm font-medium">
-          Rs {PRICE_FORMAT.format(frame.price)}
+          Rs{" "}
+          {PRICE_FORMAT.format(
+            typeof frame.price === "number" ? frame.price : Number(frame.price),
+          )}
         </p>
       </div>
     </li>
@@ -210,11 +242,13 @@ type FilterControlsProps = {
   maxPrice: string;
   color: string;
   material: string;
+  search: string;
   onCategoryChange: (value: string) => void;
   onMinPriceChange: (value: string) => void;
   onMaxPriceChange: (value: string) => void;
   onColorChange: (value: string) => void;
   onMaterialChange: (value: string) => void;
+  onSearchChange: (value: string) => void;
   onClear: () => void;
   hasFilters: boolean;
 };
@@ -225,17 +259,29 @@ function FilterControls({
   maxPrice,
   color,
   material,
+  search,
   onCategoryChange,
   onMinPriceChange,
   onMaxPriceChange,
   onColorChange,
   onMaterialChange,
+  onSearchChange,
   onClear,
   hasFilters,
 }: FilterControlsProps) {
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-black/10 p-4 dark:border-white/15">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-6">
+        <label className="flex flex-col gap-1 text-sm md:col-span-2">
+          <span className="font-medium">Search</span>
+          <input
+            type="text"
+            placeholder="Search by model name..."
+            value={search}
+            onChange={(event) => onSearchChange(event.target.value)}
+            className="rounded-md border border-black/15 bg-transparent px-2 py-1.5 text-sm dark:border-white/20"
+          />
+        </label>
         <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium">Category</span>
           <select
@@ -243,7 +289,7 @@ function FilterControls({
             onChange={(event) => onCategoryChange(event.target.value)}
             className="rounded-md border border-black/15 bg-transparent px-2 py-1.5 text-sm dark:border-white/20"
           >
-            <option value="">All categories</option>
+            <option value="">All</option>
             <option value="men">Men</option>
             <option value="women">Women</option>
             <option value="kids">Kids</option>
