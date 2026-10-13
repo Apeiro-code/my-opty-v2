@@ -44,6 +44,11 @@ public interface FrameRepository extends Repository<Frame, Long> {
      */
     List<Frame> findAllByActiveTrueOrderByIdAsc();
 
+    @Query("""
+            SELECT * FROM frame WHERE is_active = TRUE ORDER BY created_at DESC, id DESC LIMIT :limit
+            """)
+    List<Frame> findNewArrivals(@Param("limit") int limit);
+
     /**
      * The frames on the shop wall, filtered for a browsing visitor. All filters are
      * optional: a null parameter means "no filter". The results are oldest first and

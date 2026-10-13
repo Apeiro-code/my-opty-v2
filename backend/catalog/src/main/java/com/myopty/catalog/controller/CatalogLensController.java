@@ -26,7 +26,21 @@ public class CatalogLensController {
     }
 
     @GetMapping
-    public ApiResponse<List<StorefrontLensResponse>> list() {
-        return ApiResponse.of(service.listActiveForStorefront());
+    public ApiResponse<List<StorefrontLensResponse>> list(
+            @org.springframework.web.bind.annotation.RequestParam(value = "type", required = false) String type) {
+        return ApiResponse.of(service.listActiveForStorefront(type));
+    }
+
+    @GetMapping("/new-arrivals")
+    public ApiResponse<List<StorefrontLensResponse>> newArrivals(
+            @org.springframework.web.bind.annotation.RequestParam(value = "limit", required = false, defaultValue = "8")
+                    int limit) {
+        return ApiResponse.of(service.listNewArrivals(limit));
+    }
+
+    @GetMapping("/{id}")
+    public ApiResponse<com.myopty.catalog.dto.StorefrontLensDetailResponse> get(
+            @org.springframework.web.bind.annotation.PathVariable long id) {
+        return ApiResponse.of(service.getActiveForStorefront(id));
     }
 }

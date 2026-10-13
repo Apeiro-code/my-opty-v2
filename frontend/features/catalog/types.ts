@@ -61,6 +61,10 @@ export type StorefrontLens = {
   inStock: boolean;
 };
 
+export type StorefrontLensDetail = StorefrontLens & {
+  description: string | null;
+};
+
 /**
  * The body of `POST /api/shop/frames` and `PUT /api/shop/frames/{id}`. The two
  * requests carry the same fields, so one type serves both; `color` is nullable

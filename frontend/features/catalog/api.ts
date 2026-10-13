@@ -1,4 +1,4 @@
-import type { StorefrontFrame, StorefrontLens } from "./types";
+import type { StorefrontFrame, StorefrontLens, StorefrontLensDetail } from "./types";
 import {
   apiDelete,
   apiDownload,
@@ -93,8 +93,26 @@ export function getStorefrontFrame(
   return apiGet<StorefrontFrame>(`/api/frames/${id}`);
 }
 
-export function listStorefrontLenses(): Promise<ApiResult<StorefrontLens[]>> {
-  return apiGet<StorefrontLens[]>("/api/lenses");
+export function listStorefrontLenses(params?: {
+  type?: string | null;
+}): Promise<ApiResult<StorefrontLens[]>> {
+  const clean: Record<string, string | undefined> = {};
+  if (params?.type && params.type.trim() !== "") {
+    clean.type = params.type.trim();
+  }
+  return apiGet<StorefrontLens[]>("/api/lenses", clean);
+}
+
+export function getStorefrontLens(id: number): Promise<ApiResult<StorefrontLensDetail>> {
+  return apiGet<StorefrontLensDetail>(`/api/lenses/${id}`);
+}
+
+export function listNewArrivalsFrames(limit = 8): Promise<ApiResult<StorefrontFrame[]>> {
+  return apiGet<StorefrontFrame[]>("/api/frames/new-arrivals", { limit });
+}
+
+export function listNewArrivalsLenses(limit = 8): Promise<ApiResult<StorefrontLens[]>> {
+  return apiGet<StorefrontLens[]>("/api/lenses/new-arrivals", { limit });
 }
 
 /** Adds a frame so it appears on the site. */

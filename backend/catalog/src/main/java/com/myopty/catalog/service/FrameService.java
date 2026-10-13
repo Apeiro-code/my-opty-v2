@@ -133,6 +133,14 @@ public class FrameService {
     }
 
     @Transactional(readOnly = true)
+    public java.util.List<StorefrontFrameResponse> listNewArrivals(int limit) {
+        int n = limit > 0 ? limit : 8;
+        return frames.findNewArrivals(n).stream()
+                .map(StorefrontFrameResponse::from)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public StorefrontFrameResponse getActiveForStorefront(long id) {
         return frames.findByIdAndActiveTrue(id)
                 .map(StorefrontFrameResponse::from)

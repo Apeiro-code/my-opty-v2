@@ -21,10 +21,11 @@ const IMAGE_SIZES = "(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 90vw";
 export default function LensGrid() {
   const [lenses, setLenses] = useState<StorefrontLens[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [type, setType] = useState("");
 
   useEffect(() => {
     let active = true;
-    listStorefrontLenses()
+    listStorefrontLenses({ type: type || null })
       .then((res) => {
         if (!active) {
           return;
@@ -49,7 +50,7 @@ export default function LensGrid() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [type]);
 
   if (loadError) {
     return (
@@ -109,7 +110,11 @@ function LensCard({ lens }: { lens: StorefrontLens }) {
       </div>
       <div className="flex flex-1 flex-col gap-1 p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="font-medium">{lens.name}</h2>
+          <h2 className="font-medium">
+            <a href={`/lenses/${lens.id}`} className="hover:underline">
+              {lens.name}
+            </a>
+          </h2>
           <span
             className={
               lens.inStock

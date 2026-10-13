@@ -76,10 +76,41 @@ public class LensService {
     }
 
     @Transactional(readOnly = true)
+    public java.util.List<com.myopty.catalog.dto.StorefrontLensResponse> listActiveForStorefront(String type) {
+        if (type == null || type.trim().isEmpty()) {
+            return lenses.findAllByActiveTrueOrderByIdAsc().stream()
+                    .map(com.myopty.catalog.dto.StorefrontLensResponse::from)
+                    .toList();
+        }
+        try {
+            com.myopty.catalog.model.LensType lensType =
+                    com.myopty.catalog.model.LensType.valueOf(type.trim().toUpperCase());
+            return lenses.findAllByActiveTrueAndTypeOrderByIdAsc(lensType).stream()
+                    .map(com.myopty.catalog.dto.StorefrontLensResponse::from)
+                    .toList();
+        } catch (IllegalArgumentException e) {
+            return java.util.Collections.emptyList();
+        }
+    }
+
+    @Transactional(readOnly = true)
     public java.util.List<com.myopty.catalog.dto.StorefrontLensResponse> listActiveForStorefront() {
-        return lenses.findAllByActiveTrueOrderByIdAsc().stream()
+        return listActiveForStorefront(null);
+    }
+
+    @Transactional(readOnly = true)
+    public java.util.List<com.myopty.catalog.dto.StorefrontLensResponse> listNewArrivals(int limit) {
+        int n = limit > 0 ? limit : 8;
+        return lenses.findNewArrivals(n).stream()
                 .map(com.myopty.catalog.dto.StorefrontLensResponse::from)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public com.myopty.catalog.dto.StorefrontLensDetailResponse getActiveForStorefront(long id) {
+        return lenses.findByIdAndActiveTrue(id)
+                .map(com.myopty.catalog.dto.StorefrontLensDetailResponse::from)
+                .orElseThrow(() -> new ResourceNotFoundException("Lens not found."));
     }
 
     private static void apply(

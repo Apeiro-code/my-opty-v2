@@ -43,6 +43,13 @@ public class CatalogFrameController {
                 service.listActiveForStorefrontFiltered(category, minPrice, maxPrice, color, material, q));
     }
 
+    @GetMapping("/new-arrivals")
+    public ApiResponse<java.util.List<StorefrontFrameResponse>> newArrivals(
+            @org.springframework.web.bind.annotation.RequestParam(value = "limit", required = false, defaultValue = "8")
+                    int limit) {
+        return ApiResponse.of(service.listNewArrivals(limit));
+    }
+
     @GetMapping("/{id}")
     public ApiResponse<StorefrontFrameResponse> get(@org.springframework.web.bind.annotation.PathVariable long id) {
         return ApiResponse.of(service.getActiveForStorefront(id));

@@ -27,6 +27,7 @@ public class Lens {
     private String coating;
     private BigDecimal price;
     private int stockQty;
+    private String description;
 
     /** Thumbnail path or URL for the storefront; may be null. */
     @Column("image_url")
@@ -86,6 +87,14 @@ public class Lens {
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public void setPrice(BigDecimal price) {

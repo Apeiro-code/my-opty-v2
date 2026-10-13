@@ -1,4 +1,5 @@
 import Link from "next/link";
+import NewArrivals from "@/features/catalog/components/NewArrivals";
 
 /**
  * The public landing page.
@@ -60,6 +61,7 @@ export default function HomePage() {
           </Link>
         ))}
       </section>
+      <NewArrivals />
     </div>
   );
 }
