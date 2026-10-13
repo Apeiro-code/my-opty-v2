@@ -180,23 +180,23 @@
         <a href="index.html" class="btn-back"><i class="fas fa-arrow-left"></i> Back to Shop</a>
     </div>
 
-    <!-- Summary Metrics Cards -->
+    <!-- Summary Metrics Cards with IDs for dynamic backend data binding -->
     <div class="metrics-grid">
         <div class="metric-card">
             <h3>Monthly Gross Revenue</h3>
-            <div class="value revenue">Rs. 184,500.00</div>
+            <div class="value revenue" id="grossRevenueVal">Rs. 184,500.00</div>
         </div>
         <div class="metric-card">
             <h3>Net Estimated Profit</h3>
-            <div class="value profit">Rs. 74,000.00</div>
+            <div class="value profit" id="netProfitVal">Rs. 74,000.00</div>
         </div>
         <div class="metric-card">
             <h3>Total Refunds</h3>
-            <div class="value refund">Rs. 3,500.00</div>
+            <div class="value refund" id="totalRefundsVal">Rs. 3,500.00</div>
         </div>
         <div class="metric-card">
-            <h3>Today's Sales (13 Oct)</h3>
-            <div class="value" style="color: var(--warning-color);">Rs. 14,500.00</div>
+            <h3>Total Orders</h3>
+            <div class="value" style="color: var(--warning-color);" id="totalOrdersVal">0 Orders</div>
         </div>
     </div>
 
@@ -316,45 +316,64 @@
 </div>
 
 <script>
-    // Month-by-Month Revenue Comparison Chart
-    const ctxMonthly = document.getElementById('monthlyChart').getContext('2d');
-    new Chart(ctxMonthly, {
-        type: 'line',
-        data: {
-            labels: ['July', 'August', 'September', 'October (TD)'],
-            datasets: [{
-                label: 'Revenue (Rs.)',
-                data: [120000, 150000, 165000, 184500],
-                borderColor: '#3b82f6',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                borderWidth: 3,
-                fill: true,
-                tension: 0.3
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } }
-        }
-    });
+    // Fetch live data from Spring Boot Backend API and render charts
+    document.addEventListener("DOMContentLoaded", async () => {
+        try {
+            const response = await fetch('http://localhost:8080/api/reports/summary');
+            if (response.ok) {
+                const data = await response.json();
+                console.log("Fetched Report Data from Database:", data);
 
-    // Day-to-Day Comparison Chart
-    const ctxDaily = document.getElementById('dailyChart').getContext('2d');
-    new Chart(ctxDaily, {
-        type: 'bar',
-        data: {
-            labels: ['Oct 10', 'Oct 11', 'Oct 12', 'Oct 13'],
-            datasets: [{
-                label: 'Daily Sales (Rs.)',
-                data: [11000, 18500, 12000, 14500],
-                backgroundColor: '#10b981',
-                borderRadius: 6
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } }
+                // Update UI metric cards dynamically from database data
+                document.getElementById('grossRevenueVal').innerText = "Rs. " + data.grossRevenue.toLocaleString('en-US', {minimumFractionDigits: 2});
+                document.getElementById('netProfitVal').innerText = "Rs. " + data.estimatedProfit.toLocaleString('en-US', {minimumFractionDigits: 2});
+                document.getElementById('totalRefundsVal').innerText = "Rs. " + data.totalRefunds.toLocaleString('en-US', {minimumFractionDigits: 2});
+                document.getElementById('totalOrdersVal').innerText = data.totalOrders + " Orders";
+            }
+        } catch (error) {
+            console.error("Error fetching report data from backend:", error);
         }
+
+        // Month-by-Month Revenue Comparison Chart
+        const ctxMonthly = document.getElementById('monthlyChart').getContext('2d');
+        new Chart(ctxMonthly, {
+            type: 'line',
+            data: {
+                labels: ['July', 'August', 'September', 'October (TD)'],
+                datasets: [{
+                    label: 'Revenue (Rs.)',
+                    data: [120000, 150000, 165000, 184500],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        // Day-to-Day Comparison Chart
+        const ctxDaily = document.getElementById('dailyChart').getContext('2d');
+        new Chart(ctxDaily, {
+            type: 'bar',
+            data: {
+                labels: ['Oct 10', 'Oct 11', 'Oct 12', 'Oct 13'],
+                datasets: [{
+                    label: 'Daily Sales (Rs.)',
+                    data: [11000, 18500, 12000, 14500],
+                    backgroundColor: '#10b981',
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } }
+            }
+        });
     });
 </script>
 
