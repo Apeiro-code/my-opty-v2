@@ -11,3 +11,5 @@ If you are not trying to use TypeScript, please remove the tsconfig.json file fr
 [00:00:07.041] Server  LOG      ✓ Ready in 6.5s
 [00:00:28.485] Server  LOG      ○ Compiling /tasks ...
 [00:00:31.227] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+{"timestamp":"18:35:01.571","source":"Server","level":"LOG","message":"  Reload env: .env"}
+{"timestamp":"18:35:03.987","source":"Server","level":"LOG","message":"✓ Compiled in 1799ms"}
