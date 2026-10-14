@@ -1,7 +1,7 @@
 package com.myopty.shared.user;
 
 import java.util.Optional;
-import org.springframework.data.repository.Repository;
+import org.springframework.data.repository.CrudRepository;
 
 /**
  * Reads {@code app_user}. A marker repository, not {@code CrudRepository}: until
@@ -10,9 +10,13 @@ import org.springframework.data.repository.Repository;
  * than a review habit. Registration will widen this deliberately, in its own
  * change, together with whatever verification flow goes with it.
  */
-public interface AppUserRepository extends Repository<AppUser, Long> {
+public interface AppUserRepository extends CrudRepository<AppUser, Long> {
 
     Optional<AppUser> findById(Long id);
 
     Optional<AppUser> findByEmail(String email);
+
+    boolean existsByEmail(String email);
+
+    boolean existsByPhone(String phone);
 }

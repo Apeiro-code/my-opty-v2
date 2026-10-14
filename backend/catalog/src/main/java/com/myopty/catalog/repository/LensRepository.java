@@ -27,6 +27,18 @@ public interface LensRepository extends Repository<Lens, Long> {
 
     List<Lens> findAllByOrderByIdAsc();
 
+    /** Active lenses for storefront, oldest first. */
+    List<Lens> findAllByActiveTrueOrderByIdAsc();
+
+    List<Lens> findAllByActiveTrueAndTypeOrderByIdAsc(com.myopty.catalog.model.LensType type);
+
+    @Query("""
+            SELECT * FROM lens WHERE is_active = TRUE ORDER BY created_at DESC, id DESC LIMIT :limit
+            """)
+    List<Lens> findNewArrivals(@Param("limit") int limit);
+
+    java.util.Optional<Lens> findByIdAndActiveTrue(Long id);
+
     /**
      * Takes {@code quantity} off a lens in one statement. Returns the number of
      * rows changed, which is zero — and nothing is modified — when the lens

@@ -54,8 +54,9 @@ class SchemaMigrationTest {
 
         assertThat(versions)
                 .containsExactly(
-                        "1", "1.1", "1.2", "1.3", "2", "3", "4", "5", "6", "7", "100", "101", "102", "103", "104",
-                        "105", "106", "107", "200", "201", "202", "203", "300", "301", "302", "303");
+                        "1", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "2", "3", "4", "5", "6", "7", "8", "100", "101",
+                        "102", "103", "104", "105", "106", "107", "200", "201", "202", "203", "300", "301", "302",
+                        "303");
     }
 
     @Test
@@ -77,6 +78,7 @@ class SchemaMigrationTest {
                         "dealer",
                         "dealer_email",
                         "discount",
+                        "email_verification",
                         "frame",
                         "invoice",
                         "lens",
@@ -106,6 +108,12 @@ class SchemaMigrationTest {
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM lens", Long.class)).isGreaterThanOrEqualTo(6);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM discount", Long.class))
                 .isGreaterThanOrEqualTo(4);
+
+        // The FAQ page must not open empty before anyone has asked anything: the
+        // seed rows are the only answered, marked questions until Epic 5 exists.
+        assertThat(jdbc.queryForObject(
+                        "SELECT COUNT(*) FROM question WHERE is_faq = TRUE AND answer_text IS NOT NULL", Long.class))
+                .isGreaterThanOrEqualTo(3);
 
         // The variety the shopping and inventory features need, not just row counts.
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM lens WHERE type = 'PROGRESSIVE'", Long.class))

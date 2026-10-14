@@ -9,11 +9,14 @@ import org.springframework.data.relational.core.mapping.Table;
  * A frame the shop sells: the model and its colourway, what it is made of, its
  * price and how many are on the shelf.
  *
- * <p>Only the columns the add/edit stories own are mapped. {@code shape},
- * {@code image_url}, {@code description} and {@code low_stock_threshold} exist in
- * V3 and are left unmapped here, so their column defaults survive a save and this
+ * <p>Only the columns the add/edit and storefront-browse stories own are mapped.
+ * {@code shape}, {@code description} and {@code low_stock_threshold} exist in V3
+ * and are left unmapped here, so their column defaults survive a save and this
  * story cannot quietly overwrite a value another story sets. An unmapped field is
  * not a missing one; adding it to the form is the change that adds it here.
+ * {@code imageUrl} is mapped for the customer-facing browse, which shows a
+ * thumbnail; the owner's form does not set it, so a create writes null and an
+ * update loads the stored value and saves it back untouched.
  *
  * <p>The database fills {@code created_at} and {@code updated_at} from their column
  * defaults, so no fields exist for them and a save never writes them.
@@ -34,6 +37,10 @@ public class Frame {
     /** Named explicitly: the property is {@code active} but the column is {@code is_active}. */
     @Column("is_active")
     private boolean active;
+
+    /** Named explicitly: the property is {@code imageUrl} but the column is {@code image_url}. */
+    @Column("image_url")
+    private String imageUrl;
 
     public Long getId() {
         return id;
@@ -97,5 +104,13 @@ public class Frame {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 }

@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.myopty.catalog.dto.CreateFrameRequest;
 import com.myopty.catalog.dto.FrameResponse;
+import com.myopty.catalog.dto.StorefrontFrameResponse;
 import com.myopty.catalog.dto.UpdateFrameRequest;
 import com.myopty.catalog.exception.InvalidCategoryException;
 import com.myopty.catalog.exception.ResourceNotFoundException;
@@ -164,6 +165,91 @@ class FrameServiceTest {
         assertThat(service.list()).extracting(FrameResponse::model).containsExactly("Astra 2100", "Willow 08");
     }
 
+    @Test
+    void theStorefrontListsOnlyActiveFramesOldestFirst() {
+        service.create(request("Astra 2100", "Matte Black", "Acetate", "4500.00", 12, null));
+        service.create(request("Falcon 330", "Clear", "Acetate", "5400.00", 0, false));
+        service.create(request("Willow 08", "Plum", "TR-90", "3800.00", 15, null));
+
+        assertThat(service.listActiveForStorefront())
+                .extracting(StorefrontFrameResponse::model)
+                .containsExactly("Astra 2100", "Willow 08");
+    }
+
+    @Test
+    void theStorefrontCanBeFilteredByCategorySlug() {
+        long men = categoryRepository.store("Men", CategoryItemType.FRAME);
+        long women = categoryRepository.store("Women", CategoryItemType.FRAME);
+        FrameResponse menFrame =
+                service.create(request("Astra 2100", "Matte Black", "Acetate", "4500.00", 12, null, men));
+        service.create(request("Meridian", "Champagne", "Titanium", "9200.00", 6, null, women));
+
+        assertThat(service.listActiveForStorefrontFiltered("men", null, null, null, null, null))
+                .extracting(StorefrontFrameResponse::id)
+                .containsExactly(menFrame.id());
+    }
+
+    @Test
+    void theStorefrontFiltersByPriceRangeInclusively() {
+        service.create(request("Astra 2100", "Matte Black", "Acetate", "4500.00", 12, null));
+        FrameResponse mid = service.create(request("Kestrel 04", "Gunmetal", "Steel", "6800.00", 8, null));
+        service.create(request("Meridian", "Champagne", "Titanium", "9200.00", 6, null));
+
+        assertThat(service.listActiveForStorefrontFiltered(
+                        null, new BigDecimal("5000.00"), new BigDecimal("8000.00"), null, null, null))
+                .extracting(StorefrontFrameResponse::id)
+                .containsExactly(mid.id());
+    }
+
+    @Test
+    void theStorefrontFiltersByColorAndMaterialCaseInsensitively() {
+        FrameResponse black = service.create(request("Astra 2100", "Matte Black", "Acetate", "4500.00", 12, null));
+        service.create(request("Willow 08", "Plum", "TR-90", "3800.00", 15, null));
+        FrameResponse titanium = service.create(request("Meridian", "Rose Gold", "Titanium", "9200.00", 6, null));
+
+        assertThat(service.listActiveForStorefrontFiltered(null, null, null, "black", null, null))
+                .extracting(StorefrontFrameResponse::id)
+                .containsExactly(black.id());
+        assertThat(service.listActiveForStorefrontFiltered(null, null, null, null, "titanium", null))
+                .extracting(StorefrontFrameResponse::id)
+                .containsExactly(titanium.id());
+    }
+
+    @Test
+    void theStorefrontCombinesFiltersWithAnd() {
+        long men = categoryRepository.store("Men", CategoryItemType.FRAME);
+        service.create(request("Astra 2100", "Matte Black", "Acetate", "4500.00", 12, null, men));
+        FrameResponse match = service.create(request("Kestrel 04", "Gunmetal", "Steel", "6800.00", 8, null, men));
+        service.create(request("Meridian", "Champagne", "Titanium", "9200.00", 6, null, men));
+
+        assertThat(service.listActiveForStorefrontFiltered(
+                        "men", new BigDecimal("5000.00"), new BigDecimal("8000.00"), "gunmetal", "steel", null))
+                .extracting(StorefrontFrameResponse::id)
+                .containsExactly(match.id());
+    }
+
+    @Test
+    void theStorefrontReturnsEmptyWhenNoFramesMatchFilters() {
+        service.create(request("Astra 2100", "Matte Black", "Acetate", "4500.00", 12, null));
+        assertThat(service.listActiveForStorefrontFiltered("women", null, null, null, null, null))
+                .isEmpty();
+    }
+
+    @Test
+    void theStorefrontReportsThumbnailAndFriendlyStock() {
+        FrameResponse inStock = service.create(request("Astra 2100", "Matte Black", "Acetate", "4500.00", 12, null));
+        FrameResponse soldOut = service.create(request("Willow 08", "Plum", "TR-90", "3800.00", 0, null));
+        frames.findById(inStock.id()).orElseThrow().setImageUrl("/images/frames/astra-2100.jpg");
+
+        List<StorefrontFrameResponse> listed = service.listActiveForStorefront();
+
+        assertThat(listed)
+                .extracting(StorefrontFrameResponse::imageUrl)
+                .containsExactly("/images/frames/astra-2100.jpg", null);
+        assertThat(listed).extracting(StorefrontFrameResponse::inStock).containsExactly(true, false);
+        assertThat(listed).extracting(StorefrontFrameResponse::id).containsExactly(inStock.id(), soldOut.id());
+    }
+
     private static CreateFrameRequest request(
             String model, String color, String material, String price, int stockQty, Boolean active) {
         return request(model, color, material, price, stockQty, active, null);
@@ -178,6 +264,7 @@ class FrameServiceTest {
 
         private final AtomicLong ids = new AtomicLong();
         private final Map<Long, Frame> byId = new HashMap<>();
+        private final Map<Long, com.myopty.catalog.model.Category> categories = new HashMap<>();
 
         @Override
         public Frame save(Frame frame) {
@@ -188,14 +275,88 @@ class FrameServiceTest {
             return frame;
         }
 
+        void addCategory(Category category) {
+            if (category != null && category.getId() != null) {
+                categories.put(category.getId(), category);
+            }
+        }
+
         @Override
         public Optional<Frame> findById(Long id) {
             return Optional.ofNullable(byId.get(id));
         }
 
         @Override
+        public Optional<Frame> findByIdAndActiveTrue(Long id) {
+            return findById(id).filter(Frame::isActive);
+        }
+
+        @Override
         public List<Frame> findAllByOrderByIdAsc() {
             return byId.values().stream()
+                    .sorted(Comparator.comparing(Frame::getId))
+                    .toList();
+        }
+
+        @Override
+        public List<Frame> findAllByActiveTrueOrderByIdAsc() {
+            return byId.values().stream()
+                    .filter(Frame::isActive)
+                    .sorted(Comparator.comparing(Frame::getId))
+                    .toList();
+        }
+
+        @Override
+        public List<Frame> findActiveForStorefront(
+                String categorySlug,
+                java.math.BigDecimal minPrice,
+                java.math.BigDecimal maxPrice,
+                String color,
+                String material,
+                String q) {
+            return byId.values().stream()
+                    .filter(Frame::isActive)
+                    .filter(frame -> {
+                        if (categorySlug != null) {
+                            if (categories.get(frame.getCategoryId()) == null) {
+                                return false;
+                            }
+                            String slug = categories.get(frame.getCategoryId()).getSlug();
+                            if (slug == null || !slug.equalsIgnoreCase(categorySlug)) {
+                                return false;
+                            }
+                        }
+                        if (minPrice != null
+                                && frame.getPrice() != null
+                                && frame.getPrice().compareTo(minPrice) < 0) {
+                            return false;
+                        }
+                        if (maxPrice != null
+                                && frame.getPrice() != null
+                                && frame.getPrice().compareTo(maxPrice) > 0) {
+                            return false;
+                        }
+                        if (color != null && !color.isBlank()) {
+                            String c = frame.getColor();
+                            if (c == null || !c.toLowerCase().contains(color.toLowerCase())) {
+                                return false;
+                            }
+                        }
+                        if (material != null && !material.isBlank()) {
+                            String m = frame.getMaterial();
+                            if (m == null || !m.toLowerCase().contains(material.toLowerCase())) {
+                                return false;
+                            }
+                        }
+                        if (q != null && !q.trim().isEmpty()) {
+                            String model = frame.getModel();
+                            if (model == null
+                                    || !model.toLowerCase().contains(q.trim().toLowerCase())) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    })
                     .sorted(Comparator.comparing(Frame::getId))
                     .toList();
         }
@@ -221,7 +382,7 @@ class FrameServiceTest {
         }
     }
 
-    private static final class FakeCategoryRepository implements CategoryRepository {
+    private final class FakeCategoryRepository implements CategoryRepository {
 
         private final AtomicLong ids = new AtomicLong();
         private final Map<Long, Category> byId = new HashMap<>();
@@ -233,6 +394,15 @@ class FrameServiceTest {
             category.setSlug(name.toLowerCase());
             category.setItemType(itemType);
             byId.put(category.getId(), category);
+            // also sync to frames fake for filtering tests
+            try {
+                java.lang.reflect.Field f = frames.getClass().getDeclaredField("categories");
+                f.setAccessible(true);
+                @SuppressWarnings("unchecked")
+                java.util.Map<Long, Category> map = (java.util.Map<Long, Category>) f.get(frames);
+                map.put(category.getId(), category);
+            } catch (Exception ignored) {
+            }
             return category.getId();
         }
 

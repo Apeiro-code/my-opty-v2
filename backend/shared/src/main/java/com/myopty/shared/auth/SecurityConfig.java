@@ -8,6 +8,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -49,14 +50,17 @@ import tools.jackson.databind.ObjectMapper;
  *
  * <p>The role rule is written once, here, rather than in each controller:
  * {@code /api/shop/**} is the shop owner's side (the frontend's
- * {@code (client)/shop} group), so it needs {@code ROLE_CLIENT}; everything
+ * {@code (client)/shop} group), so it needs {@code ROLE_CLIENT}; the customer's
+ * own profile edit ({@code PUT /api/auth/me}) and question endpoints
+ * ({@code GET/POST /api/questions}) need {@code ROLE_CUSTOMER}, matched by method
+ * and path so the public FAQ read is not caught by the same rule; everything
  * else under {@code /api/**} needs a session but makes no distinction between
  * the two roles — finer-grained rules arrive with the endpoints that need them.
  *
  * <p>{@code PUBLIC_PATHS} is the short list that skips a session altogether. The
- * storefront's read of running promotions is on it because browsing is anonymous
- * and the promotions are what the customer is being shown; each entry there is a
- * deliberate opening, not a default.
+ * storefront's reads are on it because browsing is anonymous: the running
+ * promotions the customer is being shown, and the frame catalogue for sale. Each
+ * entry there is a deliberate opening, not a default.
  */
 @Configuration
 @EnableWebSecurity
@@ -68,7 +72,15 @@ public class SecurityConfig {
         "/swagger-ui/**",
         "/v3/api-docs/**",
         "/api/auth/login",
-        "/api/discounts/active"
+        "/api/auth/register",
+        "/api/auth/verify-email",
+        "/api/auth/resend-verification",
+        "/api/discounts/active",
+        "/api/frames",
+        "/api/frames/**",
+        "/api/lenses",
+        "/api/lenses/**",
+        "/api/questions/faq"
     };
 
     private final List<String> allowedOrigins;
@@ -88,6 +100,12 @@ public class SecurityConfig {
                 .securityContext(sc -> sc.securityContextRepository(securityContextRepository))
                 .authorizeHttpRequests(auth -> auth.requestMatchers(PUBLIC_PATHS)
                         .permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/api/auth/me")
+                        .hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.POST, "/api/questions")
+                        .hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.GET, "/api/questions")
+                        .hasRole("CUSTOMER")
                         .requestMatchers("/api/shop/**")
                         .hasRole("CLIENT")
                         .requestMatchers("/api/**")

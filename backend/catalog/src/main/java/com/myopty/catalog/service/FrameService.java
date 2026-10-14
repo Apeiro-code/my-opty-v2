@@ -2,6 +2,7 @@ package com.myopty.catalog.service;
 
 import com.myopty.catalog.dto.CreateFrameRequest;
 import com.myopty.catalog.dto.FrameResponse;
+import com.myopty.catalog.dto.StorefrontFrameResponse;
 import com.myopty.catalog.dto.UpdateFrameRequest;
 import com.myopty.catalog.exception.ResourceNotFoundException;
 import com.myopty.catalog.model.CategoryItemType;
@@ -93,6 +94,65 @@ public class FrameService {
     @Transactional(readOnly = true)
     public List<FrameResponse> list() {
         return frames.findAllByOrderByIdAsc().stream().map(FrameResponse::from).toList();
+    }
+
+    /**
+     * The frames a browsing visitor may see: the active ones, oldest first, wrapped
+     * in the public shape that drops the shop's own stock count and active flag.
+     */
+    @Transactional(readOnly = true)
+    public List<StorefrontFrameResponse> listActiveForStorefront() {
+        return frames.findAllByActiveTrueOrderByIdAsc().stream()
+                .map(StorefrontFrameResponse::from)
+                .toList();
+    }
+
+    /**
+     * The frames a browsing visitor may see, filtered by the provided criteria. All
+     * parameters are optional; an empty or blank string is treated as no filter.
+     * Results are oldest first and only active frames are returned.
+     */
+    @Transactional(readOnly = true)
+    public List<StorefrontFrameResponse> listActiveForStorefrontFiltered(
+            String categorySlug,
+            java.math.BigDecimal minPrice,
+            java.math.BigDecimal maxPrice,
+            String color,
+            String material,
+            String q) {
+        String normalizedCategory = normalize(categorySlug);
+        String normalizedColor = normalize(color);
+        String normalizedMaterial = normalize(material);
+        String normalizedQ = normalize(q);
+        return frames
+                .findActiveForStorefront(
+                        normalizedCategory, minPrice, maxPrice, normalizedColor, normalizedMaterial, normalizedQ)
+                .stream()
+                .map(StorefrontFrameResponse::from)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public java.util.List<StorefrontFrameResponse> listNewArrivals(int limit) {
+        int n = limit > 0 ? limit : 8;
+        return frames.findNewArrivals(n).stream()
+                .map(StorefrontFrameResponse::from)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public StorefrontFrameResponse getActiveForStorefront(long id) {
+        return frames.findByIdAndActiveTrue(id)
+                .map(StorefrontFrameResponse::from)
+                .orElseThrow(() -> new ResourceNotFoundException("Frame not found."));
+    }
+
+    private static String normalize(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     private static void apply(

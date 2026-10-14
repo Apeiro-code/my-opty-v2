@@ -30,7 +30,7 @@ CREATE TABLE app_user (
     UNIQUE KEY uq_app_user_phone (phone),
     KEY idx_app_user_role (role),
     CONSTRAINT chk_app_user_role
-        CHECK (role IN ('CUSTOMER', 'CLIENT')),
+        CHECK (role IN ('CUSTOMER', 'CLIENT', 'ADMIN')),
     CONSTRAINT chk_app_user_status
         CHECK (status IN ('PENDING_VERIFICATION', 'ACTIVE', 'DISABLED'))
 )

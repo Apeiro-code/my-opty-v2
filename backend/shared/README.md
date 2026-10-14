@@ -39,6 +39,9 @@ person, and each is keyed by `app_user.id`.
 | `auth/SecurityConfig` | The whole filter chain: deny-by-default on `/api/**`, `ROLE_CLIENT` on `/api/shop/**`, the two auth endpoints and `/actuator/health` public. CSRF is off with the reason documented in the class; CORS reads `CORS_ALLOWED_ORIGINS`; 401 and 403 are JSON bodies in the API's error envelope. |
 | `auth/AuthController` | `POST /api/auth/login`, `GET /api/auth/me`, `POST /api/auth/logout`. Login discards any pre-authentication session before establishing identity (fixation), and logout invalidates the session outright. |
 | `auth/dto/*` | The request and response shapes, as records with the validation that keeps malformed input out of the controller. |
+| `question/controller/*` | The Q&A endpoints: `POST /api/questions` (customer asks), `GET /api/questions` (their own), `GET /api/questions/faq` (public), and `GET`/`PUT /api/shop/questions` (the shop's unanswered queue and the answer). |
+| `question/service/QuestionService` | Ask, read, and answer. Answering sets the answer, its timestamp and the answering client, then emails the customer after the transaction commits through a `QuestionNotifier` seam. |
+| `question/repository/QuestionRepository` | Reads for the customer's own list, the shop's open queue and the public FAQ; writes questions and their answers. |
 
 Registration, password reset and a login screen in the frontend are later stories — until
 they land, the only accounts are the two `V1_3` fixtures, and "logged in" means the session

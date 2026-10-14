@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AuthNav from "@/features/shared/components/AuthNav";
 
 /**
  * Layout for the shop owner. Separate from `(customer)` so the owner does not inherit the
@@ -25,6 +26,9 @@ export default function ClientLayout({ children }: LayoutProps<"/">) {
           <Link href="/shop/prescriptions" className="text-sm hover:underline">
             Prescriptions
           </Link>
+          <Link href="/shop/questions" className="text-sm hover:underline">
+            Questions
+          </Link>
           <Link href="/shop/inventory" className="text-sm hover:underline">
             Inventory
           </Link>
@@ -37,6 +41,7 @@ export default function ClientLayout({ children }: LayoutProps<"/">) {
           <Link href="/shop/billing" className="text-sm hover:underline">
             Billing
           </Link>
+          <AuthNav />
         </nav>
       </header>
 
