@@ -1,10 +1,9 @@
 package com.myopty.workflow.config;
 
 import com.myopty.workflow.service.TodoTaskService;
+import jakarta.annotation.PostConstruct;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import jakarta.annotation.PostConstruct;
-import java.util.List;
 
 @Component
 public class OverdueReminderScheduler {

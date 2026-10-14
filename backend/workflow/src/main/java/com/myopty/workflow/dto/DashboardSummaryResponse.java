@@ -18,9 +18,16 @@ public class DashboardSummaryResponse {
     public DashboardSummaryResponse() {}
 
     // Constructor from Entity
-    public DashboardSummaryResponse(Integer summaryId, Integer clientId, LocalDate date,
-                                   Double totalSales, Integer totalOrders, Integer lowStockItems,
-                                   Integer pendingTasks, LocalDate createdAt, LocalDateTime createdAtTime) {
+    public DashboardSummaryResponse(
+            Integer summaryId,
+            Integer clientId,
+            LocalDate date,
+            Double totalSales,
+            Integer totalOrders,
+            Integer lowStockItems,
+            Integer pendingTasks,
+            LocalDate createdAt,
+            LocalDateTime createdAtTime) {
         this.summaryId = summaryId;
         this.clientId = clientId;
         this.date = date;
@@ -33,30 +40,75 @@ public class DashboardSummaryResponse {
     }
 
     // Getters and Setters
-    public Integer getSummaryId() { return summaryId; }
-    public void setSummaryId(Integer summaryId) { this.summaryId = summaryId; }
+    public Integer getSummaryId() {
+        return summaryId;
+    }
 
-    public Integer getClientId() { return clientId; }
-    public void setClientId(Integer clientId) { this.clientId = clientId; }
+    public void setSummaryId(Integer summaryId) {
+        this.summaryId = summaryId;
+    }
 
-    public LocalDate getDate() { return date; }
-    public void setDate(LocalDate date) { this.date = date; }
+    public Integer getClientId() {
+        return clientId;
+    }
 
-    public Double getTotalSales() { return totalSales; }
-    public void setTotalSales(Double totalSales) { this.totalSales = totalSales; }
+    public void setClientId(Integer clientId) {
+        this.clientId = clientId;
+    }
 
-    public Integer getTotalOrders() { return totalOrders; }
-    public void setTotalOrders(Integer totalOrders) { this.totalOrders = totalOrders; }
+    public LocalDate getDate() {
+        return date;
+    }
 
-    public Integer getLowStockItems() { return lowStockItems; }
-    public void setLowStockItems(Integer lowStockItems) { this.lowStockItems = lowStockItems; }
+    public void setDate(LocalDate date) {
+        this.date = date;
+    }
 
-    public Integer getPendingTasks() { return pendingTasks; }
-    public void setPendingTasks(Integer pendingTasks) { this.pendingTasks = pendingTasks; }
+    public Double getTotalSales() {
+        return totalSales;
+    }
 
-    public LocalDate getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDate createdAt) { this.createdAt = createdAt; }
+    public void setTotalSales(Double totalSales) {
+        this.totalSales = totalSales;
+    }
 
-    public LocalDateTime getCreatedAtTime() { return createdAtTime; }
-    public void setCreatedAtTime(LocalDateTime createdAtTime) { this.createdAtTime = createdAtTime; }
+    public Integer getTotalOrders() {
+        return totalOrders;
+    }
+
+    public void setTotalOrders(Integer totalOrders) {
+        this.totalOrders = totalOrders;
+    }
+
+    public Integer getLowStockItems() {
+        return lowStockItems;
+    }
+
+    public void setLowStockItems(Integer lowStockItems) {
+        this.lowStockItems = lowStockItems;
+    }
+
+    public Integer getPendingTasks() {
+        return pendingTasks;
+    }
+
+    public void setPendingTasks(Integer pendingTasks) {
+        this.pendingTasks = pendingTasks;
+    }
+
+    public LocalDate getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDate createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getCreatedAtTime() {
+        return createdAtTime;
+    }
+
+    public void setCreatedAtTime(LocalDateTime createdAtTime) {
+        this.createdAtTime = createdAtTime;
+    }
 }

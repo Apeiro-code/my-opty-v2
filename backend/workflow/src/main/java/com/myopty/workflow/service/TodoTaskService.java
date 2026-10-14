@@ -4,10 +4,8 @@ import com.myopty.workflow.dto.TodoTaskRequest;
 import com.myopty.workflow.dto.TodoTaskResponse;
 import com.myopty.workflow.model.TodoTask;
 import com.myopty.workflow.repository.TodoTaskRepository;
-import org.springframework.stereotype.Service;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
+import org.springframework.stereotype.Service;
 
 @Service
 public class TodoTaskService {
@@ -34,7 +32,8 @@ public class TodoTaskService {
     }
 
     public TodoTaskResponse updateStatus(Integer taskId, String newStatus) {
-        TodoTask task = repository.findById(taskId)
+        TodoTask task = repository
+                .findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Task not found with id: " + taskId));
         task.setStatus(newStatus);
         if ("DONE".equals(newStatus)) {
@@ -72,7 +71,6 @@ public class TodoTaskService {
                 task.getDueDate(),
                 task.getPriority(),
                 task.getReminderSent(),
-                task.getCreatedAt()
-        );
+                task.getCreatedAt());
     }
 }

@@ -20,6 +20,13 @@
             <groupId>com.myopty</groupId>
             <artifactId>contracts</artifactId>
         </dependency>
+        <!-- The authenticated principal, the error bodies and the mail sender all
+             live in shared, so billing depends on it rather than re-declaring
+             security and mail starters of its own. -->
+        <dependency>
+            <groupId>com.myopty</groupId>
+            <artifactId>shared</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webmvc</artifactId>
@@ -35,6 +42,12 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-flyway</artifactId>
+        </dependency>
+        <!-- Draws the invoice PDF from a table. Billing-local: only the receipt
+             needs it, so no other module pays for the jar. -->
+        <dependency>
+            <groupId>com.github.librepdf</groupId>
+            <artifactId>openpdf</artifactId>
         </dependency>
         <!-- The starter alone does not include a MySQL driver for Flyway. -->
         <dependency>

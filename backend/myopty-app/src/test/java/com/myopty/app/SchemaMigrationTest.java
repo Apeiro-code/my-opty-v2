@@ -55,8 +55,8 @@ class SchemaMigrationTest {
         assertThat(versions)
                 .containsExactly(
                         "1", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "2", "3", "4", "5", "6", "7", "8", "100", "101",
-                        "102", "103", "104", "105", "106", "107", "200", "201", "202", "203", "300", "301", "302",
-                        "303");
+                        "102", "103", "104", "105", "106", "107", "199", "200", "201", "202", "203", "204", "205",
+                        "206", "207", "208", "300", "301", "302", "303", "304", "305", "306");
     }
 
     @Test
@@ -73,8 +73,10 @@ class SchemaMigrationTest {
                         "availability_report",
                         "billing_report",
                         "category",
+                        "client",
                         "client_profile",
                         "customer_profile",
+                        "dashboard_summary",
                         "dealer",
                         "dealer_email",
                         "discount",
@@ -86,9 +88,13 @@ class SchemaMigrationTest {
                         "order_notification",
                         "payment",
                         "payment_method",
+                        "payment_refund",
                         "prescription",
                         "progressive_order",
                         "question",
+                        "report_historical",
+                        "report_inventory_monthly",
+                        "report_sales_monthly",
                         "stock_entry",
                         "stock_update",
                         "todo_task");

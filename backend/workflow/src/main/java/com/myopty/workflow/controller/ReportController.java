@@ -3,11 +3,9 @@ package com.myopty.workflow.controller;
 import com.myopty.workflow.dto.*;
 import com.myopty.workflow.model.*;
 import com.myopty.workflow.service.ReportService;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
-
 import java.time.*;
 import java.util.*;
+import org.springframework.web.bind.annotation.*;
 
 @CrossOrigin(origins = "http://localhost:3000")
 @RestController
@@ -20,7 +18,7 @@ public class ReportController {
         this.service = service;
     }
 
-// ===== Monthly Sales Report =====
+    // ===== Monthly Sales Report =====
 
     @GetMapping("/sales/monthly")
     public ReportSalesMonthlyResponse getMonthlySalesReport(
@@ -35,12 +33,11 @@ public class ReportController {
     }
 
     @PostMapping("/sales/monthly")
-    public ReportSalesMonthlyResponse generateMonthlySalesReport(
-            @RequestBody ReportSalesMonthlyRequest request) {
+    public ReportSalesMonthlyResponse generateMonthlySalesReport(@RequestBody ReportSalesMonthlyRequest request) {
         return service.generateMonthlySalesReport(request);
     }
 
-// ===== Monthly Inventory Report =====
+    // ===== Monthly Inventory Report =====
 
     @GetMapping("/inventory/monthly")
     public ReportInventoryMonthlyResponse getMonthlyInventoryReport(
@@ -80,8 +77,7 @@ public class ReportController {
 
     @GetMapping("/dashboard/summary")
     public DashboardSummaryResponse getDailyDashboardSummary(
-            @RequestParam Integer clientId,
-            @RequestParam(required = false) String date) {
+            @RequestParam Integer clientId, @RequestParam(required = false) String date) {
         LocalDate localDate = date != null ? LocalDate.parse(date) : LocalDate.now();
         return service.getDailyDashboardSummary(clientId, localDate);
     }
@@ -90,9 +86,7 @@ public class ReportController {
 
     @GetMapping("/export/sales/pdf")
     public byte[] exportSalesPdf(
-            @RequestParam Integer clientId,
-            @RequestParam Integer month,
-            @RequestParam Integer year) {
+            @RequestParam Integer clientId, @RequestParam Integer month, @RequestParam Integer year) {
         // In a real implementation, this would generate a PDF report
         // For now, return empty bytes with appropriate headers
         return new byte[0];
@@ -100,9 +94,7 @@ public class ReportController {
 
     @GetMapping("/export/sales/excel")
     public byte[] exportSalesExcel(
-            @RequestParam Integer clientId,
-            @RequestParam Integer month,
-            @RequestParam Integer year) {
+            @RequestParam Integer clientId, @RequestParam Integer month, @RequestParam Integer year) {
         // In a real implementation, this would generate an Excel report
         // For now, return empty bytes with appropriate headers
         return new byte[0];
@@ -110,34 +102,26 @@ public class ReportController {
 
     @GetMapping("/export/inventory/pdf")
     public byte[] exportInventoryPdf(
-            @RequestParam Integer clientId,
-            @RequestParam Integer month,
-            @RequestParam Integer year) {
+            @RequestParam Integer clientId, @RequestParam Integer month, @RequestParam Integer year) {
         // In a real implementation, this would generate a PDF inventory report
         return new byte[0];
     }
 
     @GetMapping("/export/inventory/excel")
     public byte[] exportInventoryExcel(
-            @RequestParam Integer clientId,
-            @RequestParam Integer month,
-            @RequestParam Integer year) {
+            @RequestParam Integer clientId, @RequestParam Integer month, @RequestParam Integer year) {
         // In a real implementation, this would generate an Excel inventory report
         return new byte[0];
     }
 
     @GetMapping("/export/dashboard/pdf")
-    public byte[] exportDashboardPdf(
-            @RequestParam Integer clientId,
-            @RequestParam(required = false) String date) {
+    public byte[] exportDashboardPdf(@RequestParam Integer clientId, @RequestParam(required = false) String date) {
         LocalDate localDate = date != null ? LocalDate.parse(date) : LocalDate.now();
         return new byte[0];
     }
 
     @GetMapping("/export/dashboard/excel")
-    public byte[] exportDashboardExcel(
-            @RequestParam Integer clientId,
-            @RequestParam(required = false) String date) {
+    public byte[] exportDashboardExcel(@RequestParam Integer clientId, @RequestParam(required = false) String date) {
         LocalDate localDate = date != null ? LocalDate.parse(date) : LocalDate.now();
         return new byte[0];
     }

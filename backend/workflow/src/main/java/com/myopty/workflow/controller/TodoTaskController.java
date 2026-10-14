@@ -3,9 +3,8 @@ package com.myopty.workflow.controller;
 import com.myopty.workflow.dto.TodoTaskRequest;
 import com.myopty.workflow.dto.TodoTaskResponse;
 import com.myopty.workflow.service.TodoTaskService;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
+import org.springframework.web.bind.annotation.*;
 
 @CrossOrigin(origins = "http://localhost:3000")
 @RestController
@@ -19,8 +18,7 @@ public class TodoTaskController {
     }
 
     @PostMapping
-    public TodoTaskResponse createTask(@RequestBody TodoTaskRequest request,
-                                       @RequestParam Integer clientId) {
+    public TodoTaskResponse createTask(@RequestBody TodoTaskRequest request, @RequestParam Integer clientId) {
         return service.createTask(clientId, request);
     }
 
@@ -30,8 +28,7 @@ public class TodoTaskController {
     }
 
     @PutMapping("/{id}/status")
-    public TodoTaskResponse updateTaskStatus(@PathVariable Integer id,
-                                             @RequestParam String newStatus) {
+    public TodoTaskResponse updateTaskStatus(@PathVariable Integer id, @RequestParam String newStatus) {
         return service.updateStatus(id, newStatus);
     }
 

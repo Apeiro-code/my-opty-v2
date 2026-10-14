@@ -137,6 +137,17 @@ myopty:
     api-version: ${PAYMENT_GATEWAY_API_VERSION:}
     sandbox: ${PAYMENT_GATEWAY_SANDBOX:true}
 
+  # Billing: the tax applied to a computed order total and the currency every
+  # amount is quoted in. Tax defaults to zero so a fresh clone charges exactly the
+  # catalogue price. Receipts reuse the MAIL_* contract, and `fail-on-error` is the
+  # same MAIL_FAIL_ON_ERROR switch order notifications use: off locally so a feature
+  # is not blocked by a mail server, on in staging so an undelivered receipt is loud.
+  billing:
+    tax-rate: ${BILLING_TAX_RATE:0}
+    currency: ${BILLING_CURRENCY:LKR}
+    fail-on-error: ${MAIL_FAIL_ON_ERROR:false}
+    from-address: ${MAIL_FROM_ADDRESS:no-reply@myopty.local}
+
 management:
   endpoints:
     web:
