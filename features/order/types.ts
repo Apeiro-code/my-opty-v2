@@ -1,0 +1,145 @@
+/**
+ * Mirrors the order module's prescription DTOs. Keep in step with
+ * `backend/order` (`PrescriptionSubmission`, `PrescriptionResponse`).
+ */
+
+export type VerificationStatus = "PENDING_REVIEW" | "VERIFIED" | "REJECTED";
+
+/**
+ * The `prescription` part of the multipart submission. Every optical value is
+ * optional because a prescription legitimately omits them; the backend refuses
+ * only a submission with none at all.
+ */
+export type PrescriptionSubmission = {
+  sphLeft?: string;
+  sphRight?: string;
+  cylLeft?: string;
+  cylRight?: string;
+  axisLeft?: string;
+  axisRight?: string;
+  addPowerLeft?: string;
+  addPowerRight?: string;
+  progressive: boolean;
+};
+
+export type Prescription = {
+  id: number;
+  sphLeft: string | null;
+  sphRight: string | null;
+  cylLeft: string | null;
+  cylRight: string | null;
+  axisLeft: string | null;
+  axisRight: string | null;
+  addPowerLeft: string | null;
+  addPowerRight: string | null;
+  progressive: boolean;
+  hasDocument: boolean;
+  documentContentType: string | null;
+  verificationStatus: VerificationStatus;
+  rejectionReason: string | null;
+};
+
+/**
+ * Mirrors the order module's `OrderType` enum, which is also `lens.type` in the
+ * catalog. The selected value is the order's routing key.
+ */
+export type OrderType = "SINGLE_VISION" | "BIFOCAL" | "PROGRESSIVE";
+
+/**
+ * Mirrors the order module's `OrderStatus` enum. The shop moves an order forward
+ * `PENDING → APPROVED → PROCESSING → READY → DISPATCHED`; `REJECTED` and
+ * `DISPATCHED` are terminal and a step may be skipped but never reversed.
+ */
+export type OrderStatus =
+  "PENDING" | "APPROVED" | "PROCESSING" | "READY" | "DISPATCHED" | "REJECTED";
+
+/** The body of `POST /api/orders`. The customer comes from the session. */
+export type CreateOrder = {
+  prescriptionId: number;
+  orderType: OrderType;
+  lensId: number;
+  frameId?: number | null;
+  quantity?: number;
+};
+
+/** Mirrors the order module's `OrderResponse`. */
+export type Order = {
+  id: number;
+  orderNumber: string;
+  orderType: OrderType;
+  status: OrderStatus;
+  prescriptionId: number;
+  frameId: number | null;
+  lensId: number;
+  quantity: number;
+  totalAmount: number | null;
+  orderDate: string;
+  /** The estimated date the glasses will be ready; null until the shop approves. */
+  receiveDate: string | null;
+  rejectionReason: string | null;
+};
+
+/** The body of a rejection: why the shop refused a prescription or an order. */
+export type Reject = {
+  reason: string;
+};
+
+/**
+ * Where a promotion sits in its life. Mirrors the order module's
+ * `DiscountState`, derived from the active flag and the validity window rather
+ * than stored: `SCHEDULED` has not started, `ACTIVE` is running now, `EXPIRED`
+ * ran out, and `ENDED` was called off early.
+ */
+export type DiscountState = "ACTIVE" | "SCHEDULED" | "EXPIRED" | "ENDED";
+
+/** Mirrors the order module's `DiscountResponse`. */
+export type Discount = {
+  id: number;
+  description: string;
+  percentage: number;
+  /** The frame and lens ids the promotion targets; null when it is sitewide. */
+  targetItemIds: number[] | null;
+  /** The same thing as an empty `targetItemIds`, spelled out for the form. */
+  sitewide: boolean;
+  validFrom: string;
+  validTo: string;
+  /** The shop's flag; false once the promotion has been ended. */
+  active: boolean;
+  state: DiscountState;
+  /** When the shop ended it early, or null while it still runs. */
+  endedAt: string | null;
+  createdBy: number | null;
+  /** When the promotion was set up; the history view shows it. */
+  createdAt: string | null;
+};
+
+/**
+ * The body of `POST /api/shop/discounts` and `PUT /api/shop/discounts/{id}`.
+ * The two requests carry the same fields, so one type serves both; an empty or
+ * null `targetItemIds` means the promotion is sitewide.
+ */
+export type DiscountInput = {
+  description: string;
+  percentage: number;
+  targetItemIds: number[] | null;
+  validFrom: string;
+  validTo: string;
+};
+
+/** Mirrors `NotificationChannel`. Email is the only channel today. */
+export type NotificationChannel = "EMAIL";
+
+/** Mirrors `NotificationStatus`. `FAILED` means the move still happened. */
+export type NotificationStatus = "PENDING" | "SENT" | "FAILED";
+
+/** Mirrors the order module's `NotificationResponse`. */
+export type OrderNotification = {
+  id: number;
+  orderId: number;
+  orderNumber: string;
+  channel: NotificationChannel;
+  message: string;
+  status: NotificationStatus;
+  /** Null while pending or failed; the envelope drops the field until a send succeeds. */
+  sentAt: string | null;
+};
