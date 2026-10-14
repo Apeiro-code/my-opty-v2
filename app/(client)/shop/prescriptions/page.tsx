@@ -56,7 +56,7 @@ export default function ShopPrescriptionsPage() {
 
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-xs text-slate-500">
-        <Link href="/shop/dashboard" className="hover:text-teal-600">Shop Portal</Link>
+        <Link href="/dashboard" className="hover:text-teal-600">Shop Portal</Link>
         <span>/</span>
         <span className="text-slate-900 font-semibold">Prescription Review</span>
       </div>

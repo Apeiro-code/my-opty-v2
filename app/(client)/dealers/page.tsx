@@ -234,10 +234,10 @@ export default function DealerContactsPage() {
                   <td className="py-4 text-right">
                     <div className="flex items-center justify-end space-x-3">
                       <button
-                        onClick={() => router.replace(`/shop/dealers/${dealer.dealerId}/edit`)}
+                        onClick={() => router.replace(`/dealers/${dealer.dealerId}`)}
                         className="text-xs font-semibold text-teal-600 hover:text-teal-800 transition-colors"
                       >
-                        Edit
+                        View / Edit
                       </button>
                       <button
                         onClick={() => deleteDealer(dealer.dealerId)}

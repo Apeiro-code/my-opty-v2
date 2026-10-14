@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import AuthNav from "@/features/shared/components/AuthNav";
 import { useState } from "react";
 
@@ -23,8 +24,15 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
       {/* Original Customer Navigation Bar */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
         <nav className="mx-auto flex max-w-5xl items-center gap-6 px-6 py-4">
-          <Link href="/" className="text-lg font-bold text-slate-900 tracking-tight">
-            MyOpty
+          <Link href="/" className="flex items-center gap-2">
+            <Image
+              src="/logo.png"
+              alt="MyOpty Logo"
+              width={120}
+              height={36}
+              className="object-contain"
+              priority
+            />
           </Link>
           <Link href="/frames" className="text-sm font-medium text-slate-600 hover:text-teal-600 transition-colors">
             Frames

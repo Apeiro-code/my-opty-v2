@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import AuthNav from "@/features/shared/components/AuthNav";
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
@@ -7,20 +8,23 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       {/* Left Sidebar - Professional Admin Theme */}
       <aside className="w-64 bg-slate-900 text-slate-300 md:flex flex-col justify-between hidden border-r border-slate-800 sticky top-0 h-screen">
         <div>
-          {/* Logo / Brand */}
-          <div className="p-6 flex items-center gap-3 border-b border-slate-800/60">
-            <div className="w-10 h-10 rounded-xl bg-teal-500 flex items-center justify-center text-white font-bold text-xl shadow-md">
-              👓
-            </div>
-            <div>
-              <h1 className="text-white font-bold text-lg tracking-tight">MyOpty</h1>
-              <p className="text-xs text-teal-400 font-medium tracking-wider uppercase">Shop Portal</p>
-            </div>
+          {/* Logo and Brand Header */}
+          <div className="p-6 border-b border-slate-800/60 flex items-center gap-3">
+            <Link href="/dashboard" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
+              <Image
+                src="/logo.png"
+                alt="MyOpty Logo"
+                width={120}
+                height={36}
+                className="object-contain"
+                priority
+              />
+            </Link>
           </div>
 
-          {/* Navigation Menu with Original /shop/... Endpoints */}
+          {/* Navigation Menu */}
           <nav className="p-4 space-y-1.5 text-sm font-medium">
-            <Link href="/shop/dashboard" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
+            <Link href="/dashboard" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
               📊 Dashboard
             </Link>
             <Link href="/shop/orders" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
@@ -35,7 +39,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             <Link href="/shop/inventory" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
               📦 Inventory
             </Link>
-            <Link href="/shop/dealers" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
+            {/* මෙතන /shop/dealers වෙනුවට /dealers ලෙස නිවැරදි කර ඇත */}
+            <Link href="/dealers" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
               🤝 Dealers
             </Link>
             <Link href="/shop/discounts" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
