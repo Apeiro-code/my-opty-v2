@@ -7,6 +7,7 @@ import com.myopty.catalog.config.LowStockAlertProperties;
 import com.myopty.catalog.dto.AvailabilityItemResponse;
 import com.myopty.catalog.model.Frame;
 import com.myopty.catalog.model.Lens;
+import com.myopty.catalog.model.LensType;
 import com.myopty.catalog.model.StockChangeType;
 import com.myopty.catalog.model.StockEntry;
 import com.myopty.catalog.model.StockItemType;
@@ -19,6 +20,7 @@ import com.myopty.catalog.repository.StockRow;
 import com.myopty.contracts.catalog.InsufficientStockException;
 import com.myopty.contracts.catalog.StockReservation;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -201,6 +203,11 @@ class StockServiceTest {
         }
 
         @Override
+        public List<Frame> findNewArrivals(int limit) {
+            return Collections.emptyList();
+        }
+
+        @Override
         public List<Frame> findAllByOrderByIdAsc() {
             return frames.values().stream()
                     .sorted(Comparator.comparing(Frame::getId))
@@ -300,6 +307,21 @@ class StockServiceTest {
         @Override
         public Optional<Lens> findById(Long id) {
             return Optional.ofNullable(lenses.get(id));
+        }
+
+        @Override
+        public Optional<Lens> findByIdAndActiveTrue(Long id) {
+            return Optional.empty();
+        }
+
+        @Override
+        public List<Lens> findNewArrivals(int limit) {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public List<Lens> findAllByActiveTrueAndTypeOrderByIdAsc(LensType type) {
+            return Collections.emptyList();
         }
 
         @Override

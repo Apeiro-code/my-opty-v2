@@ -9,6 +9,7 @@ import com.myopty.catalog.model.LensType;
 import com.myopty.catalog.repository.LensRepository;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -71,6 +72,21 @@ class LensServiceTest {
         @Override
         public Optional<Lens> findById(Long id) {
             return store.stream().filter(l -> id.equals(l.getId())).findFirst();
+        }
+
+        @Override
+        public Optional<Lens> findByIdAndActiveTrue(Long id) {
+            return Optional.empty();
+        }
+
+        @Override
+        public List<Lens> findNewArrivals(int limit) {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public List<Lens> findAllByActiveTrueAndTypeOrderByIdAsc(LensType type) {
+            return Collections.emptyList();
         }
 
         @Override

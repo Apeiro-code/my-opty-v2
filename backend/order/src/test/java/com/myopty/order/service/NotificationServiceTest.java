@@ -224,6 +224,20 @@ class NotificationServiceTest {
         }
 
         @Override
+        public <S extends AppUser> S save(S entity) {
+            byId.put(entity.getId(), entity);
+            return entity;
+        }
+
+        @Override
+        public <S extends AppUser> Iterable<S> saveAll(Iterable<S> entities) {
+            for (S entity : entities) {
+                byId.put(entity.getId(), entity);
+            }
+            return entities;
+        }
+
+        @Override
         public Optional<AppUser> findById(Long id) {
             return Optional.ofNullable(byId.get(id));
         }
@@ -231,6 +245,61 @@ class NotificationServiceTest {
         @Override
         public Optional<AppUser> findByEmail(String email) {
             throw new UnsupportedOperationException("not used by the notification story");
+        }
+
+        @Override
+        public boolean existsById(Long id) {
+            return byId.containsKey(id);
+        }
+
+        @Override
+        public boolean existsByEmail(String email) {
+            return false;
+        }
+
+        @Override
+        public boolean existsByPhone(String phone) {
+            return false;
+        }
+
+        @Override
+        public Iterable<AppUser> findAll() {
+            return List.copyOf(byId.values());
+        }
+
+        @Override
+        public Iterable<AppUser> findAllById(Iterable<Long> ids) {
+            return List.of();
+        }
+
+        @Override
+        public long count() {
+            return byId.size();
+        }
+
+        @Override
+        public void deleteById(Long id) {
+            byId.remove(id);
+        }
+
+        @Override
+        public void delete(AppUser entity) {
+            byId.remove(entity.getId());
+        }
+
+        @Override
+        public void deleteAllById(Iterable<? extends Long> ids) {
+            ids.forEach(byId::remove);
+        }
+
+        @Override
+        public void deleteAll() {
+            byId.clear();
+        }
+
+        @Override
+        public void deleteAll(Iterable<? extends AppUser> entities) {
+            entities.forEach(entity -> byId.remove(entity.getId()));
         }
     }
 

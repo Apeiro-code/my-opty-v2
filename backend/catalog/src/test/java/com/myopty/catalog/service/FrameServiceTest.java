@@ -15,6 +15,7 @@ import com.myopty.catalog.model.Frame;
 import com.myopty.catalog.repository.CategoryRepository;
 import com.myopty.catalog.repository.FrameRepository;
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -289,6 +290,11 @@ class FrameServiceTest {
         @Override
         public Optional<Frame> findByIdAndActiveTrue(Long id) {
             return findById(id).filter(Frame::isActive);
+        }
+
+        @Override
+        public List<Frame> findNewArrivals(int limit) {
+            return Collections.emptyList();
         }
 
         @Override
