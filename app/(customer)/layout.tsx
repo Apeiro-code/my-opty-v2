@@ -23,7 +23,7 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800">
       {/* Original Customer Navigation Bar */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
-        <nav className="mx-auto flex max-w-5xl items-center gap-6 px-6 py-4">
+        <nav className="mx-auto flex max-w-6xl items-center gap-5 px-6 py-4">
           <Link href="/" className="flex items-center gap-2">
             <Image
               src="/logo.png"
@@ -52,6 +52,15 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
           <Link href="/questions" className="text-sm font-medium text-slate-600 hover:text-teal-600 transition-colors">
             Q&amp;A
           </Link>
+
+          {/* Switch to Shop Admin Dashboard Button */}
+          <Link
+            href="/dashboard"
+            className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-teal-400 font-bold text-xs rounded-xl transition-all shadow-sm flex items-center gap-1.5 border border-slate-800"
+          >
+            ⚙️ Shop Portal
+          </Link>
+
           <div className="ml-auto">
             <AuthNav />
           </div>

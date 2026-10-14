@@ -39,7 +39,6 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             <Link href="/shop/inventory" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
               📦 Inventory
             </Link>
-            {/* මෙතන /shop/dealers වෙනුවට /dealers ලෙස නිවැරදි කර ඇත */}
             <Link href="/dealers" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
               🤝 Dealers
             </Link>
@@ -55,8 +54,15 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           </nav>
         </div>
 
-        {/* User Auth Footer */}
-        <div className="p-4 border-t border-slate-800/60">
+        {/* User Auth Footer & Portal Switcher */}
+        <div className="p-4 border-t border-slate-800/60 space-y-3">
+          {/* Switch to Customer Portal Button */}
+          <Link
+            href="/"
+            className="flex items-center justify-center gap-2 w-full py-2.5 px-3 bg-teal-600 hover:bg-teal-500 text-white font-semibold text-xs rounded-xl transition-all shadow-md"
+          >
+            🛍️ Switch to Customer View
+          </Link>
           <AuthNav />
         </div>
       </aside>
