@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyOpty - Shopping Cart</title>
+    <!-- Google Fonts - Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --accent-color: #10b981;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border-color: #e5e7eb;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 40px 20px;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+        }
+
+        .cart-wrapper {
+            display: flex;
+            gap: 30px;
+            max-width: 1000px;
+            width: 100%;
+            align-items: flex-start;
+        }
+
+        .left-column { flex: 2; }
+        .right-column { flex: 1; position: sticky; top: 40px; }
+
+        .card, .summary-card {
+            background: var(--card-bg);
+            padding: 25px 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-main);
+            border-bottom: 2px solid var(--bg-color);
+            padding-bottom: 10px;
+        }
+        .section-title i { color: var(--primary-color); }
+
+        /* Cart Item Styling */
+        .cart-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .cart-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .item-info {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .item-img-box {
+            width: 70px;
+            height: 70px;
+            background: #eff6ff;
+            color: var(--primary-color);
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 28px;
+        }
+
+        .item-details h4 {
+            margin: 0 0 5px 0;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .item-details p {
+            margin: 0;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .item-price {
+            font-weight: 700;
+            color: #ef4444;
+            font-size: 16px;
+            margin-top: 5px;
+        }
+
+        /* Quantity Controls */
+        .qty-controls {
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            background: #fdfdfd;
+        }
+
+        .qty-btn {
+            background: #f3f4f6;
+            border: none;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-main);
+            transition: background 0.2s;
+        }
+
+        .qty-btn:hover {
+            background: #e5e7eb;
+        }
+
+        .qty-input {
+            width: 40px;
+            text-align: center;
+            border: none;
+            background: transparent;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .remove-btn {
+            color: #9ca3af;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            transition: color 0.2s;
+        }
+
+        .remove-btn:hover {
+            color: #ef4444;
+        }
+
+        /* Summary Styling */
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .summary-item.total {
+            border-top: 2px solid var(--bg-color);
+            padding-top: 15px;
+            margin-top: 10px;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .total-amount { color: #ef4444; }
+
+        .checkout-btn {
+            width: 100%;
+            padding: 16px;
+            background-color: #f97316;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-family: 'Poppins', sans-serif;
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .checkout-btn:hover {
+            background-color: #ea580c;
+        }
+
+        @media (max-width: 768px) {
+            .cart-wrapper { flex-direction: column; }
+            .cart-item { flex-direction: column; align-items: flex-start; gap: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="cart-wrapper">
+
+    <!-- Left Column: Cart Items -->
+    <div class="left-column">
+        <div class="card">
+            <div class="section-title"><i class="fas fa-shopping-cart"></i> Shopping Cart (1 Item)</div>
+
+            <div class="cart-item">
+                <div class="item-info">
+                    <div class="item-img-box">
+                        <i class="fas fa-glasses"></i>
+                    </div>
+                    <div class="item-details">
+                        <h4>Premium Spectacle Frame - Black</h4>
+                        <p>Brand: RayBan Style</p>
+                        <div class="item-price">Rs. 3,500.00</div>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <!-- Quantity Controller -->
+                    <div class="qty-controls">
+                        <button class="qty-btn" onclick="updateQty(-1)">-</button>
+                        <input type="text" id="itemQty" class="qty-input" value="1" readonly>
+                        <button class="qty-btn" onclick="updateQty(1)">+</button>
+                    </div>
+
+                    <!-- Remove Button -->
+                    <button class="remove-btn" title="Remove Item"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Right Column: Cart Summary -->
+    <div class="right-column">
+        <div class="summary-card">
+            <div class="section-title"><i class="fas fa-receipt"></i> Order Summary</div>
+
+            <div class="summary-item">
+                <span>Subtotal</span>
+                <span id="subtotalDisplay">Rs. 3,500.00</span>
+            </div>
+
+            <div class="summary-item">
+                <span>Estimated Shipping</span>
+                <span>Calculated at checkout</span>
+            </div>
+
+            <div class="summary-item total">
+                <span>Total</span>
+                <span class="total-amount" id="totalDisplay">Rs. 3,500.00</span>
+            </div>
+
+            <!-- Proceed to Checkout Button -->
+            <a href="index.html" class="checkout-btn">
+                Proceed to Checkout <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    let pricePerUnit = 3500.00;
+    let currentQty = 1;
+
+    function updateQty(change) {
+        currentQty += change;
+        if (currentQty < 1) currentQty = 1; // Minimum quantity is 1
+
+        // Update Input
+        document.getElementById('itemQty').value = currentQty;
+
+        // Calculate new total
+        let newTotal = pricePerUnit * currentQty;
+        let formattedTotal = 'Rs. ' + newTotal.toLocaleString('en-US', {minimumFractionDigits: 2});
+
+        // Update UI displays
+        document.getElementById('subtotalDisplay').innerText = formattedTotal;
+        document.getElementById('totalDisplay').innerText = formattedTotal;
+    }
+</script>
+</body>
+</html>

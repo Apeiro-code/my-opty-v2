@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyOpty - Order Invoice</title>
+    <!-- Google Fonts - Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --accent-color: #10b981;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border-color: #e5e7eb;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 40px 20px;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+        }
+
+        .invoice-container {
+            background: var(--card-bg);
+            max-width: 800px;
+            width: 100%;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Top Success Header */
+        .success-header {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .success-header i {
+            font-size: 60px;
+            margin-bottom: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 50%;
+        }
+
+        .success-header h1 {
+            margin: 0 0 10px 0;
+            font-size: 28px;
+        }
+
+        .success-header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 15px;
+        }
+
+        /* Invoice Body */
+        .invoice-body {
+            padding: 40px;
+        }
+
+        .invoice-details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px dashed var(--border-color);
+        }
+
+        .detail-block h3 {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin: 0 0 8px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-block p {
+            margin: 0;
+            font-weight: 600;
+            color: var(--text-main);
+            font-size: 15px;
+        }
+
+        /* Order Table */
+        .order-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+        .order-table th {
+            background: #f8fafc;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-align: left;
+            padding: 12px 15px;
+            font-size: 13px;
+            text-transform: uppercase;
+            border-radius: 8px;
+        }
+
+        .order-table td {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .product-col {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .product-icon {
+            background: #eff6ff;
+            color: var(--primary-color);
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+        }
+
+        .amount-right {
+            text-align: right;
+        }
+
+        /* Totals Section */
+        .totals-section {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .totals-box {
+            width: 300px;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .total-row.grand-total {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-main);
+            border-top: 2px solid var(--bg-color);
+            padding-top: 15px;
+            margin-top: 5px;
+        }
+
+        .grand-total .amount {
+            color: #ef4444;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Poppins', sans-serif;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--text-main);
+            border: 2px solid var(--border-color);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--text-main);
+            background: #f8fafc;
+        }
+
+        /* Print Styles - Hide buttons when printing */
+        @media print {
+            body { background: white; padding: 0; }
+            .invoice-container { box-shadow: none; max-width: 100%; border: 1px solid #ccc; }
+            .action-buttons { display: none; }
+        }
+
+        @media (max-width: 600px) {
+            .invoice-details-grid { grid-template-columns: 1fr; }
+            .action-buttons { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="invoice-container">
+
+    <div class="success-header">
+        <i class="fas fa-check"></i>
+        <h1>Payment Successful!</h1>
+        <p>Thank you for your purchase. Your order has been placed.</p>
+    </div>
+
+    <div class="invoice-body">
+
+        <!-- Invoice Info -->
+        <div class="invoice-details-grid">
+            <div class="detail-block">
+                <h3>Order Number</h3>
+                <p>#ORD-104592</p>
+            </div>
+            <div class="detail-block">
+                <h3>Date</h3>
+                <p id="currentDate">October 13, 2026</p>
+            </div>
+            <div class="detail-block">
+                <h3>Customer</h3>
+                <p>Pasindu Malitha<br><span style="font-size: 13px; color: var(--text-muted); font-weight: 400;">07X XXX XXXX</span></p>
+            </div>
+            <div class="detail-block">
+                <h3>Payment Method</h3>
+                <p>Credit/Debit Card</p>
+            </div>
+        </div>
+
+        <!-- Items Table -->
+        <table class="order-table">
+            <thead>
+            <tr>
+                <th>Item Description</th>
+                <th style="text-align: center;">Qty</th>
+                <th class="amount-right">Price</th>
+                <th class="amount-right">Amount</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>
+                    <div class="product-col">
+                        <div class="product-icon"><i class="fas fa-glasses"></i></div>
+                        <div>
+                            <strong>Premium Spectacle Frame - Black</strong>
+                            <div style="font-size: 12px; color: var(--text-muted);">Brand: RayBan Style</div>
+                        </div>
+                    </div>
+                </td>
+                <td style="text-align: center;">1</td>
+                <td class="amount-right">Rs. 3,500.00</td>
+                <td class="amount-right"><strong>Rs. 3,500.00</strong></td>
+            </tr>
+            </tbody>
+        </table>
+
+        <!-- Totals -->
+        <div class="totals-section">
+            <div class="totals-box">
+                <div class="total-row">
+                    <span>Subtotal</span>
+                    <span>Rs. 3,500.00</span>
+                </div>
+                <div class="total-row">
+                    <span>Delivery Fee (Standard)</span>
+                    <span>Rs. 350.00</span>
+                </div>
+                <div class="total-row grand-total">
+                    <span>Total Paid</span>
+                    <span class="amount">Rs. 3,850.00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button class="btn btn-outline" onclick="window.print()">
+                <i class="fas fa-file-pdf"></i> Download Receipt
+            </button>
+            <a href="cart.html" class="btn btn-primary">
+                <i class="fas fa-shopping-bag"></i> Continue Shopping
+            </a>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // Set today's date dynamically
+    const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+    document.getElementById('currentDate').innerText = new Date().toLocaleDateString('en-US', dateOptions);
+
+    // Load dynamic data from localStorage sent by checkout page
+    window.onload = function() {
+        const savedName = localStorage.getItem('customerName');
+        const savedPhone = localStorage.getItem('customerPhone');
+        const savedMethod = localStorage.getItem('paymentMethodName');
+        const savedTotal = localStorage.getItem('totalAmount');
+
+        // 1. Generate a proper random Order Number instead of name
+        const orderNumberEl = document.querySelectorAll('.detail-block p')[0];
+        if (orderNumberEl) {
+            orderNumberEl.innerText = "#ORD-" + Math.floor(100000 + Math.random() * 900000);
+        }
+
+        // 2. Update Customer Name & Phone
+        if (savedName) {
+            const customerBlock = document.querySelectorAll('.detail-block p')[2]; // Customer block
+            if (customerBlock) {
+                customerBlock.innerHTML = savedName + '<br><span style="font-size: 13px; color: var(--text-muted); font-weight: 400;">' + (savedPhone || '07X XXX XXXX') + '</span>';
+            }
+        }
+
+        // 3. Update Payment Method Name nicely
+        if (savedMethod) {
+            let methodDisplayName = "Credit/Debit Card";
+            if (savedMethod === 'BANK_TRANSFER') methodDisplayName = "Bank Transfer";
+            else if (savedMethod === 'KOKO') methodDisplayName = "KOKO Payment";
+            else if (savedMethod === 'CASH') methodDisplayName = "Cash on Delivery / Pickup";
+
+            const methodBlock = document.querySelectorAll('.detail-block p')[3]; // Payment method block
+            if (methodBlock) {
+                methodBlock.innerText = methodDisplayName;
+            }
+        }
+
+        // 4. Update Total Amount & Delivery Fee dynamically
+        if (savedTotal) {
+            const numericTotal = parseFloat(savedTotal);
+            const formattedTotal = 'Rs. ' + numericTotal.toLocaleString('en-US', {minimumFractionDigits: 2});
+
+            // Grand Total update
+            document.querySelector('.grand-total .amount').innerText = formattedTotal;
+
+            // Handle delivery fee display
+            const deliveryFeeRow = document.querySelectorAll('.total-row')[1]; // Delivery row
+            if (numericTotal === 3500.00) {
+                // If total is 3500, it's store pickup (No delivery fee)
+                if(deliveryFeeRow) deliveryFeeRow.style.display = 'none';
+            } else {
+                if(deliveryFeeRow) deliveryFeeRow.style.display = 'flex';
+            }
+        }
+    }
+</script>
+</body>
+</html>
